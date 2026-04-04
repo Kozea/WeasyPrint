@@ -25,6 +25,7 @@ import tinycss2.nth
 from PIL.ImageCms import ImageCmsProfile
 
 from .. import CSS
+from ..html_utils import is_ascii_digits
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
 from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
@@ -399,7 +400,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, f'border-spacing:{element.get("cellspacing")}px')
             if element.get('cellpadding'):
                 cellpadding = element.get('cellpadding')
-                if cellpadding.isdigit():
+                if is_ascii_digits(cellpadding):
                     cellpadding += 'px'
                 # TODO: don't match subtables cells
                 for subelement in element.iter():
@@ -412,24 +413,24 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                             f'padding-bottom:{cellpadding};')
             if element.get('hspace'):
                 hspace = element.get('hspace')
-                if hspace.isdigit():
+                if is_ascii_digits(hspace):
                     hspace += 'px'
                 yield specificity, check_style_attribute(
                     element, f'margin-left:{hspace};margin-right:{hspace}')
             if element.get('vspace'):
                 vspace = element.get('vspace')
-                if vspace.isdigit():
+                if is_ascii_digits(vspace):
                     vspace += 'px'
                 yield specificity, check_style_attribute(
                     element, f'margin-top:{vspace};margin-bottom:{vspace}')
             if element.get('width'):
                 style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
+                if is_ascii_digits(element.get('width')):
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(element, style_attribute)
             if element.get('height'):
                 style_attribute = f'height:{element.get("height")}'
-                if element.get('height').isdigit():
+                if is_ascii_digits(element.get('height')):
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(element, style_attribute)
             if element.get('background'):
@@ -462,13 +463,13 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             if element.tag in ('tr', 'td', 'th'):
                 if element.get('height'):
                     style_attribute = f'height:{element.get("height")}'
-                    if element.get('height').isdigit():
+                    if is_ascii_digits(element.get('height')):
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(element, style_attribute)
                 if element.tag in ('td', 'th'):
                     if element.get('width'):
                         style_attribute = f'width:{element.get("width")}'
-                        if element.get('width').isdigit():
+                        if is_ascii_digits(element.get('width')):
                             style_attribute += 'px'
                         yield specificity, check_style_attribute(
                             element, style_attribute)
@@ -482,7 +483,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         elif element.tag == 'col':
             if element.get('width'):
                 style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
+                if is_ascii_digits(element.get('width')):
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(element, style_attribute)
         elif element.tag == 'hr':
@@ -504,7 +505,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, f'height:{size - 2}px')
             if element.get('width'):
                 style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
+                if is_ascii_digits(element.get('width')):
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(element, style_attribute)
             if element.get('color'):
@@ -522,13 +523,13 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                         element, 'vertical-align:middle')
                 if element.get('hspace'):
                     hspace = element.get('hspace')
-                    if hspace.isdigit():
+                    if is_ascii_digits(hspace):
                         hspace += 'px'
                     yield specificity, check_style_attribute(
                         element, f'margin-left:{hspace};margin-right:{hspace}')
                 if element.get('vspace'):
                     vspace = element.get('vspace')
-                    if vspace.isdigit():
+                    if is_ascii_digits(vspace):
                         vspace += 'px'
                     yield specificity, check_style_attribute(
                         element, f'margin-top:{vspace};margin-bottom:{vspace}')
@@ -536,12 +537,12 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 # lot of W3C tests rely on this attribute being applied to img
                 if element.get('width'):
                     style_attribute = f'width:{element.get("width")}'
-                    if element.get('width').isdigit():
+                    if is_ascii_digits(element.get('width')):
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(element, style_attribute)
                 if element.get('height'):
                     style_attribute = f'height:{element.get("height")}'
-                    if element.get('height').isdigit():
+                    if is_ascii_digits(element.get('height')):
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(element, style_attribute)
                 if element.tag in ('img', 'object', 'input'):

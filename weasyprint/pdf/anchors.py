@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlsplit
 import pydyf
 
 from .. import Attachment
+from ..html_utils import is_ascii_digits
 from ..logger import LOGGER
 from ..text.ffi import ffi, gobject, pango
 from ..text.fonts import get_font_description
@@ -268,7 +269,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
                 field['Ff'] = 1 << (14 - 1)
             elif input_type == 'file':
                 field['Ff'] = 1 << (21 - 1)
-            if (max_length := element.get('maxlength', '')).isdigit():
+            if is_ascii_digits(max_length := element.get('maxlength', '')):
                 field['MaxLen'] = max_length
             pdf.add_object(field)
 
