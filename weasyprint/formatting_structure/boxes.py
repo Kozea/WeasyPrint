@@ -52,6 +52,7 @@ import itertools
 import sys
 
 from ..css import AnonymousStyle
+from ..html_utils import parse_html_integer
 
 
 class Box:
@@ -672,10 +673,8 @@ class TableColumnGroupBox(ParentBox):
         if self.children:
             return len(self.children)
         else:
-            try:
-                return max(int(self.element.get('span', '').strip()), 1)
-            except ValueError:
-                return 1
+            span = parse_html_integer(self.element.get('span', ''))
+            return max(span, 1) if span is not None else 1
 
 
 # Not really a parent box, but pretending to be removes some corner cases.
@@ -706,10 +705,8 @@ class TableColumnBox(ParentBox):
 
     @property
     def span(self):
-        try:
-            return max(int(self.element.get('span', '').strip()), 1)
-        except ValueError:
-            return 1
+        span = parse_html_integer(self.element.get('span', ''))
+        return max(span, 1) if span is not None else 1
 
 
 class TableCellBox(BlockContainerBox):
@@ -724,14 +721,10 @@ class TableCellBox(BlockContainerBox):
         # but HTML 5 removed it
         # https://html.spec.whatwg.org/multipage/tables.html#attr-tdth-colspan
         # rowspan=0 is still there though.
-        try:
-            self.colspan = max(int(self.element.get('colspan', '').strip()), 1)
-        except (AttributeError, ValueError):
-            self.colspan = 1
-        try:
-            self.rowspan = max(int(self.element.get('rowspan', '').strip()), 0)
-        except (AttributeError, ValueError):
-            self.rowspan = 1
+        colspan = parse_html_integer(self.element.get('colspan', ''))
+        self.colspan = max(colspan, 1) if colspan is not None else 1
+        rowspan = parse_html_integer(self.element.get('rowspan', ''))
+        self.rowspan = max(rowspan, 0) if rowspan is not None else 1
 
 
 class TableCaptionBox(BlockBox):
