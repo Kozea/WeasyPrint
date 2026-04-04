@@ -840,3 +840,46 @@ def test_first_letter_float():
     assert first_letter.position_x == 0
     # TODO: fix problem described in #1859.
     # assert text.position_x == 20
+
+
+@assert_no_logs
+def test_float_break_after_page():
+    # https://github.com/Kozea/WeasyPrint/issues/2277
+    # break-after: page on a floated element should force a page break.
+    pages = render_pages('''
+      <style>
+        @page { size: 100px; margin: 10px }
+      </style>
+      <div style="break-after: page; float: left">float</div>
+      <div>end</div>
+    ''')
+    assert len(pages) == 2
+    html1, = pages[0].children
+    body1, = html1.children
+    float_div, = body1.children
+    assert float_div.position_y == 10
+    html2, = pages[1].children
+    body2, = html2.children
+    end_div, = body2.children
+    assert end_div.position_y == 10
+
+
+@assert_no_logs
+def test_float_break_before_page():
+    # break-before: page on a floated element should force a page break.
+    pages = render_pages('''
+      <style>
+        @page { size: 100px; margin: 10px }
+      </style>
+      <div>start</div>
+      <div style="break-before: page; float: left">float</div>
+    ''')
+    assert len(pages) == 2
+    html1, = pages[0].children
+    body1, = html1.children
+    start_div, = body1.children
+    assert start_div.position_y == 10
+    html2, = pages[1].children
+    body2, = html2.children
+    float_div, = body2.children
+    assert float_div.position_y == 10

@@ -237,7 +237,7 @@ def relative_positioning(box, containing_block):
 
 def _out_of_flow_layout(context, box, index, child, new_children,
                         page_is_empty, absolute_boxes, fixed_boxes,
-                        adjoining_margins, bottom_space):
+                        adjoining_margins, bottom_space, next_page):
     stop = False  # whether we should stop parent rendering after this layout
     resume_at = None  # where to resume in-flow rendering
     new_child = None  # child rendered by this layout
@@ -260,9 +260,35 @@ def _out_of_flow_layout(context, box, index, child, new_children,
 
     # Float child layout.
     elif child.is_floated():
+        # Check for forced break-before on the float.
+        # https://drafts.csswg.org/css-break/#break-between
+        last_in_flow_child = find_last_in_flow_child(new_children)
+        if last_in_flow_child is not None:
+            page_break = block_level_page_break(last_in_flow_child, child)
+            if force_page_break(page_break, context):
+                page_name = child.page_values()[0]
+                next_page = {'break': page_break, 'page': page_name}
+                resume_at = {index: None}
+                stop = True
+                return (
+                    stop, resume_at, new_child, out_of_flow_resume_at,
+                    next_page)
+
         new_child, out_of_flow_resume_at = float_layout(
             context, child, box, absolute_boxes, fixed_boxes, bottom_space,
             skip_stack=None)
+
+        # Check for forced break-after on the float.
+        page_break = child.style['break_after']
+        if force_page_break(page_break, context):
+            new_child.index = index
+            new_children.append(new_child)
+            page_name = child.page_values()[1]
+            next_page = {'break': page_break, 'page': page_name}
+            resume_at = {index + 1: None}
+            stop = True
+            return (
+                stop, resume_at, new_child, out_of_flow_resume_at, next_page)
 
         # Check that child doesn’t overflow page.
         page_overflow = context.overflows_page(
@@ -298,7 +324,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
-    return stop, resume_at, new_child, out_of_flow_resume_at
+    return stop, resume_at, new_child, out_of_flow_resume_at, next_page
 
 
 def _break_line(context, box, line, new_children, needed, page_is_empty, index,
@@ -734,10 +760,11 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
         if not child.is_in_normal_flow():
             # Layout out-of-flow child.
             abort = False
-            stop, resume_at, new_child, out_of_flow_resume_at = (
+            stop, resume_at, new_child, out_of_flow_resume_at, next_page = (
                 _out_of_flow_layout(
                     context, box, index, child, new_children, page_is_empty,
-                    absolute_boxes, fixed_boxes, adjoining_margins, bottom_space))
+                    absolute_boxes, fixed_boxes, adjoining_margins,
+                    bottom_space, next_page))
             if out_of_flow_resume_at:
                 context.add_broken_out_of_flow(
                     new_child, child, box, out_of_flow_resume_at)
