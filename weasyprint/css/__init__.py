@@ -25,7 +25,6 @@ import tinycss2.nth
 from PIL.ImageCms import ImageCmsProfile
 
 from .. import CSS
-from ..html_utils import parse_html_integer
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
 from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
@@ -318,6 +317,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
     are returned with specificity ``(0, 0, 0)``.
 
     """
+    from ..html import HTML_WHITESPACE, parse_html_integer
     def check_style_attribute(element, style_attribute):
         declarations = tinycss2.parse_blocks_contents(style_attribute)
         return element, declarations, base_url
@@ -368,16 +368,14 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 yield specificity, check_style_attribute(
                     element, f'font-family:{element.get("face")}')
             if element.get('size'):
-                size_attr = element.get('size').lstrip(' \t\n\f\r')
+                size_attr = element.get('size').lstrip(HTML_WHITESPACE)
                 relative_plus = size_attr.startswith('+')
                 relative_minus = size_attr.startswith('-')
                 if relative_plus or relative_minus:
                     size_attr = size_attr[1:]
                 size = parse_html_integer(size_attr)
                 if size is None:
-                    LOGGER.warning(
-                        'Invalid value for size: %s',
-                        element.get('size'))
+                    LOGGER.warning('Invalid value for size: %s', element.get('size'))
                 else:
                     font_sizes = {
                         1: 'x-small',
@@ -494,9 +492,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 if parsed is not None:
                     size = parsed
                 else:
-                    LOGGER.warning(
-                        'Invalid value for size: %s',
-                        element.get('size'))
+                    LOGGER.warning('Invalid value for size: %s', element.get('size'))
             if (element.get('color'), element.get('noshade')) != (None, None):
                 if size >= 1:
                     yield specificity, check_style_attribute(
