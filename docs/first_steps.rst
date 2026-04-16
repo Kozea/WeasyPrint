@@ -44,7 +44,7 @@ Ubuntu_, Fedora_, Archlinux_, Gentoo_…
 .. _Debian: https://packages.debian.org/search?keywords=weasyprint&searchon=names&suite=all&section=all
 .. _Ubuntu: https://packages.ubuntu.com/search?keywords=weasyprint&searchon=names&suite=all&section=all
 .. _Fedora: https://src.fedoraproject.org/rpms/weasyprint
-.. _Archlinux: https://aur.archlinux.org/packages/python-weasyprint
+.. _Archlinux: https://archlinux.org/packages/extra/any/python-weasyprint/
 .. _Gentoo: https://packages.gentoo.org/packages/dev-python/weasyprint
 
 If WeasyPrint is not available on your distribution, or if you want to use a
