@@ -87,14 +87,22 @@ Adjust Document Dimensions
 
 WeasyPrint does not provide support for adjusting page size or document margins
 via command-line flags. This is best accomplished with the CSS ``@page``
-at-rule. Consider the following example:
+at-rule, which can be added to the document or provided in a stylesheet.
+Consider the following example:
 
 .. code-block:: css
 
   @page {
-    size: Letter; /* Change from the default size of A4 */
+    size: A3 landscape; /* Change the page size and orientation */
     margin: 3cm; /* Set margin on each page */
   }
+
+To apply these rules from the command line without creating a separate CSS
+file, use the ``-s`` option with shell process substitution:
+
+.. code-block:: sh
+
+  $ weasyprint input.html output.pdf -s <(echo "@page { size: A3 landscape }")
 
 There is much more which can be achieved with the ``@page`` at-rule,
 such as page numbers, headers, etc. Read more about the page_ at-rule.
