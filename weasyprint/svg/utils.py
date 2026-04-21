@@ -2,7 +2,7 @@
 
 import re
 from contextlib import suppress
-from math import cos, radians, sin, tan
+from math import cos, pi, radians, sin, tan
 from urllib.parse import urlparse
 
 from tinycss2.color5 import parse_color
@@ -55,6 +55,20 @@ def size(string, font_size=None, percentage_reference=None):
 
     # Unknown size
     return 0
+
+
+def angle(string):
+    """Compute an angle in degrees from an SVG transform value."""
+    string = normalize(string).split(' ', 1)[0]
+    if string.endswith('deg'):
+        return float(string[:-3])
+    if string.endswith('grad'):
+        return float(string[:-4]) * 0.9
+    if string.endswith('rad'):
+        return float(string[:-3]) * 180 / pi
+    if string.endswith('turn'):
+        return float(string[:-4]) * 360
+    return float(string)
 
 
 def alpha_value(value):
@@ -164,31 +178,38 @@ def transform(transform_string, transform_origin, font_size, normalized_diagonal
 
     transformations = re.findall(r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
     for transformation_type, transformation in transformations:
-        values = [
-            size(value, font_size, normalized_diagonal)
-            for value in transformation.split(' ')]
+        values = [value for value in transformation.split(' ') if value]
         if transformation_type == 'matrix':
+            values = [
+                size(value, font_size, normalized_diagonal)
+                for value in values]
             matrix = Matrix(*values) @ matrix
         elif transformation_type == 'rotate':
             if len(values) == 3:
-                matrix = Matrix(e=values[1], f=values[2]) @ matrix
+                rotate_x = size(values[1], font_size, normalized_diagonal)
+                rotate_y = size(values[2], font_size, normalized_diagonal)
+                matrix = Matrix(e=rotate_x, f=rotate_y) @ matrix
+            rotation = angle(values[0])
             matrix = Matrix(
-                cos(radians(float(values[0]))),
-                sin(radians(float(values[0]))),
-                -sin(radians(float(values[0]))),
-                cos(radians(float(values[0])))) @ matrix
+                cos(radians(rotation)),
+                sin(radians(rotation)),
+                -sin(radians(rotation)),
+                cos(radians(rotation))) @ matrix
             if len(values) == 3:
-                matrix = Matrix(e=-values[1], f=-values[2]) @ matrix
+                matrix = Matrix(e=-rotate_x, f=-rotate_y) @ matrix
         elif transformation_type.startswith('skew'):
             if len(values) == 1:
-                values.append(0)
+                values.append('0')
             if transformation_type in ('skewX', 'skew'):
                 matrix = Matrix(
-                    c=tan(radians(float(values.pop(0))))) @ matrix
+                    c=tan(radians(angle(values.pop(0))))) @ matrix
             if transformation_type in ('skewY', 'skew'):
                 matrix = Matrix(
-                    b=tan(radians(float(values.pop(0))))) @ matrix
+                    b=tan(radians(angle(values.pop(0))))) @ matrix
         elif transformation_type.startswith('translate'):
+            values = [
+                size(value, font_size, normalized_diagonal)
+                for value in values]
             if len(values) == 1:
                 values.append(0)
             if transformation_type in ('translateX', 'translate'):
@@ -196,6 +217,9 @@ def transform(transform_string, transform_origin, font_size, normalized_diagonal
             if transformation_type in ('translateY', 'translate'):
                 matrix = Matrix(f=values.pop(0)) @ matrix
         elif transformation_type.startswith('scale'):
+            values = [
+                size(value, font_size, normalized_diagonal)
+                for value in values]
             if len(values) == 1:
                 values.append(values[0])
             if transformation_type in ('scaleX', 'scale'):
