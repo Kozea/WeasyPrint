@@ -554,6 +554,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         child for child in new_children
         if not isinstance(child, AbsolutePlaceholder))
 
+    child_position_x = child.position_x
+    child_position_y = child.position_y
     (new_child, resume_at, next_page, next_adjoining_margins,
      collapsing_through, max_lines) = block_level_layout(
          context, child, bottom_space, skip_stack, box, page_is_empty_with_no_children,
@@ -585,11 +587,14 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 # Child border/padding/margin overflows the page area, do the layout
                 # again with a bottom_space value that includes them.
                 remove_placeholders(context, [new_child], absolute_boxes, fixed_boxes)
+                child.position_x = child_position_x
+                child.position_y = child_position_y
                 (new_child, resume_at, next_page, next_adjoining_margins,
                  collapsing_through, max_lines) = block_level_layout(
                      context, child, bottom_space, skip_stack, box,
                      page_is_empty_with_no_children, absolute_boxes, fixed_boxes,
-                     adjoining_margins, discard, max_lines)
+                     adjoining_margins, first_letter_style, first_line_style,
+                     discard, max_lines)
                 if new_child:
                     position_y = new_child.border_box_y() + new_child.border_height()
             else:
