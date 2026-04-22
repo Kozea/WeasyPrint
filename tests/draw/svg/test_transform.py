@@ -1,5 +1,7 @@
 """Test how SVG shapes are transformed."""
 
+import pytest
+
 from ...testing_utils import assert_no_logs
 
 
@@ -142,6 +144,31 @@ def test_transform_rotate_cx_cy(assert_pixels):
       </style>
       <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <rect x="7" y="2" width="4" height="5" transform="rotate(90 7 2)"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''')
+
+
+@pytest.mark.parametrize(
+    'angle', ['90deg', '100grad', '1.5707963267948966rad', '.25turn'])
+@assert_no_logs
+def test_transform_rotate_angle_units(assert_same_renderings, angle):
+    assert_same_renderings('''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="-7" width="4" height="5" transform="rotate(90)"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''', f'''
+      <style>
+        @page {{ size: 9px }}
+        svg {{ display: block }}
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="-7" width="4" height="5" transform="rotate({angle})"
               stroke-width="2" stroke="red" fill="none" />
       </svg>
     ''')
