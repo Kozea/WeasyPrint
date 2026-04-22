@@ -321,6 +321,40 @@ def test_line_height_invalid(rule):
 
 
 @assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('normal', 'normal'),
+    ('1', (1, 1)),
+    ('1.5', (1.5, 2)),
+    ('3', (3, 3)),
+    ('3 1', (3, 1)),
+    ('3 2', (3, 2)),
+    ('3 calc(1 + 1)', (3, 2)),
+    ('2.5 3', (2.5, 3)),
+    ('3 drop', (3, 3)),
+    ('drop 3', (3, 3)),
+    ('3 raise', (3, 1)),
+    ('raise 3', (3, 1)),
+])
+def test_initial_letter(rule, value):
+    assert get_value(f'initial-letter: {rule}') == value
+
+
+@pytest.mark.parametrize('rule', [
+    'auto',
+    '0',
+    '-1',
+    '3 0',
+    '3 2.5',
+    '3 2 1',
+    'drop',
+    'raise',
+    'drop raise 3',
+])
+def test_initial_letter_invalid(rule):
+    assert_invalid(f'initial-letter: {rule}')
+
+
+@assert_no_logs
 @pytest.mark.parametrize('rule', [
     'symbols()',
     'symbols(cyclic)',
