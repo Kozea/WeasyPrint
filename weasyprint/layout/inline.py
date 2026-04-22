@@ -139,6 +139,12 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         # Removing this line breaks the position == linebox.position test below
         # See issue #583.
         line.position_y = position_y
+        if clear_gap := initial_letter_clear_gap(line):
+            line.height += clear_gap
+            line.baseline += clear_gap
+            for child in line.children:
+                if child.is_in_normal_flow():
+                    child.translate(dy=clear_gap)
 
         if line.height <= candidate_height:
             break
@@ -291,6 +297,36 @@ def remove_last_whitespace(context, line):
     # 'white-space' set to 'pre-wrap', UAs may visually collapse them.
 
 
+def apply_initial_letter(box, letter_style):
+    """Apply simple dropped-initial sizing to a ``::first-letter`` style."""
+    initial_letter = letter_style['initial_letter']
+    if initial_letter == 'normal':
+        return
+
+    size, sink = initial_letter
+    line_height, _ = strut(box.style)
+    parent_cap_height = box.style['font_size'] * character_ratio(box.style, 'cap')
+    letter_cap_ratio = character_ratio(letter_style, 'cap')
+    letter_font_size = (
+        ((size - 1) * line_height + parent_cap_height) / letter_cap_ratio)
+    letter_style['font_size'] = letter_font_size
+    letter_style['line_height'] = ('PIXELS', letter_font_size)
+    letter_style['__initial_letter_clear_gap'] = (
+        max(size - sink, 0) * line_height)
+    if letter_style['float'] == 'none':
+        letter_style['float'] = (
+            'right' if box.style['direction'] == 'rtl' else 'left')
+
+
+def initial_letter_clear_gap(line):
+    """Return the gap before first-line contents for raised initial letters."""
+    return max(
+        (
+            child.style.get('__initial_letter_clear_gap', 0)
+            for child in line.children if child.is_floated()),
+        default=0)
+
+
 def first_letter_to_box(box, skip_stack, first_letter_style):
     """Create a box for the ::first-letter selector."""
     if first_letter_style and box.children:
@@ -305,6 +341,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
             letter_style = box.style.copy()
             for key, value in first_letter_style.items():
                 letter_style[key] = value
+            apply_initial_letter(box, letter_style)
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
                     f'{box.element_tag}::first-letter', letter_style,

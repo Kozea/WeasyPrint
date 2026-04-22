@@ -839,3 +839,175 @@ def test_first_letter_float():
     first_letter, text = line1.children
     assert first_letter.position_x == 0
     assert text.position_x == 20
+
+
+@assert_no_logs
+def test_initial_letter():
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 3 }
+      </style>
+      <p>Lor em in up ax by</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4, line5 = p.children
+    first_letter, text = line1.children
+    first_letter_line, = first_letter.children
+    first_letter_text, = first_letter_line.children
+    assert first_letter_text.text == 'L'
+    assert first_letter_text.style['font_size'] == 60
+    assert first_letter.height == 60
+    assert text.text == 'or'
+    assert text.position_x == 60
+    assert line2.position_x == 60
+    assert line3.position_x == 60
+    assert line4.position_x == 0
+    assert line5.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_sink():
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 3 2 }
+      </style>
+      <p>Lor em in up ax by</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4 = p.children
+    first_letter, text = line1.children
+    assert first_letter.height == 60
+    assert first_letter.children[0].children[0].style['font_size'] == 60
+    assert line1.height == 40
+    assert text.position_x == 60
+    assert text.position_y == 20
+    assert line2.position_x == 60
+    assert line3.position_x == 0
+    assert line4.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_raise():
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 40px 0 0 }
+        p::first-letter { initial-letter: 3 raise }
+      </style>
+      <p>Lor em in up ax by</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4 = p.children
+    first_letter, text = line1.children
+    assert first_letter.height == 60
+    assert line1.height == 60
+    assert text.position_x == 60
+    assert text.position_y == 80
+    assert line2.position_x == 0
+    assert line3.position_x == 0
+    assert line4.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_fractional_size():
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 2.5 3 }
+      </style>
+      <p>Lor em in up ax by</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4, line5 = p.children
+    first_letter, text = line1.children
+    assert first_letter.width == 50
+    assert first_letter.height == 50
+    assert first_letter.children[0].children[0].style['font_size'] == 50
+    assert text.position_x == 50
+    assert line2.position_x == 50
+    assert line3.position_x == 50
+    assert line4.position_x == 0
+    assert line5.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_punctuation():
+    page, = render_pages('''
+      <style>
+        body { width: 140px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 3 }
+      </style>
+      <p>“Lor” em ipsum dolor</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4 = p.children
+    first_letter, text = line1.children
+    first_letter_line, = first_letter.children
+    first_letter_text, = first_letter_line.children
+    assert first_letter_text.text == '“L'
+    assert text.text == 'or”'
+    assert text.position_x == 120
+    assert line2.position_x == 0
+    assert line3.position_x == 0
+    assert line4.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_styled_box():
+    page, = render_pages('''
+      <style>
+        body { width: 140px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter {
+          initial-letter: 3;
+          border: 2px solid;
+          padding: 2px;
+          margin-right: 5px;
+        }
+      </style>
+      <p>Lor em ipsum dolor sit amet</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4, line5, line6 = p.children
+    first_letter, text = line1.children
+    first_letter_text, = first_letter.children[0].children
+    assert first_letter.width == 60
+    assert first_letter.margin_width() == 73
+    assert first_letter_text.position_x == 4
+    assert text.position_x == 73
+    assert line2.position_x == 73
+    assert line3.position_x == 0
+    assert line4.position_x == 0
+    assert line5.position_x == 0
+    assert line6.position_x == 0
+
+
+@assert_no_logs
+def test_initial_letter_short_paragraph():
+    page, = render_pages('''
+      <style>
+        body { width: 140px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 3 }
+      </style>
+      <p>Lor</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line, = p.children
+    first_letter, text = line.children
+    assert first_letter.height == 60
+    assert text.text == 'or'
+    assert text.position_x == 60
