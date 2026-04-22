@@ -73,6 +73,37 @@ def test_grid_single_percentage_width():
 
 
 @assert_no_logs
+def test_grid_container_max_content_width():
+    # Regression test for #2354.
+    page, = render_pages('''
+      <style>
+        body {font-family: weasyprint; font-size: 2px}
+      </style>
+      <div style="float: left">
+        <div style="display: grid; grid: 1fr / 1fr 1fr;
+                    border: 1px solid">
+          <div>abc def</div>
+          <div>abc def</div>
+        </div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    float_box, = body.children
+    grid, = float_box.children
+    div1, div2 = grid.children
+    line1, = div1.children
+    line2, = div2.children
+    text1, = line1.children
+    text2, = line2.children
+
+    assert float_box.width == 30
+    assert grid.width == 28
+    assert div1.width == div2.width == 14
+    assert text1.text == text2.text == 'abc def'
+
+
+@assert_no_logs
 def test_grid_rows():
     page, = render_pages('''
       <article style="display: grid">
