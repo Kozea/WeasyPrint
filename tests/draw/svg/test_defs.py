@@ -56,3 +56,26 @@ def test_use_symbol_color(assert_pixels):
     svg = SVG.replace('fill="blue"', '')
     svg = svg.replace('href="#square"', 'href="#square" fill="blue"')
     assert_pixels(RESULT, STYLE + svg)
+
+
+@assert_no_logs
+def test_use_context_paint(assert_pixels):
+    assert_pixels('''
+        RRBB__GGMM
+        RRBB__GGMM
+    ''', '''
+      <style>
+        @page { size: 10px 2px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <g id="rectangle" stroke="none">
+            <rect width="2" height="2" fill="context-fill" />
+            <rect x="2" width="2" height="2" fill="context-stroke" />
+          </g>
+        </defs>
+        <use href="#rectangle" fill="red" stroke="blue" />
+        <use href="#rectangle" x="6" fill="lime" stroke="magenta" />
+      </svg>
+    ''')
