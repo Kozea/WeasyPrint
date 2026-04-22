@@ -385,6 +385,7 @@ class SVG:
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
         self.text_path_width = 0
+        self.context_paint_node = None
 
         self.tree.cascade(self.tree)
 
@@ -691,18 +692,36 @@ class SVG:
                     self.stream.clip()
                     self.stream.end()
 
-                self.draw_node(child, font_size, fill_stroke)
+                previous_context_paint_node = self.context_paint_node
+                self.context_paint_node = node
+                try:
+                    self.draw_node(child, font_size, fill_stroke)
+                finally:
+                    self.context_paint_node = previous_context_paint_node
                 self.stream.pop_state()
 
             position = 'mid' if angles else 'start'
 
-    @staticmethod
-    def get_paint(value):
+    def get_paint(self, value):
         """Get paint fill or stroke attribute with a color or a URL."""
+        return self._get_paint(value, ())
+
+    def _get_paint(self, value, context_values):
+        """Get paint fill or stroke, resolving context paint values."""
         if not value or value == 'none':
             return None, None
 
         value = value.strip()
+        if value in ('context-fill', 'context-stroke'):
+            context_attribute = value.removeprefix('context-')
+            context_node = self.context_paint_node
+            if context_node is None or value in context_values:
+                return None, None
+            context_value = context_node.get(
+                context_attribute,
+                'black' if context_attribute == 'fill' else None)
+            return self._get_paint(context_value, (*context_values, value))
+
         match = re.compile(r'(url\(.+\)) *(.*)').search(value)
         if match:
             source = parse_url(match.group(1)).fragment
@@ -752,6 +771,8 @@ class SVG:
                 sum_dashes = sum(float(value) for value in dash_array)
                 offset = sum_dashes - abs(offset) % sum_dashes
             self.stream.set_dash(dash_array, offset)
+        else:
+            self.stream.set_dash((), 0)
 
         # Apply line cap
         line_cap = node.get('stroke-linecap', 'butt')

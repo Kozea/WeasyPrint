@@ -40,6 +40,98 @@ def test_markers(assert_pixels):
 
 
 @assert_no_logs
+def test_markers_context_paint(assert_pixels):
+    assert_pixels('''
+        ___________
+        ___________
+        _____BRR___
+        _____RRR___
+        _____RRR___
+        ___________
+        _____BRR___
+        _____RRR___
+        _____RRR___
+        ___________
+        _____BRR___
+        _____RRR___
+        _____RRR___
+    ''', '''
+      <style>
+        @page { size: 11px 13px }
+        svg { display: block }
+      </style>
+      <svg width="11px" height="13px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="rectangle" markerUnits="userSpaceOnUse">
+            <rect width="3" height="3" fill="context-stroke" />
+            <rect width="1" height="1" fill="context-fill" />
+          </marker>
+        </defs>
+        <path
+          d="M 5 2 v 4 v 4"
+          fill="blue" stroke="red" stroke-width="0"
+          marker-start="url(#rectangle)"
+          marker-mid="url(#rectangle)"
+          marker-end="url(#rectangle)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_markers_no_dash(assert_pixels):
+    assert_pixels('''
+        ___________
+        __RRRRRR___
+        __RRRRRR___
+    ''', '''
+      <style>
+        @page { size: 11px 3px }
+        svg { display: block }
+      </style>
+      <svg width="11px" height="3px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="line" markerWidth="6" markerHeight="2"
+                  markerUnits="userSpaceOnUse">
+            <line x1="0" y1="1" x2="6" y2="1"
+                  stroke="red" stroke-width="2" />
+          </marker>
+        </defs>
+        <path
+          d="M 2 1 h 6"
+          stroke="red" stroke-width="0" stroke-dasharray="1"
+          marker-start="url(#line)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_markers_context_stroke_no_dash(assert_pixels):
+    assert_pixels('''
+        ___________
+        __RRRRRR___
+        __RRRRRR___
+    ''', '''
+      <style>
+        @page { size: 11px 3px }
+        svg { display: block }
+      </style>
+      <svg width="11px" height="3px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="line" markerWidth="6" markerHeight="2"
+                  markerUnits="userSpaceOnUse">
+            <line x1="0" y1="1" x2="6" y2="1"
+                  stroke="context-stroke" stroke-width="2" />
+          </marker>
+        </defs>
+        <path
+          d="M 2 1 h 6"
+          stroke="red" stroke-width="0" stroke-dasharray="1"
+          marker-start="url(#line)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_markers_viewbox(assert_pixels):
     assert_pixels('''
         ___________
