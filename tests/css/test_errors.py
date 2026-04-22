@@ -20,6 +20,13 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
     ('test', ['WARNING: Parse error']),
     ('@test', ['WARNING: Unknown empty rule']),
     ('@test {}', ['WARNING: Unknown rule']),
+    ('@import::before "test.css"', ['WARNING: Invalid @import rule']),
+    ('@page { @top-left-corner super { content: "a" } }',
+     ['WARNING: Invalid @page rule']),
+    ('@page { @unknown { content: "a" } }',
+     ['WARNING: Unknown @page rule']),
+    ('@page { @footnote::before { content: "a" } }',
+     ['WARNING: Invalid @page rule']),
 ])
 def test_warnings(source, messages):
     with capture_logs() as logs:
