@@ -2,11 +2,12 @@
 
 import re
 from contextlib import suppress
-from math import cos, pi, radians, sin, tan
+from math import cos, sin, tan
 from urllib.parse import urlparse
 
 from tinycss2.color5 import parse_color
 
+from ..css.units import ANGLE_TO_RADIANS
 from ..matrix import Matrix
 
 
@@ -58,17 +59,13 @@ def size(string, font_size=None, percentage_reference=None):
 
 
 def angle(string):
-    """Compute an angle in degrees from an SVG transform value."""
+    """Compute an angle in radians from an SVG transform value."""
     string = normalize(string).split(' ', 1)[0]
-    if string.endswith('deg'):
-        return float(string[:-3])
-    if string.endswith('grad'):
-        return float(string[:-4]) * 0.9
-    if string.endswith('rad'):
-        return float(string[:-3]) * 180 / pi
-    if string.endswith('turn'):
-        return float(string[:-4]) * 360
-    return float(string)
+    for unit, coefficient in sorted(
+            ANGLE_TO_RADIANS.items(), key=lambda item: -len(item[0])):
+        if string.endswith(unit):
+            return float(string[:-len(unit)]) * coefficient
+    return float(string) * ANGLE_TO_RADIANS['deg']
 
 
 def alpha_value(value):
@@ -191,10 +188,10 @@ def transform(transform_string, transform_origin, font_size, normalized_diagonal
                 matrix = Matrix(e=rotate_x, f=rotate_y) @ matrix
             rotation = angle(values[0])
             matrix = Matrix(
-                cos(radians(rotation)),
-                sin(radians(rotation)),
-                -sin(radians(rotation)),
-                cos(radians(rotation))) @ matrix
+                cos(rotation),
+                sin(rotation),
+                -sin(rotation),
+                cos(rotation)) @ matrix
             if len(values) == 3:
                 matrix = Matrix(e=-rotate_x, f=-rotate_y) @ matrix
         elif transformation_type.startswith('skew'):
@@ -202,10 +199,10 @@ def transform(transform_string, transform_origin, font_size, normalized_diagonal
                 values.append('0')
             if transformation_type in ('skewX', 'skew'):
                 matrix = Matrix(
-                    c=tan(radians(angle(values.pop(0))))) @ matrix
+                    c=tan(angle(values.pop(0)))) @ matrix
             if transformation_type in ('skewY', 'skew'):
                 matrix = Matrix(
-                    b=tan(radians(angle(values.pop(0))))) @ matrix
+                    b=tan(angle(values.pop(0)))) @ matrix
         elif transformation_type.startswith('translate'):
             values = [
                 size(value, font_size, normalized_diagonal)

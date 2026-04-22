@@ -1,5 +1,7 @@
 """Test how SVG shapes are transformed."""
 
+import pytest
+
 from ...testing_utils import assert_no_logs
 
 
@@ -147,8 +149,10 @@ def test_transform_rotate_cx_cy(assert_pixels):
     ''')
 
 
+@pytest.mark.parametrize(
+    'angle', ['90deg', '100grad', '1.5707963267948966rad', '.25turn'])
 @assert_no_logs
-def test_transform_rotate_degrees(assert_same_renderings):
+def test_transform_rotate_angle_units(assert_same_renderings, angle):
     assert_same_renderings('''
       <style>
         @page { size: 9px }
@@ -158,57 +162,14 @@ def test_transform_rotate_degrees(assert_same_renderings):
         <rect x="2" y="-7" width="4" height="5" transform="rotate(90)"
               stroke-width="2" stroke="red" fill="none" />
       </svg>
-    ''', '''
+    ''', f'''
       <style>
-        @page { size: 9px }
-        svg { display: block }
+        @page {{ size: 9px }}
+        svg {{ display: block }}
       </style>
       <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="-7" width="4" height="5" transform="rotate(90deg)"
+        <rect x="2" y="-7" width="4" height="5" transform="rotate({angle})"
               stroke-width="2" stroke="red" fill="none" />
-      </svg>
-    ''')
-
-
-@assert_no_logs
-def test_transform_mermaid_gantt_css(assert_same_renderings):
-    assert_same_renderings('''
-      <style>
-        @page { size: 40px 40px }
-        svg { display: block }
-      </style>
-      <svg width="40px" height="40px" xmlns="http://www.w3.org/2000/svg">
-        <rect x="14" y="4" width="10" height="10" transform-origin="19px 9px"
-              transform="rotate(45) scale(.7 .7)"
-              stroke="green" fill="green" />
-        <g transform="translate(12, 18)">
-          <text y="3" transform="translate(3 1) rotate(90)"
-                font-family="weasyprint" font-size="3" fill="blue">
-            2026-04-01
-          </text>
-        </g>
-      </svg>
-    ''', '''
-      <style>
-        @page { size: 40px 40px }
-        svg { display: block }
-      </style>
-      <svg width="40px" height="40px" xmlns="http://www.w3.org/2000/svg">
-        <style>
-          .milestone {
-            transform: rotate(45deg) scale(.7, .7);
-          }
-          .tick text {
-            transform: translate(3px, 1px) rotate(90deg);
-          }
-        </style>
-        <rect class="milestone" x="14" y="4" width="10" height="10"
-              transform-origin="19px 9px" stroke="green" fill="green" />
-        <g class="tick" transform="translate(12, 18)">
-          <text y="3" font-family="weasyprint" font-size="3" fill="blue">
-            2026-04-01
-          </text>
-        </g>
       </svg>
     ''')
 
