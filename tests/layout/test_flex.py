@@ -53,6 +53,55 @@ def test_flex_direction_row_min_height():
 
 
 @assert_no_logs
+def test_flex_direction_row_wrap_min_height():
+    page, = render_pages('''
+      <article style="display: flex; flex-wrap: wrap; min-height: 100px; width: 4px">
+        <div style="height: 10px; width: 4px"></div>
+        <div style="height: 10px; width: 4px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 100
+    div1, div2 = article.children
+    assert div1.position_y == 0
+    assert div2.position_y == 50
+
+
+@assert_no_logs
+def test_flex_direction_row_wrap_min_height_stretch():
+    page, = render_pages('''
+      <article style="display: flex; flex-wrap: wrap; min-height: 100px; width: 4px">
+        <div style="width: 4px"></div>
+        <div style="width: 4px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 100
+    div1, div2 = article.children
+    assert div1.height == div2.height == 50
+    assert div1.position_y == 0
+    assert div2.position_y == 50
+
+
+@assert_no_logs
+def test_flex_direction_row_wrap_max_height():
+    page, = render_pages('''
+      <article style="display: flex; flex-wrap: wrap; max-height: 10px; width: 4px">
+        <div style="height: 10px; width: 4px"></div>
+        <div style="height: 10px; width: 4px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 10
+
+
+@assert_no_logs
 def test_flex_direction_row_rtl():
     page, = render_pages('''
       <article style="display: flex; direction: rtl">
