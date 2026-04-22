@@ -992,6 +992,41 @@ def test_overflow_wrap_inline_box_boundary():
 
 
 @assert_no_logs
+def test_overflow_wrap_nested_inline_box_boundary():
+    # Regression test for #2102.
+    html = '''
+      <style>
+        body {font-family: weasyprint; font-size: 16px;
+              overflow-wrap: break-word}
+        div {width: 20em}
+      </style>
+      <div>
+        <em>
+          some text
+          <span>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyyyyyyy</span>
+          zzzz wwwwwwwwwwwww
+          aaaaaa
+        </em>
+      </div>
+      <div>
+        <em>
+          some text
+          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyyyyyyy
+          zzzz wwwwwwwwwwwww
+          aaaaaa
+        </em>
+      </div>
+    '''
+    page, = render_pages(html)
+    html, = page.children
+    body, = html.children
+    div1, div2 = body.children
+
+    assert [box_text(line) for line in div1.children] == [
+        box_text(line) for line in div2.children]
+
+
+@assert_no_logs
 def test_pre_wrap_inline_box_boundary():
     # Regression test for #2308.
     text = '00 00 00 00 00 00 00 00 00 00 '
