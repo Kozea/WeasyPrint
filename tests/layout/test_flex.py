@@ -781,6 +781,175 @@ def test_flex_break_inside_avoid():
 
 
 @assert_no_logs
+def test_flex_row_fragmentation():
+    # Regression test for issue #2440.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 12px 6px; margin: 0 }
+        body, table { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 12px }
+        section { width: 6px }
+        table { border-spacing: 0 }
+        td { height: 2px; padding: 0 }
+      </style>
+      <article>
+        <section>
+          <table>
+            <tr><td>A</td></tr>
+            <tr><td>B</td></tr>
+            <tr><td>C</td></tr>
+            <tr><td>D</td></tr>
+          </table>
+        </section>
+        <section>
+          <table>
+            <tr><td>a</td></tr>
+            <tr><td>b</td></tr>
+            <tr><td>c</td></tr>
+            <tr><td>d</td></tr>
+          </table>
+        </section>
+      </article>
+    ''')
+
+    def cell_texts(section):
+        table_wrapper, = section.children
+        table, = table_wrapper.children
+        row_group, = table.children
+        return [
+            row.children[0].children[0].children[0].text
+            for row in row_group.children]
+
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.position_x == 0
+    assert section2.position_x == 6
+    assert cell_texts(section1) == ['A', 'B', 'C']
+    assert cell_texts(section2) == ['a', 'b', 'c']
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.position_x == 0
+    assert section2.position_x == 6
+    assert cell_texts(section1) == ['D']
+    assert cell_texts(section2) == ['d']
+
+
+@assert_no_logs
+def test_flex_row_fragmentation_wrapped_tables():
+    # Regression test for the larger structure reported in issue #2440.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px 6px; margin: 0 }
+        body, table { font: 2px/1 weasyprint; margin: 0 }
+        .metric-page { page-break-before: always }
+        .tables { display: flex; flex-wrap: wrap; gap: 2px }
+        .table { box-sizing: border-box; page-break-inside: auto;
+                 width: 9px }
+        .table-bordered { border-spacing: 0; page-break-inside: auto;
+                          width: 100% }
+        .table-bordered tr { break-inside: auto; page-break-inside: auto }
+        td { height: 2px; padding: 0 }
+      </style>
+      <body>
+        <div class="metric-page page">
+          <div class="tables">
+            <div class="table">
+              <table class="table-bordered">
+                <tbody>
+                  <tr><td>A</td></tr><tr><td>B</td></tr>
+                  <tr><td>C</td></tr><tr><td>D</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table">
+              <table class="table-bordered">
+                <tbody>
+                  <tr><td>a</td></tr><tr><td>b</td></tr>
+                  <tr><td>c</td></tr><tr><td>d</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table">
+              <table class="table-bordered">
+                <tbody><tr><td>E</td></tr></tbody>
+              </table>
+            </div>
+            <div class="table">
+              <table class="table-bordered">
+                <tbody><tr><td>e</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+    ''')
+
+    def card_texts(card):
+        table_wrapper, = card.children
+        table, = table_wrapper.children
+        row_group, = table.children
+        return [
+            row.children[0].children[0].children[0].text
+            for row in row_group.children]
+
+    html, = page1.children
+    body, = html.children
+    page, = body.children
+    flex, = page.children
+    card1, card2 = flex.children
+    assert card1.position_x == 0
+    assert card2.position_x == 11
+    assert card_texts(card1) == ['A', 'B', 'C']
+    assert card_texts(card2) == ['a', 'b', 'c']
+
+    html, = page2.children
+    body, = html.children
+    page, = body.children
+    flex, = page.children
+    card1, card2, card3, card4 = flex.children
+    assert card1.position_x == card3.position_x == 0
+    assert card2.position_x == card4.position_x == 11
+    assert card1.position_y == card2.position_y == 0
+    assert card3.position_y == card4.position_y == 4
+    assert card_texts(card1) == ['D']
+    assert card_texts(card2) == ['d']
+    assert card_texts(card3) == ['E']
+    assert card_texts(card4) == ['e']
+
+
+@assert_no_logs
+def test_flex_row_fragmentation_completed_item():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 8px 6px; margin: 0 }
+        body { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 8px }
+        section { border: 1px solid; width: 2px }
+      </style>
+      <article>
+        <section>A<br>B<br>C<br>D</section>
+        <section>a</section>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.children[0].children[0].text == 'A'
+    assert section2.children[0].children[0].text == 'a'
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    section, = article.children
+    assert section.children[0].children[0].text == 'C'
+
+
+@assert_no_logs
 def test_flex_absolute_content():
     # Regression test for issue #996.
     page, = render_pages('''
