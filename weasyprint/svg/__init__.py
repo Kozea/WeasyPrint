@@ -1,7 +1,7 @@
 """Render SVG images."""
 
 import re
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from math import cos, hypot, pi, radians, sin, sqrt
 from xml.etree import ElementTree
 
@@ -385,6 +385,7 @@ class SVG:
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
         self.text_path_width = 0
+        self.context_paint_node = None
 
         self.tree.cascade(self.tree)
 
@@ -508,27 +509,29 @@ class SVG:
 
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
-            for child in node:
-                new_chunk = text_anchor_shift and (
-                    child.tag == 'text' or 'x' in child.attrib or 'y' in child.attrib)
-                if new_chunk:
-                    new_stream = self.stream
-                    self.stream = original_streams[-1]
-                self.draw_node(child, font_size, fill_stroke)
-                if new_chunk:
-                    self.stream = new_stream
-                visible_text_child = (
-                    TAGS.get(node.tag) == text and
-                    TAGS.get(child.tag) == text and
-                    child.visible)
-                if visible_text_child:
-                    if not is_valid_bounding_box(child.text_bounding_box):
-                        continue
-                    x1, y1 = child.text_bounding_box[:2]
-                    x2 = x1 + child.text_bounding_box[2]
-                    y2 = y1 + child.text_bounding_box[3]
-                    node.text_bounding_box = extend_bounding_box(
-                        node.text_bounding_box, ((x1, y1), (x2, y2)))
+            with self.context_paint(node if node.tag == 'use' else None):
+                for child in node:
+                    new_chunk = text_anchor_shift and (
+                        child.tag == 'text' or
+                        'x' in child.attrib or 'y' in child.attrib)
+                    if new_chunk:
+                        new_stream = self.stream
+                        self.stream = original_streams[-1]
+                    self.draw_node(child, font_size, fill_stroke)
+                    if new_chunk:
+                        self.stream = new_stream
+                    visible_text_child = (
+                        TAGS.get(node.tag) == text and
+                        TAGS.get(child.tag) == text and
+                        child.visible)
+                    if visible_text_child:
+                        if not is_valid_bounding_box(child.text_bounding_box):
+                            continue
+                        x1, y1 = child.text_bounding_box[:2]
+                        x2 = x1 + child.text_bounding_box[2]
+                        y2 = y1 + child.text_bounding_box[3]
+                        node.text_bounding_box = extend_bounding_box(
+                            node.text_bounding_box, ((x1, y1), (x2, y2)))
 
         # Restore concrete and inner size of root svg tag
         if node.tag == 'svg':
@@ -691,18 +694,45 @@ class SVG:
                     self.stream.clip()
                     self.stream.end()
 
-                self.draw_node(child, font_size, fill_stroke)
+                with self.context_paint(node):
+                    self.draw_node(child, font_size, fill_stroke)
                 self.stream.pop_state()
 
             position = 'mid' if angles else 'start'
 
-    @staticmethod
-    def get_paint(value):
+    @contextmanager
+    def context_paint(self, node):
+        """Set the context element used by context-fill and context-stroke."""
+        if node is None:
+            yield
+            return
+        previous_context_paint_node = self.context_paint_node
+        self.context_paint_node = node
+        try:
+            yield
+        finally:
+            self.context_paint_node = previous_context_paint_node
+
+    def get_paint(self, value):
         """Get paint fill or stroke attribute with a color or a URL."""
+        return self._get_paint(value, ())
+
+    def _get_paint(self, value, context_values):
+        """Get paint fill or stroke, resolving context paint values."""
         if not value or value == 'none':
             return None, None
 
         value = value.strip()
+        if value in ('context-fill', 'context-stroke'):
+            context_attribute = value.removeprefix('context-')
+            context_node = self.context_paint_node
+            if context_node is None or value in context_values:
+                return None, None
+            context_value = context_node.get(
+                context_attribute,
+                'black' if context_attribute == 'fill' else None)
+            return self._get_paint(context_value, (*context_values, value))
+
         match = re.compile(r'(url\(.+\)) *(.*)').search(value)
         if match:
             source = parse_url(match.group(1)).fragment
@@ -752,6 +782,8 @@ class SVG:
                 sum_dashes = sum(float(value) for value in dash_array)
                 offset = sum_dashes - abs(offset) % sum_dashes
             self.stream.set_dash(dash_array, offset)
+        else:
+            self.stream.set_dash((), 0)
 
         # Apply line cap
         line_cap = node.get('stroke-linecap', 'butt')
