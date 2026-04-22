@@ -781,6 +781,93 @@ def test_flex_break_inside_avoid():
 
 
 @assert_no_logs
+def test_flex_row_fragmentation():
+    # Regression test for issue #2440.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 12px 6px; margin: 0 }
+        body, table { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 12px }
+        section { width: 6px }
+        table { border-spacing: 0 }
+        td { height: 2px; padding: 0 }
+      </style>
+      <article>
+        <section>
+          <table>
+            <tr><td>A</td></tr>
+            <tr><td>B</td></tr>
+            <tr><td>C</td></tr>
+            <tr><td>D</td></tr>
+          </table>
+        </section>
+        <section>
+          <table>
+            <tr><td>a</td></tr>
+            <tr><td>b</td></tr>
+            <tr><td>c</td></tr>
+            <tr><td>d</td></tr>
+          </table>
+        </section>
+      </article>
+    ''')
+
+    def cell_texts(section):
+        table_wrapper, = section.children
+        table, = table_wrapper.children
+        row_group, = table.children
+        return [
+            row.children[0].children[0].children[0].text
+            for row in row_group.children]
+
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.position_x == 0
+    assert section2.position_x == 6
+    assert cell_texts(section1) == ['A', 'B', 'C']
+    assert cell_texts(section2) == ['a', 'b', 'c']
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.position_x == 0
+    assert section2.position_x == 6
+    assert cell_texts(section1) == ['D']
+    assert cell_texts(section2) == ['d']
+
+
+@assert_no_logs
+def test_flex_row_fragmentation_completed_item():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 8px 6px; margin: 0 }
+        body { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 8px }
+        section { border: 1px solid; width: 2px }
+      </style>
+      <article>
+        <section>A<br>B<br>C<br>D</section>
+        <section>a</section>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    assert section1.children[0].children[0].text == 'A'
+    assert section2.children[0].children[0].text == 'a'
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    section, = article.children
+    assert section.children[0].children[0].text == 'C'
+
+
+@assert_no_logs
 def test_flex_absolute_content():
     # Regression test for issue #996.
     page, = render_pages('''
