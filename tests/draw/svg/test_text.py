@@ -386,7 +386,7 @@ def test_text_positioned_explicit_bidi_formatting_controls(
         svg { display: block }
       </style>
       <svg width="50px" height="20px" xmlns="http://www.w3.org/2000/svg">
-        <text x="0 80 8 16 100 24" y="15" font-family="weasyprint"
+        <text x="0 8 16 24" y="15" font-family="weasyprint"
               font-size="16" fill="blue">A&#x202A;BC&#x202C;D</text>
       </svg>
     ''', '''
@@ -402,6 +402,64 @@ def test_text_positioned_explicit_bidi_formatting_controls(
 
 
 @assert_no_logs
+def test_text_positioned_bidi_control_characters_are_not_addressable(
+        assert_same_renderings):
+    text = (
+        'A&#x061C;&#x200E;&#x200F;B&#x202A;&#x202C;C&#x202B;&#x202C;D'
+        '&#x202D;&#x202C;E&#x202E;&#x202C;F&#x2066;&#x2069;G'
+        '&#x2067;&#x2069;H&#x2068;&#x2069;IJK')
+    assert_same_renderings(f'''
+      <style>
+        @page {{ size: 104px 20px }}
+        svg {{ display: block }}
+      </style>
+      <svg width="104px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0 8 16 24 32 40 48 56 64 72 80" y="15"
+              font-family="weasyprint" font-size="16" fill="blue">{text}</text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 104px 20px }
+        svg { display: block }
+      </style>
+      <svg width="104px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0 8 16 24 32 40 48 56 64 72 80" y="15"
+              font-family="weasyprint" font-size="16" fill="blue">ABCDEFGHIJK</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_positioned_bidi_controls_with_position_lists(
+        assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 70px 32px }
+        svg { display: block }
+      </style>
+      <svg width="70px" height="32px" xmlns="http://www.w3.org/2000/svg">
+        <text x="4 16 30 44" y="22 19 22 19" dx="0 1 2 3"
+              dy="0 -1 1 0" rotate="0 10 -10 0"
+              font-family="weasyprint" font-size="16" fill="blue">
+          A&#x200E;B&#x200F;C&#x061C;D
+        </text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 70px 32px }
+        svg { display: block }
+      </style>
+      <svg width="70px" height="32px" xmlns="http://www.w3.org/2000/svg">
+        <text x="4 16 30 44" y="22 19 22 19" dx="0 1 2 3"
+              dy="0 -1 1 0" rotate="0 10 -10 0"
+              font-family="weasyprint" font-size="16" fill="blue">
+          ABCD
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_positioned_bidi_isolate_controls(assert_same_renderings):
     assert_same_renderings('''
       <style>
@@ -409,7 +467,7 @@ def test_text_positioned_bidi_isolate_controls(assert_same_renderings):
         svg { display: block }
       </style>
       <svg width="70px" height="24px" xmlns="http://www.w3.org/2000/svg">
-        <text x="0 100 8 20 32 44 120 56" y="19" font-family="weasyprint-noto-hebrew"
+        <text x="0 8 20 32 44 56" y="19" font-family="weasyprint-noto-hebrew"
               font-size="18" fill="blue">A&#x2067;שלום&#x2069;B</text>
       </svg>
     ''', '''

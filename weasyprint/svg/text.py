@@ -91,6 +91,35 @@ def _byte_offsets(text):
     return offsets
 
 
+def _is_bidi_control(character):
+    """Return whether ``character`` is discarded by bidi layout."""
+    return character in (
+        '\u061c',  # ARABIC LETTER MARK
+        '\u200e',  # LEFT-TO-RIGHT MARK
+        '\u200f',  # RIGHT-TO-LEFT MARK
+        '\u202a',  # LEFT-TO-RIGHT EMBEDDING
+        '\u202b',  # RIGHT-TO-LEFT EMBEDDING
+        '\u202c',  # POP DIRECTIONAL FORMATTING
+        '\u202d',  # LEFT-TO-RIGHT OVERRIDE
+        '\u202e',  # RIGHT-TO-LEFT OVERRIDE
+        '\u2066',  # LEFT-TO-RIGHT ISOLATE
+        '\u2067',  # RIGHT-TO-LEFT ISOLATE
+        '\u2068',  # FIRST STRONG ISOLATE
+        '\u2069',  # POP DIRECTIONAL ISOLATE
+    )
+
+
+def _addressable_indexes(text):
+    """Return SVG text-position indexes for every character boundary."""
+    indexes, index = [], 0
+    for character in text:
+        indexes.append(index)
+        if not _is_bidi_control(character):
+            index += 2 if ord(character) > 0xffff else 1
+    indexes.append(index)
+    return indexes
+
+
 def _grapheme_spans(text):
     """Return simple grapheme-like spans as UTF-8 byte offsets."""
     offsets = _byte_offsets(text)
@@ -138,6 +167,7 @@ def _positioned_clusters(layout, text):
     encoded = text.encode()
     offsets = _byte_offsets(text)
     char_indexes = {offset: index for index, offset in enumerate(offsets)}
+    addressable_indexes = _addressable_indexes(text)
     grapheme_spans = _grapheme_spans(text)
     clusters = []
 
@@ -185,14 +215,16 @@ def _positioned_clusters(layout, text):
                     glyph_ranges = ((glyph_item, start_index, index),)
                     cluster = (
                         start, end, start_char_index, end_char_index,
+                        addressable_indexes[start_char_index],
+                        addressable_indexes[end_char_index],
                         visible, cluster_text, glyph_ranges, width)
                     if (clusters and clusters[-1][0] == start and
                             clusters[-1][1] == end):
                         previous = clusters[-1]
                         clusters[-1] = (
-                            *previous[:4], previous[4] or visible,
-                            previous[5], (*previous[6], *glyph_ranges),
-                            previous[7] + width)
+                            *previous[:6], previous[6] or visible,
+                            previous[7], (*previous[8], *glyph_ranges),
+                            previous[9] + width)
                     else:
                         clusters.append(cluster)
                 start_index = index
@@ -449,7 +481,7 @@ def text(svg, node, font_size):
         svg.fill_stroke(node, font_size, text=True)
         for cluster in clusters:
             (
-                _, _, _, _, visible, _, glyph_ranges,
+                _, _, _, _, _, _, visible, _, glyph_ranges,
                 cluster_advance) = cluster
             if not visible:
                 continue
@@ -508,11 +540,13 @@ def text(svg, node, font_size):
         visible_index = 0
         for cluster in clusters:
             (
-                _, _, char_index, end_char_index, visible, _,
+                _, _, _, _, position_index, end_position_index, visible, _,
                 glyph_ranges, cluster_width) = cluster
             if not visible:
-                pending_dx += _positions_sum(dx, char_index, end_char_index)
-                pending_dy += _positions_sum(dy, char_index, end_char_index)
+                pending_dx += _positions_sum(
+                    dx, position_index, end_position_index)
+                pending_dy += _positions_sum(
+                    dy, position_index, end_position_index)
                 continue
 
             position = []
@@ -521,24 +555,27 @@ def text(svg, node, font_size):
                     position.append(positions[0] if visible_index == 0 else None)
                 else:
                     position.append(
-                        positions[char_index]
-                        if char_index < len(positions) else None)
+                        positions[position_index]
+                        if position_index < len(positions) else None)
             for positions, pending in ((dx, pending_dx), (dy, pending_dy)):
                 if len(positions) == 1:
                     position.append(positions[0] if visible_index == 0 else None)
                 else:
                     value = (
-                        positions[char_index]
-                        if char_index < len(positions) else 0)
+                        positions[position_index]
+                        if position_index < len(positions) else 0)
                     position.append(value + pending)
             if len(rotate) == 1:
                 position.append(rotate[0] if visible_index == 0 else None)
             else:
                 position.append(
-                    rotate[char_index] if char_index < len(rotate) else None)
+                    rotate[position_index]
+                    if position_index < len(rotate) else None)
 
-            pending_dx = _positions_sum(dx, char_index + 1, end_char_index)
-            pending_dy = _positions_sum(dy, char_index + 1, end_char_index)
+            pending_dx = _positions_sum(
+                dx, position_index + 1, end_position_index)
+            pending_dy = _positions_sum(
+                dy, position_index + 1, end_position_index)
             draw_text(
                 layout, cluster_width, height, baseline, position,
                 spacing=bool(visible_index), glyph_ranges=glyph_ranges)
