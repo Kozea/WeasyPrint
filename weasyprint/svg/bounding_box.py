@@ -3,7 +3,7 @@
 from math import atan, atan2, cos, inf, isinf, pi, radians, sin, sqrt, tan
 
 from .path import PATH_LETTERS
-from .utils import normalize, point
+from .utils import normalize, point, transform
 
 EMPTY_BOUNDING_BOX = inf, inf, 0, 0
 
@@ -215,7 +215,8 @@ def bounding_box_g(svg, node, font_size):
     for child in node:
         child_bounding_box = svg.calculate_bounding_box(child, font_size)
         if is_valid_bounding_box(child_bounding_box):
-            minx, miny, width, height = child_bounding_box
+            minx, miny, width, height = transform_bounding_box(
+                svg, child, font_size, child_bounding_box)
             maxx, maxy = minx + width, miny + height
             bounding_box = extend_bounding_box(
                 bounding_box, ((minx, miny), (maxx, maxy)))
@@ -345,6 +346,28 @@ def extend_bounding_box(bounding_box, points):
         min(minx, *x_list), min(miny, *y_list),
         max(maxx, *x_list), max(maxy, *y_list))
     return minx, miny, maxx - minx, maxy - miny
+
+
+def transform_bounding_box(svg, node, font_size, bounding_box):
+    """Apply node transform to a bounding box."""
+    transform_string = node.get('transform')
+    if not transform_string:
+        return bounding_box
+
+    matrix = transform(
+        transform_string, node.get('transform-origin'), font_size,
+        svg.inner_diagonal)
+    if not matrix.determinant:
+        return EMPTY_BOUNDING_BOX
+
+    minx, miny, width, height = bounding_box
+    maxx, maxy = minx + width, miny + height
+    points = (
+        matrix.transform_point(minx, miny),
+        matrix.transform_point(minx, maxy),
+        matrix.transform_point(maxx, miny),
+        matrix.transform_point(maxx, maxy))
+    return extend_bounding_box(EMPTY_BOUNDING_BOX, points)
 
 
 def is_valid_bounding_box(bounding_box):
