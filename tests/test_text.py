@@ -210,6 +210,38 @@ def test_text_align_right():
 
 
 @assert_no_logs
+def test_text_align_right_pre_wrap_trailing_space():
+    # Regression test for #2384.
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 200px; margin: 0 }
+        body { margin: 0; width: 35px; font: 10px/1 weasyprint }
+        div { text-align: right; white-space: pre-wrap }
+      </style>
+      <body><div>abc def ghi jkl mno</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line1, line2, line3, line4, line5 = div.children
+    text1, = line1.children
+    text2, = line2.children
+    text3, = line3.children
+    text4, = line4.children
+    text5, = line5.children
+
+    assert text1.text == 'abc '
+    assert text2.text == 'def '
+    assert text3.text == 'ghi '
+    assert text4.text == 'jkl '
+    assert text5.text == 'mno'
+    assert line1.width > div.width
+    assert line1.position_x == line2.position_x == 5
+    assert line2.position_x == line3.position_x == line4.position_x
+    assert line5.position_x == 5
+
+
+@assert_no_logs
 def test_text_align_center():
     # <-------------------->  page, body
     #           +-----+
