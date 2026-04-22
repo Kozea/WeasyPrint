@@ -104,6 +104,46 @@ def test_grid_container_max_content_width():
 
 
 @assert_no_logs
+def test_grid_container_in_flex_column():
+    # Reference test for the #2354 flex/grid example.
+    page, = render_pages('''
+      <style>
+        body {font-family: weasyprint; font-size: 2px}
+      </style>
+      <div style="padding: 10px; display: flex; flex-direction: column;
+                  background: red">
+        <div style="display: grid; grid-template-columns: 1fr 1fr;
+                    align-items: center; background: pink">
+          <span style="background: lime">a</span>
+          <span style="background: cyan">ab cd ef gh</span>
+        </div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    flex, = body.children
+    grid, = flex.children
+    span1, span2 = grid.children
+    line1, = span1.children
+    line2, = span2.children
+    inline1, = line1.children
+    inline2, = line2.children
+    text1, = inline1.children
+    text2, = inline2.children
+
+    assert flex.width == body.width - 20
+    assert grid.position_x == flex.position_x + 10
+    assert grid.width == flex.width
+    assert span1.position_x == grid.position_x
+    assert span2.position_x == span1.position_x + span1.width
+    assert isclose(span1.width, grid.width / 2)
+    assert span1.width == span2.width
+    assert span1.position_y == span2.position_y
+    assert text1.text == 'a'
+    assert text2.text == 'ab cd ef gh'
+
+
+@assert_no_logs
 def test_grid_rows():
     page, = render_pages('''
       <article style="display: grid">
