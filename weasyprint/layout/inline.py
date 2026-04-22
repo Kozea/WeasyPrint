@@ -313,6 +313,8 @@ def apply_initial_letter(box, letter_style):
     letter_style['line_height'] = ('PIXELS', letter_font_size)
     letter_style['__initial_letter_clear_gap'] = (
         max(size - sink, 0) * line_height)
+    letter_style['__initial_letter_sink_gap'] = (
+        max(sink - size, 0) * line_height)
     if letter_style['float'] == 'none':
         letter_style['float'] = (
             'right' if box.style['direction'] == 'rtl' else 'left')
@@ -609,6 +611,8 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
             fixed_boxes.append(placeholder)
 
     elif child.is_floated():
+        if child.style.get('__initial_letter_sink_gap', 0):
+            child = child.copy()
         child.position_x = position_x
         float_width = shrink_to_fit(context, child, containing_block.width)
 

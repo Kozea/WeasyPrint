@@ -893,6 +893,33 @@ def test_initial_letter_sink():
 
 
 @assert_no_logs
+def test_initial_letter_larger_sink():
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px/1 weasyprint; margin: 0 }
+        p { margin: 0 }
+        p::first-letter { initial-letter: 3 4 }
+      </style>
+      <p>Lor em in up ax by</p>''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4, line5 = p.children
+    first_letter, text = line1.children
+    assert first_letter.height == 60
+    assert first_letter.margin_top == 20
+    assert first_letter.margin_height() == 80
+    assert first_letter.border_box_y() == 20
+    assert first_letter.children[0].children[0].style['font_size'] == 60
+    assert text.position_x == 60
+    assert text.position_y == 0
+    assert line2.position_x == 60
+    assert line3.position_x == 60
+    assert line4.position_x == 60
+    assert line5.position_x == 0
+
+
+@assert_no_logs
 def test_initial_letter_raise():
     page, = render_pages('''
       <style>

@@ -43,6 +43,8 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
         box.margin_top = 0
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
+    if initial_letter_sink_gap := box.style.get('__initial_letter_sink_gap', 0):
+        box.margin_top += initial_letter_sink_gap
 
     clearance = get_clearance(context, box, containing_block.style['direction'])
     if clearance is not None:
