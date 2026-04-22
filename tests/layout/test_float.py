@@ -838,5 +838,4 @@ def test_first_letter_float():
     line1, = p.children
     first_letter, text = line1.children
     assert first_letter.position_x == 0
-    # TODO: fix problem described in #1859.
-    # assert text.position_x == 20
+    assert text.position_x == 20
