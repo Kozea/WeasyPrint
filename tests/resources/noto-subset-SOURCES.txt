@@ -1,0 +1,34 @@
+The *-subset.woff test fonts are tiny subsets of open fonts, used for
+deterministic SVG complex-script rendering tests.
+
+They are distributed under the SIL Open Font License 1.1; see
+noto-subset-OFL.txt and amiri-subset-OFL.txt in this directory.
+
+Sources:
+
+- noto-hebrew-subset.woff:
+  https://github.com/notofonts/noto-sans-hebrew
+  Source font: instance_ttf/NotoSansHebrew-Regular.ttf
+- amiri-arabic-subset.woff:
+  https://github.com/aliftype/amiri
+  Source font: fonts/Amiri-Regular.ttf
+- noto-devanagari-subset.woff:
+  https://github.com/notofonts/devanagari
+  Source font: NotoSansDevanagari-Regular.ttf
+- noto-cjk-subset.woff:
+  https://github.com/notofonts/noto-cjk
+  Source font: Sans/OTF/Korean/NotoSansCJKkr-Regular.otf
+
+The subsets keep only the glyphs and OpenType layout data needed by the tests.
+To recreate them, install WeasyPrint’s development dependencies, then run this
+command from the repository root:
+
+```
+python tests/resources/generate-font-subsets.py
+```
+
+The script downloads the source fonts to `/tmp/weasyprint-font-subsets`, scans
+`tests/draw/svg/test_text.py` for SVG text using the subset font families, and
+generates the WOFF files from the characters currently used in the tests.
+When adding new complex-script test text, just rerun the script and commit the
+updated subset font.
