@@ -10,7 +10,7 @@ Sources:
   https://github.com/notofonts/noto-sans-hebrew
   Source font: instance_ttf/NotoSansHebrew-Regular.ttf
 - amiri-arabic-subset.woff:
-  https://github.com/aliftype/amiri
+  https://github.com/aliftype/amiri/tree/1.003
   Source font: fonts/Amiri-Regular.ttf
 - noto-devanagari-subset.woff:
   https://github.com/notofonts/devanagari

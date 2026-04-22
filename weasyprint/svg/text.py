@@ -133,7 +133,7 @@ def _expand_to_graphemes(start, end, grapheme_spans):
 
 def _positioned_clusters(layout, text):
     """Return Pango clusters in visual order."""
-    from ..text.ffi import ffi, pango
+    from ..text.ffi import FROM_UNITS, ffi, pango
 
     encoded = text.encode()
     offsets = _byte_offsets(text)
@@ -179,15 +179,20 @@ def _positioned_clusters(layout, text):
                     start_char_index = char_indexes[start]
                     end_char_index = char_indexes[end]
                     cluster_text = encoded[start:end].decode()
+                    width = sum(
+                        glyphs_info[i].geometry.width * FROM_UNITS
+                        for i in glyph_indexes)
+                    glyph_ranges = ((glyph_item, start_index, index),)
                     cluster = (
                         start, end, start_char_index, end_char_index,
-                        visible, cluster_text)
+                        visible, cluster_text, glyph_ranges, width)
                     if (clusters and clusters[-1][0] == start and
                             clusters[-1][1] == end):
                         previous = clusters[-1]
                         clusters[-1] = (
                             *previous[:4], previous[4] or visible,
-                            previous[5])
+                            previous[5], (*previous[6], *glyph_ranges),
+                            previous[7] + width)
                     else:
                         clusters.append(cluster)
                 start_index = index
@@ -200,10 +205,26 @@ def _positions_sum(positions, start, end):
     return sum(positions[index] for index in range(start, min(end, len(positions))))
 
 
+def _lines(text, style, context, max_width):
+    """Yield wrapped Pango layouts for ``text``."""
+    from ..text.line_break import split_first_line
+
+    while text:
+        layout, _, resume_index, width, height, baseline = split_first_line(
+            text, style, context, max_width, 0)
+        yield layout, width, height, baseline
+        if resume_index is None:
+            break
+        next_text = text.encode()[resume_index:].decode()
+        if next_text == text:
+            break
+        text = next_text
+
+
 def text(svg, node, font_size):
     """Draw text node."""
     from ..css.properties import INITIAL_VALUES
-    from ..draw.text import draw_emojis, draw_first_line
+    from ..draw.text import draw_emojis, draw_first_line, draw_first_line_glyphs
     from ..text.line_break import split_first_line
 
     # TODO: use real computed values
@@ -258,8 +279,15 @@ def text(svg, node, font_size):
 
     letter_spacing = svg.length(node.get('letter-spacing'), font_size)
     text_length = svg.length(node.get('textLength'), font_size)
+    writing_mode = node.get('writing-mode')
+    vertical = writing_mode in ('vertical-rl', 'vertical-lr')
+    inline_size = node.get('inline-size')
+    inline_size = (
+        size(inline_size, font_size, svg.inner_width)
+        if inline_size and inline_size != 'auto' else None)
     use_unicode_bidi = not (
-        is_positioned((x, y, dx, dy, rotate)) or letter_spacing or text_length)
+        vertical or is_positioned((x, y, dx, dy, rotate)) or
+        letter_spacing or text_length)
     text = (
         apply_unicode_bidi(node.text, style['direction'], node.get('unicode-bidi'))
         if use_unicode_bidi else node.text)
@@ -317,7 +345,7 @@ def text(svg, node, font_size):
 
     def draw_text(
             layout, width, height, baseline, position, spacing=False,
-            layout_style=style):
+            layout_style=style, glyph_ranges=None):
         x, y, dx, dy, r = position
         if x is not None:
             svg.cursor_d_position[0] = 0
@@ -342,17 +370,129 @@ def text(svg, node, font_size):
         node.text_bounding_box = extend_bounding_box(
             node.text_bounding_box, points)
 
-        layout.reactivate(layout_style)
         svg.fill_stroke(node, font_size, text=True)
         matrix = Matrix(a=scale_x, d=-1, e=x_position, f=y_position)
         if angle:
             a, c = cos(angle), sin(angle)
             matrix = Matrix(a, -c, c, a) @ matrix
-        emojis = draw_first_line(
-            svg.stream, TextBox(layout, style), 'none', 'none', matrix)
+        if glyph_ranges is None:
+            layout.reactivate(layout_style)
+            emojis = draw_first_line(
+                svg.stream, TextBox(layout, style), 'none', 'none', matrix)
+        else:
+            emojis = draw_first_line_glyphs(
+                svg.stream, TextBox(layout, style), glyph_ranges, matrix)
         emoji_lines.append((x, y, emojis))
 
-    if not (is_positioned((x, y, dx, dy, rotate)) or letter_spacing or text_length):
+    def draw_wrapped_text(position):
+        x, y, dx, dy, r = position
+        first_x, first_y = x, y
+        if x is not None:
+            svg.cursor_d_position[0] = 0
+        if y is not None:
+            svg.cursor_d_position[1] = 0
+        svg.cursor_d_position[0] += dx or 0
+        svg.cursor_d_position[1] += dy or 0
+        x = svg.cursor_position[0] if x is None else x
+        y = svg.cursor_position[1] if y is None else y
+
+        right_to_left = (
+            style['direction'] == 'rtl' and
+            node.get('text-anchor') in (None, 'start'))
+        line_y = y
+        max_y = y
+        for line_layout, line_width, line_height, line_baseline in _lines(
+                text, style, svg.context, inline_size):
+            line_x = x
+            if right_to_left:
+                line_x += inline_size - line_width
+            draw_text(
+                line_layout, line_width, line_height, line_baseline,
+                (line_x, line_y, dx if line_y == y else 0, 0, r))
+            max_y = max(max_y, line_y - line_baseline + line_height)
+            line_y += line_height
+
+        if right_to_left:
+            x_position = x + svg.cursor_d_position[0]
+            y_position = y + svg.cursor_d_position[1] + y_align
+            node.text_bounding_box = extend_bounding_box(
+                node.text_bounding_box,
+                ((x_position, y_position), (x_position + inline_size, max_y)))
+        svg.cursor_position = (
+            first_x if first_x is not None else x,
+            first_y if first_y is not None else line_y)
+
+    def draw_vertical_text(position):
+        x, y, dx, dy, r = position
+        if x is not None:
+            svg.cursor_d_position[0] = 0
+        if y is not None:
+            svg.cursor_d_position[1] = 0
+        svg.cursor_d_position[0] += dx or 0
+        svg.cursor_d_position[1] += dy or 0
+        x = svg.cursor_position[0] if x is None else x
+        y = svg.cursor_position[1] if y is None else y
+
+        x_position = x + svg.cursor_d_position[0]
+        y_position = y + svg.cursor_d_position[1]
+        angle = last_r if r is None else r
+        vertical_inline_size = inline_size if inline_size is not None else inf
+        column_step = font_size
+        column_x = x_position
+        current_y = y_position
+        column_height = 0
+        min_x, max_x = x_position, x_position + column_step
+        max_y = y_position
+
+        layout.reactivate(style)
+        clusters = _positioned_clusters(layout, text)
+        svg.fill_stroke(node, font_size, text=True)
+        for cluster in clusters:
+            (
+                _, _, _, _, visible, _, glyph_ranges,
+                cluster_advance) = cluster
+            if not visible:
+                continue
+            if (vertical_inline_size != inf and column_height and
+                    column_height + cluster_advance > vertical_inline_size):
+                column_x += (
+                    -column_step if writing_mode == 'vertical-rl'
+                    else column_step)
+                current_y = y_position
+                column_height = 0
+
+            matrix = Matrix(d=-1, e=column_x, f=current_y + baseline)
+            if angle:
+                a, c = cos(angle), sin(angle)
+                matrix = Matrix(a, -c, c, a) @ matrix
+            emojis = draw_first_line_glyphs(
+                svg.stream, TextBox(layout, style), glyph_ranges, matrix)
+            emoji_lines.append((column_x, current_y + baseline, emojis))
+
+            min_x = min(min_x, column_x)
+            max_x = max(max_x, column_x + column_step)
+            max_y = max(max_y, current_y + cluster_advance)
+            current_y += cluster_advance
+            column_height += cluster_advance
+
+        layout.deactivate()
+        node.text_bounding_box = extend_bounding_box(
+            node.text_bounding_box, ((min_x, y_position), (max_x, max_y)))
+        svg.cursor_position = column_x, current_y
+
+    if vertical:
+        position = [
+            positions[0] if positions else None
+            for positions in (x, y, dx, dy, rotate)]
+        draw_vertical_text(position)
+    elif inline_size and not (
+            is_positioned((x, y, dx, dy, rotate)) or
+            letter_spacing or text_length):
+        position = [
+            positions[0] if positions else None
+            for positions in (x, y, dx, dy, rotate)]
+        draw_wrapped_text(position)
+    elif not (is_positioned((x, y, dx, dy, rotate)) or letter_spacing or text_length):
         position = [
             positions[0] if positions else None
             for positions in (x, y, dx, dy, rotate)]
@@ -360,19 +500,16 @@ def text(svg, node, font_size):
     else:
         layout.reactivate(style)
         clusters = _positioned_clusters(layout, text)
-        layout.deactivate()
-
-        cluster_style = Style()
-        cluster_style.update(style)
-        cluster_style.font_config = style.font_config
-        cluster_style['direction'] = 'ltr'
 
         # Draw visible typographic clusters in visual order. Pango has already
         # shaped the layout through HarfBuzz, so these clusters match the glyph
         # runs used for PDF text drawing.
         pending_dx = pending_dy = 0
         visible_index = 0
-        for _, _, char_index, end_char_index, visible, cluster_text in clusters:
+        for cluster in clusters:
+            (
+                _, _, char_index, end_char_index, visible, _,
+                glyph_ranges, cluster_width) = cluster
             if not visible:
                 pending_dx += _positions_sum(dx, char_index, end_char_index)
                 pending_dy += _positions_sum(dy, char_index, end_char_index)
@@ -402,13 +539,11 @@ def text(svg, node, font_size):
 
             pending_dx = _positions_sum(dx, char_index + 1, end_char_index)
             pending_dy = _positions_sum(dy, char_index + 1, end_char_index)
-            layout, _, _, width, height, baseline = split_first_line(
-                cluster_text, cluster_style, svg.context, inf, 0)
             draw_text(
-                layout, width, height, baseline, position,
-                spacing=bool(visible_index),
-                layout_style=cluster_style)
+                layout, cluster_width, height, baseline, position,
+                spacing=bool(visible_index), glyph_ranges=glyph_ranges)
             visible_index += 1
+        layout.deactivate()
 
     svg.stream.end_text()
     svg.stream.pop_state()

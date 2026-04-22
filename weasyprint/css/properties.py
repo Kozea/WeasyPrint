@@ -37,6 +37,7 @@ INITIAL_VALUES = {
     'unicode_bidi': 'normal',
     'vertical_align': 'baseline',
     'visibility': 'visible',
+    'writing_mode': 'horizontal-tb',
     'z_index': 'auto',
 
     # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css-backgrounds-3/

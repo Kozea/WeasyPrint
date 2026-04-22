@@ -266,6 +266,61 @@ def test_text_positioned_rtl_arabic_numbers(assert_same_renderings):
 
 
 @assert_no_logs
+def test_text_positioned_arabic_lam_alef_shaping(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 80px 50px }
+        svg { display: block }
+      </style>
+      <svg width="80px" height="50px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="36" direction="rtl" text-anchor="end"
+              font-family="weasyprint-amiri-arabic" font-size="28"
+              fill="blue">سلام</text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 80px 50px }
+        svg { display: block }
+      </style>
+      <svg width="80px" height="50px" xmlns="http://www.w3.org/2000/svg">
+        <text x="32.0048828125 25.14453125 12.65625 0" y="36"
+              direction="rtl"
+              text-anchor="end"
+              font-family="weasyprint-amiri-arabic" font-size="28"
+              fill="blue">سلام</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_positioned_persian_joining(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 120px 50px }
+        svg { display: block }
+      </style>
+      <svg width="120px" height="50px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="36" direction="rtl" text-anchor="end"
+              font-family="weasyprint-amiri-arabic" font-size="28"
+              fill="blue">میخواهم</text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 120px 50px }
+        svg { display: block }
+      </style>
+      <svg width="120px" height="50px" xmlns="http://www.w3.org/2000/svg">
+        <text x="66.9208984375 60.0888671875 43.0087890625 33.3486328125
+                 27.2724609375 14.6162109375 0"
+              y="36" direction="rtl"
+              text-anchor="end"
+              font-family="weasyprint-amiri-arabic" font-size="28"
+              fill="blue">میخواهم</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_positioned_rtl_neutral_punctuation(assert_same_renderings):
     assert_same_renderings('''
       <style>
@@ -284,11 +339,11 @@ def test_text_positioned_rtl_neutral_punctuation(assert_same_renderings):
       </style>
       <svg width="104px" height="34px" xmlns="http://www.w3.org/2000/svg">
         <text x="0" y="25" font-family="weasyprint-noto-hebrew" font-size="22"
-              fill="blue">)</text>
+              fill="blue">(</text>
         <text x="12 20 28" y="25" font-family="weasyprint-noto-hebrew" font-size="22"
               fill="blue">abc</text>
         <text x="44" y="25" font-family="weasyprint-noto-hebrew" font-size="22"
-              fill="blue">(</text>
+              fill="blue">)</text>
         <text x="60" y="25" direction="rtl" text-anchor="end"
               font-family="weasyprint-noto-hebrew" font-size="22" fill="blue">ג</text>
         <text x="72" y="25" direction="rtl" text-anchor="end"
@@ -616,6 +671,74 @@ def test_text_positioned_cjk_word(assert_same_renderings):
         <text x="96" y="32"
               font-family="weasyprint-noto-cjk"
               font-size="28" fill="blue">어</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_vertical_rl_inline_size(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 100px 300px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="100" height="300" viewBox="0 0 100 300">
+        <text x="62.5" y="25" inline-size="200"
+              style="font: 25px weasyprint-noto-cjk; inline-size: 200px;
+                     writing-mode: vertical-rl;"
+              fill="blue">テキストは１０文字後に折り返されます。</text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 100px 300px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="100" height="300" viewBox="0 0 100 300">
+        <text x="62.5" y="25"
+              style="font: 25px weasyprint-noto-cjk;
+                     writing-mode: vertical-rl;"
+              fill="blue">テキストは１０文</text>
+        <text x="37.5" y="25"
+              style="font: 25px weasyprint-noto-cjk;
+                     writing-mode: vertical-rl;"
+              fill="blue">字後に折り返され</text>
+        <text x="12.5" y="25"
+              style="font: 25px weasyprint-noto-cjk;
+                     writing-mode: vertical-rl;"
+              fill="blue">ます。</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_rtl_inline_size(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 300px 100px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="300" height="100" viewBox="0 0 300 100">
+        <text x="250" y="30"
+              style="font: 20px weasyprint-amiri-arabic; inline-size: 200px;
+                     direction: rtl;"
+              fill="blue">هذا النص يلتف في 200 بكسل.</text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 300px 100px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="300" height="100" viewBox="0 0 300 100">
+        <text x="250" y="30"
+              style="font: 20px weasyprint-amiri-arabic; direction: rtl;"
+              fill="blue">هذا النص يلتف في 200</text>
+        <text x="250" y="65.16015625"
+              style="font: 20px weasyprint-amiri-arabic; direction: rtl;"
+              fill="blue">بكسل.</text>
       </svg>
     ''')
 

@@ -19,6 +19,7 @@ WORKDIR = Path('/tmp/weasyprint-font-subsets')
 
 HTML_ENTITY_PATTERN = re.compile(
     r'&(?!(?:[a-zA-Z][a-zA-Z0-9]+|#[0-9]+|#x[0-9a-fA-F]+);)')
+STYLE_DECLARATION_PATTERN = re.compile(r'([-\w]+)\s*:\s*([^;]+)')
 
 
 @dataclass(frozen=True)
@@ -42,8 +43,8 @@ SUBSETS = (
         family='weasyprint-amiri-arabic',
         source_url=(
             'https://raw.githubusercontent.com/aliftype/amiri/'
-            'main/fonts/Amiri-Regular.ttf'),
-        source_filename='Amiri-Regular.ttf',
+            '1.003/fonts/Amiri-Regular.ttf'),
+        source_filename='Amiri-1.003-Regular.ttf',
         output_filename='amiri-arabic-subset.woff'),
     FontSubset(
         family='weasyprint-noto-devanagari',
@@ -78,6 +79,26 @@ def svg_test_documents():
                         yield arg.value
 
 
+def _families_from_value(value):
+    """Yield font family names from a CSS/SVG font-family value."""
+    for family in value.split(','):
+        yield family.strip().strip('"\'')
+
+
+def element_font_families(element):
+    """Yield subset font families used by ``element``."""
+    if family := element.attrib.get('font-family'):
+        yield from _families_from_value(family)
+    for name, value in STYLE_DECLARATION_PATTERN.findall(
+            element.attrib.get('style', '')):
+        if name == 'font-family':
+            yield from _families_from_value(value)
+        elif name == 'font':
+            parts = value.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                yield from _families_from_value(parts[1])
+
+
 def used_characters_by_family():
     """Return visible SVG text characters grouped by subset font family."""
     characters = {subset.family: set() for subset in SUBSETS}
@@ -88,12 +109,13 @@ def used_characters_by_family():
         except ElementTree.ParseError as exception:
             raise SystemExit(f'Cannot parse SVG test document: {exception}')
         for element in root.iter():
-            family = element.attrib.get('font-family')
-            if family not in characters:
-                continue
-            for text in element.itertext():
-                characters[family].update(
-                    character for character in text if not character.isspace())
+            for family in element_font_families(element):
+                if family not in characters:
+                    continue
+                for text in element.itertext():
+                    characters[family].update(
+                        character for character in text
+                        if not character.isspace())
     return characters
 
 
