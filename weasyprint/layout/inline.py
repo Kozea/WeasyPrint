@@ -487,7 +487,9 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
             skip = skip or 0
             assert skip_stack is None
 
-        is_line_start = len(line_children) == 0
+        text = box.text.encode()[skip:].decode()
+        first_letter = text[0] if text else None
+        is_line_start = not line_has_break(line_children, first_letter, box.style)
         new_box, skip, preserved_line_break = split_text_box(
             context, box, max_x - position_x, skip,
             is_line_start=is_line_start)
@@ -808,21 +810,10 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         if preserved:
             preserved_line_break = True
 
-        can_break = None
-        if last_letter is True:
-            last_letter = ' '
-        elif last_letter is False:
-            last_letter = ' '  # no-break space
-        elif box.style['white_space'] in ('pre', 'nowrap'):
+        if box.style['white_space'] in ('pre', 'nowrap'):
             can_break = False
-        if can_break is None:
-            if None in (last_letter, first):
-                can_break = False
-            elif first in (True, False):
-                can_break = first
-            else:
-                can_break = can_break_text(
-                    last_letter + first, child.style['lang'])
+        else:
+            can_break = can_break_between(last_letter, first, child.style)
 
         if can_break:
             children.extend(waiting_children)
@@ -1253,3 +1244,53 @@ def can_break_inside(box):
     elif text_wrap and isinstance(box, boxes.ParentBox):
         return any(can_break_inside(child) for child in box.children)
     return False
+
+
+def can_break_between(last_letter, first_letter, style):
+    if last_letter is True:
+        last_letter = ' '
+    elif last_letter is False:
+        last_letter = ' '  # no-break space
+    if None in (last_letter, first_letter):
+        return False
+    if first_letter in (True, False):
+        return first_letter
+    return can_break_text(last_letter + first_letter, style['lang'])
+
+
+def first_last_letters(box):
+    if isinstance(box, boxes.TextBox):
+        if not box.text:
+            return None, None
+        if box.trailing_collapsible_space:
+            return box.text[0], True
+        return box.text[0], box.text[-1]
+    elif isinstance(box, boxes.AtomicInlineLevelBox):
+        # See https://www.w3.org/TR/css-text-3/#line-breaking
+        # Atomic inlines behave like ideographic characters.
+        return '\u2e80', '\u2e80'
+    elif isinstance(box, boxes.ParentBox):
+        first_letter = last_letter = None
+        for child in box.children:
+            if not child.is_in_normal_flow():
+                continue
+            child_first, child_last = first_last_letters(child)
+            if first_letter is None:
+                first_letter = child_first
+            if child_last is not None:
+                last_letter = child_last
+        return first_letter, last_letter
+    return None, None
+
+
+def line_has_break(line_children, first_letter, style):
+    last_letter = None
+    for _, child in line_children:
+        child_first, child_last = first_last_letters(child)
+        if can_break_between(last_letter, child_first, style):
+            return True
+        if can_break_inside(child):
+            return True
+        if child_last is not None:
+            last_letter = child_last
+    return can_break_between(last_letter, first_letter, style)

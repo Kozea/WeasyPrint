@@ -20,6 +20,12 @@ def make_text(text, width=None, **style):
         justification_spacing=0)
 
 
+def box_text(box):
+    if hasattr(box, 'text'):
+        return box.text
+    return ''.join(box_text(child) for child in box.children)
+
+
 @assert_no_logs
 def test_line_content():
     for width, remaining in [(100, 'text for test'),
@@ -960,6 +966,83 @@ def test_wrap_overflow_word_break(span_css, expected_lines):
             line_text += span_box.children[0].text
         lines.append(line_text)
     assert lines == expected_lines
+
+
+@assert_no_logs
+def test_overflow_wrap_inline_box_boundary():
+    # Regression test for #1614.
+    page, = render_pages('''
+      <style>
+        body {font-family: weasyprint; font-size: 16px;
+              overflow-wrap: break-word}
+        div {width: 280px}
+      </style>
+      <div>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<span>bbbbbbbbbb</span></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+
+    assert [box_text(line) for line in div.children] == [
+        'aaaaaaaaaaaaaaaaa',
+        'aaaaaaaaaaaaabbbb',
+        'bbbbbb',
+    ]
+    assert all(line.width <= div.width for line in div.children)
+
+
+@assert_no_logs
+def test_pre_wrap_inline_box_boundary():
+    # Regression test for #2308.
+    text = '00 00 00 00 00 00 00 00 00 00 '
+    span_text = '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+    after_text = ' 00 00 00 00 00'
+    page, = render_pages(f'''
+      <style>
+        code {{display: block; font-family: weasyprint; font-size: 16px;
+               white-space: pre-wrap; width: 300px}}
+      </style>
+      <code>{text}<span>{span_text}</span>{after_text}</code>
+    ''')
+    html, = page.children
+    body, = html.children
+    code, = body.children
+    _line1, line2, _line3, _line4, line5 = code.children
+
+    text, span = line2.children
+    span_text, = span.children
+    assert text.text == '00 00 00 00 '
+    assert span_text.text == '00 00 '
+    span, text = line5.children
+    span_text, = span.children
+    assert span_text.text == '00'
+    assert text.text == ' 00 00 00 00 00'
+
+
+@assert_no_logs
+def test_pre_wrap_space_before_after_inline_box():
+    # Regression test for #2025.
+    html = '''
+      <style>
+        pre {font-family: weasyprint; font-size: 16px;
+             white-space: pre-wrap; width: 250px}
+      </style>
+      <pre><b>1234567890 1234567890 </b>domicilié 1234567890</pre>
+      <pre><b>1234567890 1234567890</b> domicilié 1234567890</pre>
+    '''
+    page, = render_pages(html)
+    html, = page.children
+    body, = html.children
+    pre1, pre2 = body.children
+
+    assert [box_text(line) for line in pre1.children] == [
+        '1234567890 ',
+        '1234567890 ',
+        'domicilié ',
+        '1234567890',
+    ]
+    assert [box_text(line) for line in pre1.children] == [
+        box_text(line) for line in pre2.children]
 
 
 @assert_no_logs
