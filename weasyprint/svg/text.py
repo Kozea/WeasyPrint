@@ -43,6 +43,8 @@ def text(svg, node, font_size):
     style['font_style'] = node.get('font-style', 'normal')
     style['font_weight'] = node.get('font-weight', 400)
     style['font_size'] = font_size
+    if node.get('direction') in ('ltr', 'rtl'):
+        style['direction'] = node.get('direction')
     if style['font_weight'] == 'normal':
         style['font_weight'] = 400
     elif style['font_weight'] == 'bold':

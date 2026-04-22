@@ -295,6 +295,45 @@ def test_text_anchor_end(assert_pixels):
 
 
 @assert_no_logs
+def test_text_direction_rtl_anchor_start(assert_pixels):
+    assert_pixels('''
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" direction="rtl"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="18" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_direction_rtl_anchor_end(assert_pixels):
+    assert_pixels('''
+        __BBBBBB____________
+        __BBBBBB____________
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue" direction="rtl" text-anchor="end">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_tspan(assert_pixels):
     assert_pixels('''
         BBBBBB__BBBBBB______
