@@ -334,6 +334,27 @@ def test_text_direction_rtl_anchor_end(assert_pixels):
 
 
 @assert_no_logs
+def test_text_unicode_bidi_override(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="3" font-family="weasyprint" font-size="4"
+              fill="blue" direction="rtl" unicode-bidi="bidi-override">
+          liga
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_tspan(assert_pixels):
     assert_pixels('''
         BBBBBB__BBBBBB______
