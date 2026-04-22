@@ -4,7 +4,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
 """
 
-from math import inf
+from math import ceil, inf
 
 from tinycss2 import parse_component_value_list
 from tinycss2.color5 import parse_color
@@ -1022,6 +1022,43 @@ def outline_offset(token):
     """Validation for ``outline-offset``."""
     if length := get_length(token):
         return length
+
+
+@property(unstable=True)
+def initial_letter(tokens):
+    """Validation for ``initial-letter``."""
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'normal':
+        return 'normal'
+    if len(tokens) not in (1, 2):
+        return
+
+    size = sink = mode = None
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword in ('drop', 'raise'):
+            if mode is not None or sink is not None:
+                return
+            mode = keyword
+            continue
+
+        if number := get_number(token):
+            if number.value < 1:
+                return
+            if size is None:
+                size = number.value
+                continue
+            if sink is not None or mode is not None:
+                return
+            integer = get_number(token, integer=True)
+            if integer and integer.value >= 1:
+                sink = integer.value
+                continue
+        return
+
+    if size is not None:
+        if sink is None:
+            sink = 1 if mode == 'raise' else ceil(size)
+        return size, sink
 
 
 @property()
