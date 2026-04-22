@@ -583,6 +583,8 @@ def display(style, name, value):
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
     float_ = style.specified['float']
     position = style.specified['position']
+    if style.is_root_element and value == ('contents',):
+        return ('block', 'flow')
     if position in ('absolute', 'fixed') or float_ != 'none' or style.is_root_element:
         if value == ('inline-table',):
             return ('block', 'table')
