@@ -22,6 +22,49 @@ def test_text_fill(assert_pixels):
 
 
 @assert_no_logs
+def test_text_combining_character(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 20px 20px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="15" font-family="weasyprint" font-size="16" fill="blue">
+          é
+        </text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 20px 20px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="15" font-family="weasyprint" font-size="16" fill="blue">
+          é
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_ligature(assert_pixels):
+    assert_pixels('''
+        BBB_________________
+        BBB_________________
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" font-family="weasyprint" font-size="2" fill="blue">
+          liga
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_stroke(assert_pixels):
     assert_pixels('''
         _BBBBBBBBBBBB_______
