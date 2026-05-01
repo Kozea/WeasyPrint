@@ -640,6 +640,8 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
+    return position_x, max_x
+
 
 def _break_waiting_children(context, box, max_x, bottom_space, initial_skip_stack,
                             absolute_boxes, fixed_boxes, line_placeholders,
@@ -764,14 +766,16 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         child.position_y = box.position_y
 
         if not child.is_in_normal_flow():
-            _out_of_flow_layout(
+            new_position_x, new_max_x = _out_of_flow_layout(
                 context, box, containing_block, index, child, children,
                 line_children, waiting_children, waiting_floats,
                 absolute_boxes, fixed_boxes, line_placeholders, float_widths,
                 max_x, position_x, bottom_space)
+            if isinstance(box, boxes.LineBox):
+                position_x, max_x = new_position_x, new_max_x
             if child.is_floated():
                 float_resume_index = index + 1
-                if child not in waiting_floats:
+                if child not in waiting_floats and not isinstance(box, boxes.LineBox):
                     max_x -= child.margin_width()
             continue
 
