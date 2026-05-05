@@ -143,7 +143,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             # TODO: handle compact footnotes
             style['display'] = ('inline', 'flow')
 
-    box = make_box(element.tag, style, [], element)
+    if display == ('contents',):
+        box = boxes.BlockBox(element.tag, style, element, [])
+    else:
+        box = make_box(element.tag, style, [], element)
     box.first_letter_style = style_for(element, 'first-letter')
     box.first_line_style = style_for(element, 'first-line')
 
@@ -230,6 +233,9 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
 
+    if display == ('contents',):
+        return children
+
     if marker_boxes and len(box.children) == 1:
         # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
         #
@@ -277,7 +283,10 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     content = style['content']
     if content in ('normal', 'inhibit', 'none'):
         return []
-    box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
+    if display == ('contents',):
+        box = boxes.InlineBox(f'{element.tag}::{pseudo_type}', style, element, [])
+    else:
+        box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
 
     quote_depth, counter_values, _counter_scopes, _page_groups = state
     update_counters(state, style)
@@ -302,7 +311,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
             target_collector, counter_style)
-    return [box]
+    return children if display == ('contents',) else [box]
 
 
 def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
@@ -321,10 +330,10 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     quote_depth, counter_values, _counter_scopes, _page_groups = state
 
-    box = make_box(f'{element.tag}::marker', style, children, element)
-
-    if style['display'] == ('none',):
+    if style['display'] in (('none',), ('contents',)):
         return
+
+    box = make_box(f'{element.tag}::marker', style, children, element)
 
     image_type, image = style['list_style_image']
 

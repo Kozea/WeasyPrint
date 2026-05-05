@@ -1028,6 +1028,31 @@ def test_flex_direction_row_inline_block():
 
 
 @assert_no_logs
+def test_flex_display_contents():
+    # Regression test for issue #2210.
+    page, = render_pages('''
+      <article style="display: flex; flex-flow: column wrap">
+        <div style="display: contents">
+          <label style="order: 1">Tab 1</label>
+          <label style="order: 2">Tab 2</label>
+        </div>
+        <div style="display: contents">
+          <div style="order: 1">Content Block 1</div>
+          <div style="order: 2">Content Block 2</div>
+        </div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    tab_1, content_1, tab_2, content_2 = article.children
+    assert tab_1.children[0].children[0].children[0].text == 'Tab 1'
+    assert content_1.children[0].children[0].text == 'Content Block 1'
+    assert tab_2.children[0].children[0].children[0].text == 'Tab 2'
+    assert content_2.children[0].children[0].text == 'Content Block 2'
+
+
+@assert_no_logs
 def test_flex_float():
     page, = render_pages('''
       <article style="display: flex">
