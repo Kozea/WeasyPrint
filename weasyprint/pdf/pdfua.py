@@ -6,7 +6,9 @@ from functools import partial
 def pdfua(pdf, metadata, document, page_streams, attachments, compress, version):
     """Set metadata for PDF/UA documents."""
     # Common PDF metadata stream
-    metadata.include_in_pdf(pdf, 'ua', version, conformance=None, compress=compress)
+    conformance = f'PDF/UA-{version}' if version >= 2 else None
+    metadata.include_in_pdf(
+        pdf, 'ua', version, conformance=conformance, compress=compress)
 
 
 VARIANTS = {
