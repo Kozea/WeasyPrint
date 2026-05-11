@@ -9,7 +9,7 @@ from ..layout.absolute import AbsolutePlaceholder
 from ..logger import LOGGER
 
 
-def add_tags(pdf, document, page_streams):
+def add_tags(pdf, document, pdf_version, page_streams):
     """Add tag tree to the document."""
 
     # Add root structure.
@@ -29,6 +29,16 @@ def add_tags(pdf, document, page_streams):
     pdf.add_object(structure_document)
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
+
+    # Add namespace for PDF 2.
+    if str(pdf_version) >= '2.0':  # Cast for bytes and None
+        namespace = pydyf.Dictionary({
+            'Type': '/Namepace',
+            'NS': pydyf.String('http://iso.org/pdf2/ssn'),
+        })
+        pdf.add_object(namespace)
+        structure_root['Namespaces'] = pydyf.Array([namespace.reference])
+        structure_document['NS'] = namespace.reference
 
     # Map content.
     content_mapping['Nums'] = pydyf.Array()
