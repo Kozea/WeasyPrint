@@ -631,3 +631,34 @@ def test_path_markers_hv(assert_pixels):
           stroke="lime" stroke-width="2" fill="none" marker="url(#line)"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_path_syntax(assert_pixels):
+    assert_pixels('''
+        BBBBBBBB__
+        BBBBBBBB__
+        __________
+        RRRRRRRR__
+        RRRRRRRR__
+        __________
+        GGGGGGGG__
+        GGGGGGGG__
+        BBBBBBBB__
+        BBBBBBBB__
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0,1 H 8 H 1"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M     0+4 H8 4"
+          stroke="red" stroke-width="2" fill="none"/>
+        <path d="M0 7 h 8 h-0"
+          stroke="lime" stroke-width="2" fill="none"/>
+        <path d="M0 90e-1    h .8E+1,0"
+          stroke="blue" stroke-width="2" fill="none"/>
+      </svg>
+    ''')

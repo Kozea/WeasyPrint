@@ -17,7 +17,7 @@ class PointError(Exception):
 def normalize(string):
     """Give a canonical version of a given value string."""
     string = (string or '').replace('E', 'e')
-    string = re.sub('(?<!e)-', ' -', string)
+    string = re.sub('(?<!e)([+-])', r' \1', string)
     string = re.sub('[ \n\r\t,]+', ' ', string)
     string = re.sub(r'(\.[0-9-]+)(?=\.)', r'\1 ', string)
     return string.strip()
