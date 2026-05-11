@@ -135,6 +135,9 @@ class DocumentMetadata:
                 if variant == 'a' and version == 4:
                     subelement = SubElement(element, f'{{{NS["pdfaid"]}}}rev')
                     subelement.text = '2020'
+                elif variant == 'ua' and version == 2:
+                    subelement = SubElement(element, f'{{{NS["pdfuaid"]}}}rev')
+                    subelement.text = '2024'
 
         element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
