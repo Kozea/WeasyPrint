@@ -22,6 +22,36 @@ class Style(dict):
     """Dummy class to store dict."""
 
 
+def is_positioned(positions):
+    """Return whether a list of positions includes per-character values."""
+    return any(len(position) > 1 for position in positions)
+
+
+def apply_unicode_bidi(text, direction, unicode_bidi):
+    """Add Unicode bidi controls matching CSS unicode-bidi."""
+    if not text:
+        return text
+    direction = 'rtl' if direction == 'rtl' else 'ltr'
+    unicode_bidi = (unicode_bidi or 'normal').strip()
+    if unicode_bidi == 'normal':
+        return text
+
+    controls = {
+        ('embed', 'ltr'): ('\u202a', '\u202c'),
+        ('embed', 'rtl'): ('\u202b', '\u202c'),
+        ('isolate', 'ltr'): ('\u2066', '\u2069'),
+        ('isolate', 'rtl'): ('\u2067', '\u2069'),
+        ('bidi-override', 'ltr'): ('\u202d', '\u202c'),
+        ('bidi-override', 'rtl'): ('\u202e', '\u202c'),
+        ('isolate-override', 'ltr'): ('\u2068\u202d', '\u202c\u2069'),
+        ('isolate-override', 'rtl'): ('\u2068\u202e', '\u202c\u2069'),
+        ('plaintext', 'ltr'): ('\u2068', '\u2069'),
+        ('plaintext', 'rtl'): ('\u2068', '\u2069'),
+    }
+    start, end = controls.get((unicode_bidi, direction), ('', ''))
+    return f'{start}{text}{end}'
+
+
 def text(svg, node, font_size):
     """Draw text node."""
     from ..css.properties import INITIAL_VALUES
@@ -38,6 +68,8 @@ def text(svg, node, font_size):
     style['font_style'] = node.get('font-style', 'normal')
     style['font_weight'] = node.get('font-weight', 400)
     style['font_size'] = font_size
+    if node.get('direction') in ('ltr', 'rtl'):
+        style['direction'] = node.get('direction')
     if style['font_weight'] == 'normal':
         style['font_weight'] = 400
     elif style['font_weight'] == 'bold':
@@ -47,9 +79,6 @@ def text(svg, node, font_size):
             style['font_weight'] = int(style['font_weight'])
         except ValueError:
             style['font_weight'] = 400
-
-    layout, _, _, width, height, _ = split_first_line(
-        node.text, style, svg.context, inf, 0)
 
     # Get rotations and translations
     x, y, dx, dy, rotate = [], [], [], [], [0]
@@ -69,12 +98,26 @@ def text(svg, node, font_size):
         rotate = [radians(float(i)) if i else 0
                   for i in normalize(node.attrib['rotate']).strip().split(' ')]
     last_r = rotate[-1]
-    letters_positions = [
-        ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
-        for char in node.text]
+
+    # Return early when there’s no text
+    if not node.text:
+        x = x[0] if x else svg.cursor_position[0]
+        y = y[0] if y else svg.cursor_position[1]
+        dx = dx[0] if dx else 0
+        dy = dy[0] if dy else 0
+        svg.cursor_position = (x + dx, y + dy)
+        return
 
     letter_spacing = svg.length(node.get('letter-spacing'), font_size)
     text_length = svg.length(node.get('textLength'), font_size)
+    use_unicode_bidi = not (
+        is_positioned((x, y, dx, dy, rotate)) or letter_spacing or text_length)
+    text = (
+        apply_unicode_bidi(node.text, style['direction'], node.get('unicode-bidi'))
+        if use_unicode_bidi else node.text)
+    layout, _, _, width, height, baseline = split_first_line(
+        text, style, svg.context, inf, 0)
+
     scale_x = 1
     if text_length and node.text:
         # calculate the number of spaces to be considered for the text
@@ -119,34 +162,23 @@ def text(svg, node, font_size):
             'text-after-edge', 'after_edge', 'bottom', 'text-bottom'):
         y_align = -descent
 
-    # Return early when there’s no text
-    if not node.text:
-        x = x[0] if x else svg.cursor_position[0]
-        y = y[0] if y else svg.cursor_position[1]
-        dx = dx[0] if dx else 0
-        dy = dy[0] if dy else 0
-        svg.cursor_position = (x + dx, y + dy)
-        return
-
     svg.stream.push_state()
     svg.set_graphical_state(node, font_size, text=True)
     svg.stream.begin_text()
     emoji_lines = []
 
-    # Draw letters
-    for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
-        if x:
+    def draw_text(layout, width, height, baseline, position, spacing=False):
+        x, y, dx, dy, r = position
+        if x is not None:
             svg.cursor_d_position[0] = 0
-        if y:
+        if y is not None:
             svg.cursor_d_position[1] = 0
         svg.cursor_d_position[0] += dx or 0
         svg.cursor_d_position[1] += dy or 0
-        layout, _, _, width, height, baseline = split_first_line(
-            letter, style, svg.context, inf, 0)
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
         width *= scale_x
-        if i:
+        if spacing:
             x += letter_spacing
         svg.cursor_position = x + width, y
 
@@ -169,6 +201,23 @@ def text(svg, node, font_size):
         emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none', matrix)
         emoji_lines.append((x, y, emojis))
+
+    if not (is_positioned((x, y, dx, dy, rotate)) or letter_spacing or text_length):
+        position = [
+            positions[0] if positions else None
+            for positions in (x, y, dx, dy, rotate)]
+        draw_text(layout, width, height, baseline, position)
+    else:
+        letters_positions = [
+            ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
+            for char in node.text]
+
+        # Draw letters
+        for i, (position, letter) in enumerate(letters_positions):
+            layout, _, _, width, height, baseline = split_first_line(
+                letter, style, svg.context, inf, 0)
+            draw_text(
+                layout, width, height, baseline, position, spacing=bool(i))
 
     svg.stream.end_text()
     svg.stream.pop_state()
