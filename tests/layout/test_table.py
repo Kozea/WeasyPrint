@@ -3175,6 +3175,46 @@ def test_table_break_children_margin():
     assert len(render_pages(html)) == 3
 
 
+def test_table_break_in_padded_block():
+    # Regression test for #2580.
+    page1, = render_pages('''
+      <style>
+        @page { size: 100px; margin: 0 }
+        body { margin: 0; font: 2px/1 weasyprint }
+        div.previous { height: 20px }
+        div.wrapper { padding-bottom: 6px }
+        table {
+          border-collapse: collapse;
+          border-spacing: 0;
+          margin: 20px 0;
+          table-layout: fixed;
+          width: 100%;
+        }
+        td { height: 10px; padding: 0 }
+        tr { break-inside: avoid }
+      </style>
+      <div class="previous">Before</div>
+      <div class="wrapper">
+        <table>
+          <thead><tr><td>Header</td></tr></thead>
+          <tbody><tr><td>Row</td></tr></tbody>
+          <tfoot><tr><td>Footer</td></tr></tfoot>
+        </table>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    previous, wrapper = body.children
+    table_wrapper, = wrapper.children
+    table, = table_wrapper.children
+    header, body_group, footer = table.children
+
+    assert previous.element_tag == 'div'
+    assert len(header.children) == 1
+    assert len(body_group.children) == 1
+    assert len(footer.children) == 1
+
+
 def test_table_td_break_inside_avoid():
     # Regression test for #1547.
     html = '''

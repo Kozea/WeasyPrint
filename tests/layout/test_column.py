@@ -1113,3 +1113,25 @@ def test_columns_grid():
     body, = html.children
     div, = body.children
     column1, column2 = div.children
+
+
+@assert_no_logs
+def test_columns_first_letter():
+    # Regression test for #2717.
+    page, = render_pages('''
+      <style>
+        h1:first-letter { font-size: 120% }
+        div { columns: 2 }
+      </style>
+      <div>
+        <h1>test</h1>
+        <h1>test</h1>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    h1_1, = column1.children
+    h1_2, = column2.children
+    assert h1_1.element_tag == h1_2.element_tag == 'h1'
