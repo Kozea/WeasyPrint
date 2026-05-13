@@ -31,7 +31,7 @@ HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 # https://html.spec.whatwg.org/multipage/#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
 HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
-ASCII_DIGITS = frozenset('0123456789')
+HTML_INTEGER = re.compile(f'^[{HTML_WHITESPACE}]*([+-]?)([0-9]+)')
 
 
 def parse_html_integer(string):
@@ -43,33 +43,8 @@ def parse_html_integer(string):
     Return an integer, or ``None`` on error.
 
     """
-    position = 0
-    length = len(string)
-
-    # Skip ASCII whitespace.
-    while position < length and string[position] in HTML_WHITESPACE:
-        position += 1
-
-    if position >= length:
-        return None
-
-    # Determine sign.
-    sign = 1
-    if string[position] == '-':
-        sign = -1
-        position += 1
-    elif string[position] == '+':
-        position += 1
-
-    if position >= length or string[position] not in ASCII_DIGITS:
-        return None
-
-    # Collect sequence of ASCII digits.
-    digits_start = position
-    while position < length and string[position] in ASCII_DIGITS:
-        position += 1
-
-    return sign * int(string[digits_start:position])
+    if match := HTML_INTEGER.match(string or ''):
+        return (-1 if match.group(1) == '-' else 1) * int(match.group(2))
 
 
 def ascii_lower(string):
