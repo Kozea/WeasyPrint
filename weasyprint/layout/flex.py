@@ -479,6 +479,37 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             else:
                 child.height = child.target_main_size
 
+    forced_resume_at = None
+    forced_next_page = None
+    if main == 'width':
+        new_flex_lines = []
+        forced_resume_index = None
+        for line in flex_lines:
+            if new_flex_lines and line:
+                page_break = block.block_level_page_break(
+                    new_flex_lines[-1][-1][1], line[0][1])
+                if block.force_page_break(page_break, context):
+                    forced_resume_index = line[0][0]
+                    forced_next_page = {'break': page_break, 'page': None}
+                    break
+            for i, (index, child) in enumerate(line):
+                if not i:
+                    continue
+                page_break = block.block_level_page_break(line[i - 1][1], child)
+                if block.force_page_break(page_break, context):
+                    if i:
+                        new_flex_lines.append(FlexLine(line[:i]))
+                    forced_resume_index = index
+                    forced_next_page = {'break': page_break, 'page': None}
+                    break
+            else:
+                new_flex_lines.append(line)
+                continue
+            break
+        if forced_resume_index is not None:
+            flex_lines = new_flex_lines
+            forced_resume_at = {forced_resume_index: None}
+
     # 7 Determine the hypothetical cross size of each item.
     # TODO: Handle breaks.
     new_flex_lines = []
@@ -930,6 +961,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             child_skip_stack = None
         if resume_at:
             break
+
+    if resume_at is None and forced_resume_at is not None:
+        resume_at = forced_resume_at
+        next_page = forced_next_page
 
     if original_box_height != 'auto':
         # Don’t resume if flex items overflow flex container bottom.
