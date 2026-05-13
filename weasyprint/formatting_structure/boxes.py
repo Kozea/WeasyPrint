@@ -726,7 +726,7 @@ class TableCellBox(BlockContainerBox):
         colspan = parse_html_integer(self.element.get('colspan', ''))
         self.colspan = max(colspan, 1) if colspan is not None else 1
         rowspan = parse_html_integer(self.element.get('rowspan', ''))
-        self.rowspan = max(rowspan, 1) if rowspan is not None else 1
+        self.rowspan = max(rowspan, 0) if rowspan is not None else 1
 
 
 class TableCaptionBox(BlockBox):
