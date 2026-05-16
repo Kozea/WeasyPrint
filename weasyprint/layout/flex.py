@@ -89,15 +89,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     block.block_level_width(parent_box, containing_block)
     children = sorted(box.children, key=lambda item: item.style['order'])
     if skip_stack is not None:
-        (skip, skip_stack), = skip_stack.items()
+        skip = min(skip_stack)
         if box.style['flex_direction'].endswith('-reverse'):
             children = children[:skip + 1]
         else:
             children = children[skip:]
-        skip_stack = skip_stack
     else:
         skip, skip_stack = 0, None
-    child_skip_stack = skip_stack
 
     if row_gap == 'normal':
         row_gap = 0
@@ -131,6 +129,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     if parent_box.margin_top != 'auto':
         position_y += parent_box.margin_top
     for index, child in enumerate(children):
+        if skip_stack is not None:
+            child_skip_stack = skip_stack.get(index + skip)
+        else:
+            child_skip_stack = None
         if not child.is_flex_item:
             # Absolute child layout: create placeholder.
             if child.is_absolutely_positioned():
@@ -291,10 +293,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         max_size = getattr(child, f'max_{main}')
         child.hypothetical_main_size = max(
             min_size, min(child.flex_base_size, max_size))
-
-        # Skip stack is only for the first child.
-        child_skip_stack = None
-
     # 4 Determine the main size of the flex container using the rules of the formatting
     # context in which it participates.
     original_box_height = box.height
@@ -482,10 +480,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     # 7 Determine the hypothetical cross size of each item.
     # TODO: Handle breaks.
     new_flex_lines = []
-    child_skip_stack = skip_stack
     for line in flex_lines:
         new_flex_line = FlexLine()
         for index, child in line:
+            if skip_stack is not None:
+                child_skip_stack = skip_stack.get(index)
+            else:
+                child_skip_stack = None
             # TODO: Fix this value, see test_flex_item_auto_margin_cross.
             if child.margin_top == 'auto':
                 child.margin_top = 0
@@ -514,9 +515,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     child.width = new_child.width
 
             new_flex_line.append((index, child))
-
-            # Skip stack is only for the first child.
-            child_skip_stack = None
 
         if new_flex_line:
             new_flex_lines.append(new_flex_line)
@@ -896,10 +894,15 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     # Now we are no longer in the flex algorithm.
     box = box.copy_with_children(
         [child for child in children if child.is_absolutely_positioned()])
-    child_skip_stack = skip_stack
     for line in flex_lines:
+        line_resume_at = {}
+        line_children = {}
         for index, child in line:
             if child.is_flex_item:
+                if skip_stack is not None:
+                    child_skip_stack = skip_stack.get(index)
+                else:
+                    child_skip_stack = None
                 # TODO: Don't use block_level_layout_switch.
                 new_child, child_resume_at, next_page = block.block_level_layout_switch(
                     context, child, bottom_space, child_skip_stack, box, page_is_empty,
@@ -907,28 +910,33 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     first_letter_style=None, first_line_style=None, discard=discard,
                     max_lines=None)[:3]
                 if new_child is None:
-                    if resume_at:
-                        resume_index, = resume_at
-                        resume_index -= 1
-                    else:
-                        resume_index = 0
-                    resume_at = {resume_index + index: None}
+                    line_resume_at[index] = None
                 else:
-                    page_is_empty = False
-                    box.children.append(new_child)
+                    completed_child = (
+                        child_skip_stack and isinstance(child, boxes.ParentBox) and
+                        max(child_skip_stack) >= len(child.children) and
+                        not new_child.children and child_resume_at is None)
+                    if not completed_child:
+                        page_is_empty = False
+                        box.children.append(new_child)
+                        line_children[index] = new_child
                     position_y = new_child.position_y + new_child.border_height()
                     if child_resume_at is not None:
-                        first_level_skip = 0
-                        if resume_at:
-                            resume_index, = resume_at
-                            first_level_skip = resume_index
-                        resume_at = {first_level_skip + index: child_resume_at}
-                if resume_at:
+                        line_resume_at[index] = child_resume_at
+                if line_resume_at and main == 'height':
                     break
 
-            # Skip stack is only for the first child.
-            child_skip_stack = None
-        if resume_at:
+        if line_resume_at:
+            if main == 'width':
+                for index, child in line:
+                    if index in line_resume_at or index not in line_children:
+                        continue
+                    if isinstance(child, boxes.ParentBox):
+                        previous_skip = max(skip_stack.get(index, {0: None})) if (
+                            skip_stack and skip_stack.get(index)) else 0
+                        line_resume_at[index] = {
+                            previous_skip + len(line_children[index].children): None}
+            resume_at = line_resume_at
             break
 
     if original_box_height != 'auto':
