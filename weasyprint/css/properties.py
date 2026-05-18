@@ -151,6 +151,9 @@ INITIAL_VALUES = {
     'object_position': (('left', Dimension(50, '%'),
                          'top', Dimension(50, '%')),),
 
+    # CSS Inline Layout 3 (WD): https://www.w3.org/TR/css-inline-3/
+    'initial_letter': 'normal',
+
     # Paged Media 3 (WD): https://www.w3.org/TR/css-page-3/
     'size': None,  # set to A4 in computed_values
     'page': 'auto',
