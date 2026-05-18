@@ -31,6 +31,20 @@ HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 # https://html.spec.whatwg.org/multipage/#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
 HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
+HTML_INTEGER = re.compile(f'^[{HTML_WHITESPACE}]*([+-]?)([0-9]+)')
+
+
+def parse_html_integer(string):
+    """Parse an integer from an HTML attribute value.
+
+    Follow the HTML specification rules for parsing integers:
+    https://html.spec.whatwg.org/#rules-for-parsing-integers
+
+    Return an integer, or ``None`` on error.
+
+    """
+    if match := HTML_INTEGER.match(string or ''):
+        return (-1 if match.group(1) == '-' else 1) * int(match.group(2))
 
 
 def ascii_lower(string):

@@ -1,6 +1,9 @@
-"""Test the HTML presentational hints."""
+"""Test HTML presentational hints and HTML microsyntax parsing."""
+
+import pytest
 
 from weasyprint import CSS, HTML
+from weasyprint.html import parse_html_integer
 
 from .testing_utils import BASE_URL, assert_no_logs
 
@@ -272,3 +275,39 @@ def test_ph_embedded():
     assert img.style['float'] == 'right'
     assert img.width == 10
     assert img.height == 20
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', 42),
+    ('0', 0),
+    ('100', 100),
+    ('+123', 123),
+    ('-42', -42),
+    ('+0', 0),
+    ('-0', 0),
+    ('  42', 42),
+    ('\t7', 7),
+    (' \n -5', -5),
+    ('   +0', 0),
+    ('100%', 100),
+    ('42px', 42),
+    ('100,000', 100),
+    ('3.14', 3),
+    ('23.4', 23),
+    ('3\u0660', 3),
+])
+def test_parse_html_integer(string, expected):
+    assert parse_html_integer(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+])
+def test_parse_html_integer_invalid(string):
+    assert parse_html_integer(string) is None
