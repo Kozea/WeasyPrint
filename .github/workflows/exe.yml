@@ -19,14 +19,39 @@ jobs:
           rm C:\msys64\mingw64\bin\python.exe
       - name: Install requirements
         run: python -m pip install . pyinstaller
-      - name: Generate executable
-        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F
-      - name: Test executable
+      - name: Generate one dir executable
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint --onedir
+      - name: Move one-dir files to dist root
+        run: |
+          if (Test-Path "dist/weasyprint") {
+            Get-ChildItem -Path "dist/weasyprint" -Force | ForEach-Object {
+              Move-Item -Path $_.FullName -Destination "dist" -Force
+            }
+            Remove-Item "dist/weasyprint" -Recurse -Force
+          }
+      - name: Test one dir executable
         run: dist/weasyprint --info
-      - name: Store executable
+      - name: Store one dir executable
         uses: actions/upload-artifact@v4
         with:
-          name: weasyprint-windows
+          name: weasyprint-windows-onedir
+          path: |
+            dist
+            README.rst
+            LICENSE
+      - name: Clean up for single executable
+        run: |
+          if (Test-Path dist) {
+            Remove-Item dist -Recurse -Force
+          }
+      - name: Generate single executable
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F
+      - name: Test single executable
+        run: dist/weasyprint --info
+      - name: Store single executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: weasyprint-windows-single
           path: |
             dist/weasyprint
             dist/weasyprint.exe
