@@ -707,6 +707,13 @@ def direction(keyword):
 
 
 @property()
+@single_keyword
+def writing_mode(keyword):
+    """``writing-mode`` property validation."""
+    return keyword in ('horizontal-tb', 'vertical-rl', 'vertical-lr')
+
+
+@property()
 def display(tokens):
     """``display`` property validation."""
     for token in tokens:

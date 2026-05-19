@@ -1,6 +1,10 @@
 /* Simplified user-agent stylesheet for HTML5 in tests. */
 
 @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+@font-face { src: url(noto-hebrew-subset.woff); font-family: weasyprint-noto-hebrew }
+@font-face { src: url(amiri-arabic-subset.woff); font-family: weasyprint-amiri-arabic }
+@font-face { src: url(noto-devanagari-subset.woff); font-family: weasyprint-noto-devanagari }
+@font-face { src: url(noto-cjk-subset.woff); font-family: weasyprint-noto-cjk }
 @page { background: white; bleed: 0; @footnote { margin: 0 } }
 
 html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre, section, article { display: block }
