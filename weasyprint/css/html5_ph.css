@@ -7,9 +7,6 @@ expressed as CSS.
 
 See https://www.w3.org/TR/html5/rendering.html#rendering
 
-TODO: Attribute values are not case-insensitive, but they should be. We can add
-a "i" flag when CSS Selectors Level 4 is supported.
-
 */
 
 pre[wrap] { white-space: pre-wrap }

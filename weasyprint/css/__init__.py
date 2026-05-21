@@ -81,9 +81,8 @@ class StyleFor:
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         layer_order = inf
-        for specificity, attributes in find_style_attributes(
+        for specificity, element, declarations, base_url in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
-            element, declarations, base_url = attributes
             style = cascaded_styles.setdefault((element, None), {})
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
@@ -317,66 +316,74 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
     are returned with specificity ``(0, 0, 0)``.
 
     """
-    from ..html import HTML_WHITESPACE, parse_html_integer
-    def check_style_attribute(element, style_attribute):
-        declarations = tinycss2.parse_blocks_contents(style_attribute)
-        return element, declarations, base_url
+    from .. import html
 
     for element in tree.iter():
-        specificity = (1, 0, 0)
-        style_attribute = element.get('style')
-        if style_attribute:
-            yield specificity, check_style_attribute(element, style_attribute)
+        # Apply style attribute.
+        if style := element.get('style'):
+            specificity = (1, 0, 0)
+            declarations = tinycss2.parse_blocks_contents(style)
+            yield specificity, element, declarations, base_url
+
+        # Apply presentational hints.
         if not presentational_hints:
             continue
+
         specificity = (0, 0, 0)
+        def parse_declaration(style_attribute, element=element):
+            declaration = tinycss2.parse_one_declaration(style_attribute)
+            return specificity, element, (declaration,), base_url
+
         if element.tag == 'body':
-            # TODO: we should check the container frame element
-            for part, position in (
-                    ('height', 'top'), ('height', 'bottom'),
-                    ('width', 'left'), ('width', 'right')):
-                style_attribute = None
-                for prop in (f'margin{part}', f'{position}margin'):
-                    if element.get(prop):
-                        style_attribute = f'margin-{position}:{element.get(prop)}px'
-                        break
-                if style_attribute:
-                    yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('background'):
-                style_attribute = f'background-image:url({element.get("background")})'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('bgcolor'):
-                style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('text'):
-                style_attribute = f'color:{element.get("text")}'
-                yield specificity, check_style_attribute(element, style_attribute)
-            # TODO: we should support link, vlink, alink
+            # TODO: we should check the container frame element.
+            for attribute in ('marginheight', 'topmargin'):
+                value = html.map_to_pixel_length(element.get(attribute))
+                if value is not None:
+                    yield parse_declaration(f'margin-top:{value}')
+                    yield parse_declaration(f'margin-bottom:{value}')
+                    break
+            for attribute in ('marginwidth', 'leftmargin'):
+                value = html.map_to_pixel_length(element.get(attribute))
+                if value is not None:
+                    yield parse_declaration(f'margin-left:{value}')
+                    yield parse_declaration(f'margin-right:{value}')
+                    break
+            if background := element.get('background'):
+                url = html.parse_url(background)
+                style_attribute = f'background-image:{url}'
+                yield parse_declaration(style_attribute)
+            if bgcolor := element.get('bgcolor'):
+                color = html.parse_legacy_color(bgcolor)
+                style_attribute = f'background-color:{color}'
+                yield parse_declaration(style_attribute)
+            if text := element.get('text'):
+                color = html.parse_legacy_color(text)
+                style_attribute = f'color:{color}'
+                yield parse_declaration(style_attribute)
+            # TODO: we should support link, vlink, alink.
         elif element.tag == 'center':
-            yield specificity, check_style_attribute(element, 'text-align:center')
+            yield parse_declaration('text-align:center')
         elif element.tag == 'div':
             align = element.get('align', '').lower()
             if align == 'middle':
-                yield specificity, check_style_attribute(element, 'text-align:center')
+                yield parse_declaration('text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(element, f'text-align:{align}')
+                yield parse_declaration(f'text-align:{align}')
         elif element.tag == 'font':
-            if element.get('color'):
-                yield specificity, check_style_attribute(
-                    element, f'color:{element.get("color")}')
-            if element.get('face'):
-                yield specificity, check_style_attribute(
-                    element, f'font-family:{element.get("face")}')
-            if element.get('size'):
-                size_attr = element.get('size').lstrip(HTML_WHITESPACE)
+            if color := element.get('color'):
+                color = html.parse_legacy_color(color)
+                yield parse_declaration(f'color:{color}')
+            if face := element.get('face'):
+                face = html.parse_string(face)
+                yield parse_declaration(f'font-family:{face}')
+            if size := element.get('size'):
+                size_attr = html.strip_whitespace(size)
                 relative_plus = size_attr.startswith('+')
                 relative_minus = size_attr.startswith('-')
                 if relative_plus or relative_minus:
                     size_attr = size_attr[1:]
-                size = parse_html_integer(size_attr)
-                if size is None:
-                    LOGGER.warning('Invalid value for size: %s', element.get('size'))
-                else:
+                size = html.parse_integer(size_attr)
+                if size is not None:
                     font_sizes = {
                         1: 'x-small',
                         2: 'small',
@@ -391,180 +398,148 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     elif relative_minus:
                         size -= 3
                     size = max(1, min(7, size))
-                    yield specificity, check_style_attribute(
-                        element, f'font-size:{font_sizes[size]}')
+                    yield parse_declaration(f'font-size:{font_sizes[size]}')
         elif element.tag == 'table':
-            if element.get('cellspacing'):
-                yield specificity, check_style_attribute(
-                    element, f'border-spacing:{element.get("cellspacing")}px')
-            if element.get('cellpadding'):
-                cellpadding = element.get('cellpadding')
-                if cellpadding.isdigit():
-                    cellpadding += 'px'
-                # TODO: don't match subtables cells
-                for subelement in element.iter():
-                    if subelement.tag in ('td', 'th'):
-                        yield specificity, check_style_attribute(
-                            subelement,
-                            f'padding-left:{cellpadding};'
-                            f'padding-right:{cellpadding};'
-                            f'padding-top:{cellpadding};'
-                            f'padding-bottom:{cellpadding};')
-            if element.get('hspace'):
-                hspace = element.get('hspace')
-                if hspace.isdigit():
-                    hspace += 'px'
-                yield specificity, check_style_attribute(
-                    element, f'margin-left:{hspace};margin-right:{hspace}')
-            if element.get('vspace'):
-                vspace = element.get('vspace')
-                if vspace.isdigit():
-                    vspace += 'px'
-                yield specificity, check_style_attribute(
-                    element, f'margin-top:{vspace};margin-bottom:{vspace}')
-            if element.get('width'):
-                style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
-                    style_attribute += 'px'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('height'):
-                style_attribute = f'height:{element.get("height")}'
-                if element.get('height').isdigit():
-                    style_attribute += 'px'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('background'):
-                style_attribute = (
-                    f'background-image:url({element.get("background")})')
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('bgcolor'):
-                style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('bordercolor'):
-                style_attribute = f'border-color:{element.get("bordercolor")}'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('border'):
-                style_attribute = f'border-width:{element.get("border")}px'
-                yield specificity, check_style_attribute(element, style_attribute)
+            if cellspacing := element.get('cellspacing'):
+                value = html.map_to_pixel_length(cellspacing)
+                if value is not None:
+                    yield parse_declaration(f'border-spacing:{value}')
+            if cellpadding := element.get('cellpadding'):
+                value = html.map_to_pixel_length(cellpadding)
+                if value is not None:
+                    # TODO: don't match subtables cells.
+                    for subelement in element.iter():
+                        if subelement.tag in ('td', 'th'):
+                            yield parse_declaration(f'padding:{value}', subelement)
+            if width := element.get('width'):
+                value = html.map_to_dimension_property_ignoring_zero(width)
+                if value is not None:
+                    yield parse_declaration(f'width:{value}')
+            if height := element.get('height'):
+                value = html.map_to_dimension_property(height)
+                if value is not None:
+                    yield parse_declaration(f'height:{value}')
+            if background := element.get('background'):
+                url = html.parse_url(background)
+                style_attribute = (f'background-image:{url}')
+                yield parse_declaration(style_attribute)
+            if bgcolor := element.get('bgcolor'):
+                color = html.parse_legacy_color(bgcolor)
+                style_attribute = f'background-color:{color}'
+                yield parse_declaration(style_attribute)
+            if bordercolor := element.get('bordercolor'):
+                color = html.parse_legacy_color(bordercolor)
+                style_attribute = f'border-color:{color}'
+                yield parse_declaration(style_attribute)
+            if border := element.get('border'):
+                value = html.map_to_pixel_length(border)
+                if value is not None:
+                    yield parse_declaration(f'border-width:{value}')
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
-            # TODO: we should align descendants too
+            # TODO: we should align descendants too.
             if align == 'middle':
-                yield specificity, check_style_attribute(
-                    element, 'text-align:center')
+                yield parse_declaration('text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(element, f'text-align:{align}')
-            if element.get('background'):
-                style_attribute = f'background-image:url({element.get("background")})'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('bgcolor'):
-                style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(element, style_attribute)
+                yield parse_declaration(f'text-align:{align}')
+            if background := element.get('background'):
+                url = html.parse_url(background)
+                style_attribute = f'background-image:{url}'
+                yield parse_declaration(style_attribute)
+            if bgcolor := element.get('bgcolor'):
+                color = html.parse_legacy_color(bgcolor)
+                style_attribute = f'background-color:{color}'
+                yield parse_declaration(style_attribute)
             if element.tag in ('tr', 'td', 'th'):
-                if element.get('height'):
-                    style_attribute = f'height:{element.get("height")}'
-                    if element.get('height').isdigit():
-                        style_attribute += 'px'
-                    yield specificity, check_style_attribute(element, style_attribute)
-                if element.tag in ('td', 'th'):
-                    if element.get('width'):
-                        style_attribute = f'width:{element.get("width")}'
-                        if element.get('width').isdigit():
-                            style_attribute += 'px'
-                        yield specificity, check_style_attribute(
-                            element, style_attribute)
+                if height := element.get('height'):
+                    value = html.map_to_dimension_property_ignoring_zero(height)
+                    if value is not None:
+                        yield parse_declaration(f'height:{value}')
+                if width := element.get('width'):
+                    value = html.map_to_dimension_property_ignoring_zero(width)
+                    if value is not None:
+                        yield parse_declaration(f'width:{value}')
+            elif element.tag == 'tr':
+                if height := element.get('height'):
+                    value = html.map_to_dimension_property(height)
+                    if value is not None:
+                        yield parse_declaration(f'height:{value}')
         elif element.tag == 'caption':
             align = element.get('align', '').lower()
-            # TODO: we should align descendants too
+            # TODO: we should align descendants too.
             if align == 'middle':
-                yield specificity, check_style_attribute(element, 'text-align:center')
+                yield parse_declaration('text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(element, f'text-align:{align}')
+                yield parse_declaration(f'text-align:{align}')
         elif element.tag == 'col':
-            if element.get('width'):
-                style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
-                    style_attribute += 'px'
-                yield specificity, check_style_attribute(element, style_attribute)
+            if width := element.get('width'):
+                value = html.map_to_dimension_property(width)
+                if value is not None:
+                    yield parse_declaration(f'width:{value}')
         elif element.tag == 'hr':
-            size = 0
-            if element.get('size'):
-                parsed = parse_html_integer(element.get('size'))
-                if parsed is not None:
-                    size = parsed
-                else:
-                    LOGGER.warning('Invalid value for size: %s', element.get('size'))
-            if (element.get('color'), element.get('noshade')) != (None, None):
+            size = html.parse_non_negative_integer(element.get('size')) or 0
+            if {element.get('color'), element.get('noshade')} != {None}:
                 if size >= 1:
-                    yield specificity, check_style_attribute(
-                        element, f'border-width:{size / 2}px')
+                    yield parse_declaration(f'border-width:{size / 2}px')
             elif size == 1:
-                yield specificity, check_style_attribute(
-                    element, 'border-bottom-width:0')
+                yield parse_declaration('border-bottom-width:0')
             elif size > 1:
-                yield specificity, check_style_attribute(
-                    element, f'height:{size - 2}px')
-            if element.get('width'):
-                style_attribute = f'width:{element.get("width")}'
-                if element.get('width').isdigit():
-                    style_attribute += 'px'
-                yield specificity, check_style_attribute(element, style_attribute)
-            if element.get('color'):
-                yield specificity, check_style_attribute(
-                    element, f'color:{element.get("color")}')
+                yield parse_declaration(f'height:{size - 2}px')
+            if width := element.get('width'):
+                value = html.map_to_dimension_property(width)
+                if value is not None:
+                    yield parse_declaration(f'width:{value}')
+            if color := element.get('color'):
+                color = html.parse_legacy_color(color)
+                yield parse_declaration(f'color:{color}')
         elif element.tag in (
                 'iframe', 'applet', 'embed', 'img', 'input', 'object',
                 '{http://www.w3.org/2000/svg}svg'):
-            if (element.tag != 'input' or
-                    element.get('type', '').lower() == 'image'):
+            if element.tag != 'input' or element.get('type', '').lower() == 'image':
                 align = element.get('align', '').lower()
                 if align in ('middle', 'center'):
-                    # TODO: middle and center values are wrong
-                    yield specificity, check_style_attribute(
-                        element, 'vertical-align:middle')
-                if element.get('hspace'):
-                    hspace = element.get('hspace')
-                    if hspace.isdigit():
-                        hspace += 'px'
-                    yield specificity, check_style_attribute(
-                        element, f'margin-left:{hspace};margin-right:{hspace}')
-                if element.get('vspace'):
-                    vspace = element.get('vspace')
-                    if vspace.isdigit():
-                        vspace += 'px'
-                    yield specificity, check_style_attribute(
-                        element, f'margin-top:{vspace};margin-bottom:{vspace}')
+                    # TODO: middle and center values are wrong.
+                    yield parse_declaration('vertical-align:middle')
+                if hspace := element.get('hspace'):
+                    value = html.map_to_dimension_property(hspace)
+                    if value is not None:
+                        yield parse_declaration(f'margin-left:{value}')
+                        yield parse_declaration(f'margin-right:{value}')
+                if vspace := element.get('vspace'):
+                    value = html.map_to_dimension_property(vspace)
+                    if value is not None:
+                        yield parse_declaration(f'margin-top:{value}')
+                        yield parse_declaration(f'margin-bottom:{value}')
                 # TODO: img seems to be excluded for width and height, but a
-                # lot of W3C tests rely on this attribute being applied to img
-                if element.get('width'):
-                    style_attribute = f'width:{element.get("width")}'
-                    if element.get('width').isdigit():
-                        style_attribute += 'px'
-                    yield specificity, check_style_attribute(element, style_attribute)
-                if element.get('height'):
-                    style_attribute = f'height:{element.get("height")}'
-                    if element.get('height').isdigit():
-                        style_attribute += 'px'
-                    yield specificity, check_style_attribute(element, style_attribute)
+                # lot of W3C tests rely on this attribute being applied to img.
+                if width := element.get('width'):
+                    value = html.map_to_dimension_property(width)
+                    if value is not None:
+                        yield parse_declaration(f'width:{value}')
+                if height := element.get('height'):
+                    value = html.map_to_dimension_property(height)
+                    if value is not None:
+                        yield parse_declaration(f'height:{value}')
                 if element.tag in ('img', 'object', 'input'):
-                    if element.get('border'):
-                        yield specificity, check_style_attribute(
-                            element,
-                            f'border-width:{element.get("border")}px;'
-                            f'border-style:solid')
+                    if border := element.get('border'):
+                        value = html.map_to_pixel_length(border)
+                        if value is not None:
+                            yield parse_declaration(f'border-width:{value}')
+                            yield parse_declaration('border-style:solid')
         elif element.tag == 'ol':
-            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
-            if element.get('start'):
-                yield specificity, check_style_attribute(
-                    element,
-                    f'counter-reset:list-item {element.get("start")};'
-                    'counter-increment:list-item -1')
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet.
+            if size := element.get('start'):
+                value = html.parse_integer(size_attr)
+                if value is not None:
+                    yield parse_declaration(f'counter-reset:list-item {value}')
+                    yield parse_declaration('counter-increment:list-item -1')
         elif element.tag == 'li':
-            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
-            if element.get('value'):
-                yield specificity, check_style_attribute(
-                    element,
-                    f'counter-reset:list-item {element.get("value")};'
-                    'counter-increment:none')
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet.
+            if value := element.get('value'):
+                value = html.parse_integer(size_attr)
+                if value is not None:
+                    yield parse_declaration(f'counter-reset:list-item {value}')
+                    yield parse_declaration('counter-increment:none')
 
 
 def declaration_precedence(origin, importance):

@@ -10,6 +10,8 @@ are images with intrinsic dimensions.
 import re
 from importlib.resources import files
 
+from tinycss2.color3 import parse_color
+
 from . import CSS, Attachment, css
 from .css import get_child_text
 from .css.counters import CounterStyle
@@ -29,22 +31,124 @@ HTML5_UA_FORM_STYLESHEET = CSS(
 HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 
 # https://html.spec.whatwg.org/multipage/#space-character
-HTML_WHITESPACE = ' \t\n\f\r'
-HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
-HTML_INTEGER = re.compile(f'^[{HTML_WHITESPACE}]*([+-]?)([0-9]+)')
+WHITESPACE = ' \t\n\f\r'
+SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{WHITESPACE}]+')
+INTEGER_RE = re.compile(f'^[{WHITESPACE}]*([+-]?)([0-9]+)')
+DIMENSION_RE = re.compile(f'^[{WHITESPACE}]*([0-9]+([.][0-9]*)?)(%)?')
 
 
-def parse_html_integer(string):
+def parse_integer(string):
     """Parse an integer from an HTML attribute value.
-
-    Follow the HTML specification rules for parsing integers:
-    https://html.spec.whatwg.org/#rules-for-parsing-integers
 
     Return an integer, or ``None`` on error.
 
     """
-    if match := HTML_INTEGER.match(string or ''):
+    # See https://html.spec.whatwg.org/#rules-for-parsing-integers.
+    if match := INTEGER_RE.match(string or ''):
         return (-1 if match.group(1) == '-' else 1) * int(match.group(2))
+
+
+def parse_non_negative_integer(string):
+    """Parse a non-negative integer from an HTML attribute value.
+
+    Return an integer, or ``None`` on error.
+
+    """
+    # See https://html.spec.whatwg.org/#rules-for-parsing-non-negative-integers.
+    integer = parse_integer(string)
+    return integer if integer is not None and integer >= 0 else None
+
+
+def parse_dimension_value(string):
+    """Parse a dimension value from an HTML attribute value.
+
+    Return an integer and a unit string ('%' or 'px'), or ``None`` on error.
+
+    """
+    # See https://html.spec.whatwg.org/#rules-for-parsing-dimension-values.
+    if match := DIMENSION_RE.match(string or ''):
+        return float(match.group(1)), '%' if match.group(3) == '%' else 'px'
+
+
+def parse_legacy_color(string):
+    """Parse a legacy color from an HTML attribute value.
+
+    Return a color string compatible with CSS colors, or ``None`` on error.
+
+    """
+    # See https://html.spec.whatwg.org/#rules-for-parsing-a-legacy-colour-value.
+    string = string.strip(WHITESPACE)
+    if string.lower() in ('transparent', 'currentcolor'):
+        return
+    # Use the CSS3 color parser for simplicity.
+    color = parse_color(string)
+    if color is None:
+        return
+    red = round(max(0, min(1, color.red)) * 255)
+    green = round(max(0, min(1, color.green)) * 255)
+    blue = round(max(0, min(1, color.blue)) * 255)
+    return f'#{red:02x}{green:02x}{blue:02x}'
+
+
+def parse_string(string):
+    """Parse a URL from an HTML attribute value.
+
+    Return a CSS-escaped string, including quotes.
+
+    """
+    string = (
+        string
+        .replace('\\', '\\\\')
+        .replace('"', '\\"')
+        .replace('\n', '\\A')
+        .replace('\r', '\\D')
+        .replace('\f', '\\C'))
+    return f'"{string}"'
+
+
+def parse_url(string):
+    """Parse a URL from an HTML attribute value.
+
+    Return a url() string.
+
+    """
+    return f'url({parse_string(string)})'
+
+
+def map_to_pixel_length(string):
+    """Map an HTML attribute value to a pixel length.
+
+    Return a string with the value and 'px', or ``None`` on error.
+
+    """
+    value = parse_non_negative_integer(string)
+    if value is not None:
+        return f'{value}px'
+
+
+def map_to_dimension_property(string):
+    """Map an HTML attribute value to a dimension.
+
+    Return a string with the value and the dimension, or ``None`` on error.
+
+    """
+    dimension = parse_dimension_value(string)
+    if dimension is not None:
+        value, unit = dimension
+        return f'{value}{unit}'
+
+
+def map_to_dimension_property_ignoring_zero(string):
+    """Map an HTML attribute value to a dimension, ignoring zero values.
+
+    Return a string with the value and the dimension, or ``None`` on error.
+
+    """
+    dimension = parse_dimension_value(string)
+    if dimension is not None:
+        value, unit = dimension
+        if value != 0:
+            return f'{value}{unit}'
 
 
 def ascii_lower(string):
@@ -69,7 +173,7 @@ def ascii_lower(string):
 
 def element_has_link_type(element, link_type):
     """Return whether element has a ``rel`` attribute with given link type."""
-    tokens = HTML_SPACE_SEPARATED_TOKENS_RE.findall(element.get('rel', ''))
+    tokens = SPACE_SEPARATED_TOKENS_RE.findall(element.get('rel', ''))
     return any(ascii_lower(token) == link_type for token in tokens)
 
 
@@ -313,7 +417,7 @@ def strip_whitespace(string):
     https://www.whatwg.org/html#space-character
 
     """
-    return string.strip(HTML_WHITESPACE)
+    return string.strip(WHITESPACE)
 
 
 # YYYY (eg 1997)

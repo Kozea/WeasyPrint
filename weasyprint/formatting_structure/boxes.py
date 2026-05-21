@@ -672,9 +672,9 @@ class TableColumnGroupBox(ParentBox):
         if self.children:
             return len(self.children)
         else:
-            from ..html import parse_html_integer
+            from ..html import parse_integer
 
-            span = parse_html_integer(self.element.get('span'))
+            span = parse_integer(self.element.get('span'))
             return max(span, 1) if span is not None else 1
 
 
@@ -706,9 +706,9 @@ class TableColumnBox(ParentBox):
 
     @property
     def span(self):
-        from ..html import parse_html_integer
+        from ..html import parse_integer
 
-        span = parse_html_integer(self.element.get('span'))
+        span = parse_integer(self.element.get('span'))
         return max(span, 1) if span is not None else 1
 
 
@@ -724,11 +724,11 @@ class TableCellBox(BlockContainerBox):
         # but HTML 5 removed it
         # https://html.spec.whatwg.org/multipage/tables.html#attr-tdth-colspan
         # rowspan=0 is still there though.
-        from ..html import parse_html_integer
+        from ..html import parse_integer
 
-        colspan = parse_html_integer(self.element.get('colspan'))
+        colspan = parse_integer(self.element.get('colspan'))
         self.colspan = max(colspan, 1) if colspan is not None else 1
-        rowspan = parse_html_integer(self.element.get('rowspan'))
+        rowspan = parse_integer(self.element.get('rowspan'))
         self.rowspan = max(rowspan, 0) if rowspan is not None else 1
 
 
