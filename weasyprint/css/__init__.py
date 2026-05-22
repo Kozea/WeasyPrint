@@ -1137,12 +1137,14 @@ class ComputedStyle(dict):
             weight = (0, 0, (0, 0, 0))
             pending = False
 
+        wanted_key = key.replace('_', '-')
         if logical_function := PHYSICAL_FUNCTIONS.get(key):
             # TODO: use writing-mode and text-orientation.
             logical_key = logical_function(block='ttb', inline=self['direction'])
             if logical_key in self.cascaded:
                 logical_value, logical_weight = self.cascaded[logical_key]
                 if logical_weight >= weight:
+                    wanted_key = logical_key.replace('_', '-')
                     value = logical_value
                     pending = isinstance(value, Pending)
 
@@ -1159,9 +1161,8 @@ class ComputedStyle(dict):
                     solved_tokens.append(token)
                 else:
                     solved_tokens.extend(tokens)
-            original_key = key.replace('_', '-')
             try:
-                value = value.solve(solved_tokens, original_key)
+                value = value.solve(solved_tokens, wanted_key)
             except InvalidValues:
                 if key in INHERITED and parent_style is not None:
                     # Values in parent_style are already computed.

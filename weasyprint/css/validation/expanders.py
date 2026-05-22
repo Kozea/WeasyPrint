@@ -171,7 +171,7 @@ def _expand_sides(tokens, name, base_url, sides):
                 expanded_names.append(f'{name}-{side}')
 
     # Return pending expanders if var is found.
-    expander = functools.partial(expand_four_sides, name=name, base_url=base_url)
+    expander = functools.partial(EXPANDERS[name], name=name, base_url=base_url)
     if result := _find_var(tokens, expander, expanded_names):
         yield from result.items()
         return
