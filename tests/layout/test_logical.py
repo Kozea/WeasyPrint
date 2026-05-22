@@ -10,9 +10,11 @@ from ..testing_utils import assert_no_logs
     (
         '<div style="border-top: 1px solid">',
         '<div style="border-block-start: 1px solid">',
+        '<div style="--size: 1px; border-block-start: var(--size) solid">',
     ), (
         '<div style="border-left: 1px solid">',
         '<div style="border-inline-start: 1px solid">',
+        '<div style="--size: 1px; border-inline-start: var(--size) solid">',
     ), (
         '<div style="border-inline-start: 1px solid">',
         '<article style="direction: rtl">'
