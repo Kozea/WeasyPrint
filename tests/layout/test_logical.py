@@ -22,6 +22,9 @@ from ..testing_utils import assert_no_logs
     ), (
         '<div style="border-style: solid; border-width: 1px 2px">',
         '<div style="border-style: solid; border-width: logical 1px 2px">',
+        # TODO: handle this case.
+        # '<div style="border-style: solid;'
+        # '  --size: 1px; border-width: logical var(--size) 2px">',
     ), (
         '<div style="padding-top: 1px">',
         '<div style="padding-block-start: 1px">',
