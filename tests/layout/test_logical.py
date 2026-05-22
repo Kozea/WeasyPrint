@@ -61,6 +61,8 @@ from ..testing_utils import assert_no_logs
         '<div style="position: absolute; width: 5px; right: 1px">',
         '<div style="position: absolute; width: 5px; inset-inline-end: 1px">',
         '<div style="position: absolute; width: 5px; inset-inline: auto 1px">',
+        '<div style="position: absolute; width: 5px;'
+        '  --size: 1px; inset-inline: auto var(--size)">',
     ), (
         '<div style="float: left; width: 5px">',
         '<div style="float: inline-start; width: 5px">',
