@@ -615,19 +615,36 @@ def draw_dotted_rect_border(stream, box, width, color):
     """Fast path: uniform dotted border with no rounded corners.
 
     A round line cap turns a zero-length dash into a filled circle, so one
-    stroked rectangle replaces hundreds of per-dot Bézier curves.
+    stroked line per side replaces hundreds of per-dot Bézier curves. Each
+    side picks its own dash period so dots land exactly on both corners,
+    matching the per-side spacing of the generic path.
 
     """
     bbx, bby, bbw, bbh = box.rounded_border_box()[:4]
     half = width / 2
+    x0, y0 = bbx + half, bby + half
+    x1, y1 = bbx + bbw - half, bby + bbh - half
+
+    def period(outer_length):
+        # Match the per-side spacing of the generic path: dot count chosen
+        # from the outer side length, dots distributed between the two
+        # half-width-inset endpoints.
+        n_dots = max(2, int(outer_length // (2 * width)) + 1)
+        return (outer_length - width) / (n_dots - 1)
+
     with stream.stacked():
         stream.set_color(color, stroke=True)
         stream.set_line_width(width)
         stream.set_line_cap(1)
-        stream.set_line_join(1)
-        stream.set_dash([0, 2 * width], 0)
-        stream.rectangle(bbx + half, bby + half, bbw - width, bbh - width)
-        stream.stroke()
+        for x_a, y_a, x_b, y_b, outer_length in (
+                (x0, y0, x1, y0, bbw),  # top
+                (x1, y0, x1, y1, bbh),  # right
+                (x0, y1, x1, y1, bbw),  # bottom
+                (x0, y0, x0, y1, bbh)):  # left
+            stream.set_dash([0, period(outer_length)], 0)
+            stream.move_to(x_a, y_a)
+            stream.line_to(x_b, y_b)
+            stream.stroke()
 
 
 def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
