@@ -98,6 +98,18 @@ def draw_border(stream, box):
             draw_rounded_border(stream, box, styles[0], colors[0])
         return
 
+    # Dotted fast path: uniform dotted border with no rounded corners. We
+    # stroke a single rectangle with round caps and a zero-length dash
+    # pattern, which is orders of magnitude smaller in the PDF than the
+    # generic per-dot Bézier clip path.
+    radii = box.rounded_border_box()[4:]
+    no_radii = all(rx == 0 and ry == 0 for rx, ry in radii)
+    if (set(styles) == {'dotted'} and single_color and four_sides
+            and len(set(widths)) == 1 and no_radii):
+        with stream.artifact():
+            draw_dotted_rect_border(stream, box, widths[0], colors[0])
+        return
+
     # We're not smart enough to find a good way to draw the borders, we must
     # draw them side by side. Order is not specified, but this one seems to be
     # close to what other browsers do.
@@ -597,6 +609,25 @@ def draw_rect_border(stream, box, widths, style, color):
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
     stream.fill(even_odd=True)
+
+
+def draw_dotted_rect_border(stream, box, width, color):
+    """Fast path: uniform dotted border with no rounded corners.
+
+    A round line cap turns a zero-length dash into a filled circle, so one
+    stroked rectangle replaces hundreds of per-dot Bézier curves.
+
+    """
+    bbx, bby, bbw, bbh = box.rounded_border_box()[:4]
+    half = width / 2
+    with stream.stacked():
+        stream.set_color(color, stroke=True)
+        stream.set_line_width(width)
+        stream.set_line_cap(1)
+        stream.set_line_join(1)
+        stream.set_dash([0, 2 * width], 0)
+        stream.rectangle(bbx + half, bby + half, bbw - width, bbh - width)
+        stream.stroke()
 
 
 def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
