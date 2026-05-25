@@ -97,6 +97,10 @@ class Font:
         self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
+        if harfbuzz.hb_version_atleast(7, 0, 0):
+            self.colr = harfbuzz.hb_ot_color_has_paint(self.hb_face)
+        else:
+            self.colr = False
         self.glyph_count = harfbuzz.hb_face_get_glyph_count(self.hb_face)
         self.stemv = 80
         self.stemh = 80
@@ -160,7 +164,7 @@ class Font:
                 self.file_content = partial_font.getvalue()
 
         # Remove images.
-        if self.png or self.svg:
+        if self.png or self.svg or self.colr:
             full_font = io.BytesIO(self.file_content)
             ttfont = TTFont(full_font, fontNumber=self.index)
             try:
@@ -175,7 +179,7 @@ class Font:
                 else:
                     for glyph in ttfont['glyf'].glyphs:
                         ttfont['glyf'][glyph] = ttFont.getTableModule('glyf').Glyph()
-                for table_name in ('CBDT', 'CBLC', 'SVG '):
+                for table_name in ('CBDT', 'CBLC', 'SVG ', 'COLR'):
                     if table_name in ttfont:
                         del ttfont[table_name]
                 output_font = io.BytesIO()
