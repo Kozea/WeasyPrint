@@ -273,6 +273,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     f = -stream.logical_rect.y
                     f = f * FROM_UNITS / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
+            elif font.colr:
+                breakpoint()
 
             x_advance += (logical_width + offset - kerning) / 1000
 
