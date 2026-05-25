@@ -27,3 +27,19 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Bundled ICC profile
+-------------------
+
+WeasyPrint includes the International Color Consortium sRGB2014.icc profile in
+weasyprint/pdf/sRGB2014.icc. Its original source is:
+
+https://www.color.org/srgbprofiles.xalter
+
+Copyright International Color Consortium, 2015
+
+This profile is made available by the International Color Consortium, and may be
+copied, distributed, embedded, made, used, and sold without restriction. Altered
+versions of this profile shall have the original identification and copyright
+information removed and shall not be misrepresented as the original profile.

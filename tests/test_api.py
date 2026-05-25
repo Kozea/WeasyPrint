@@ -616,7 +616,12 @@ def test_partial_pdf_custom_metadata():
 @assert_no_logs
 def test_pdf_srgb():
     stdout = _run('--srgb --uncompressed-pdf - -', b'test')
-    assert b'sRGB' in stdout
+    assert b'/OutputIntents' in stdout
+    assert b'/S /GTS_PDFA1' in stdout
+    assert b'/OutputConditionIdentifier (sRGB IEC61966-2.1)' in stdout
+    assert b'/DestOutputProfile' in stdout
+    assert b'/N 3' in stdout
+    assert b'/Alternate /DeviceRGB' in stdout
 
 
 @assert_no_logs
