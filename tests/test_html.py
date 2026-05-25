@@ -3,9 +3,14 @@
 import pytest
 
 from weasyprint import CSS, HTML
-from weasyprint.html import parse_html_integer
 
 from .testing_utils import BASE_URL, assert_no_logs
+
+from weasyprint.html import (  # isort:skip
+    map_to_dimension_property, map_to_dimension_property_ignoring_zero,
+    map_to_pixel_length, parse_dimension_value, parse_integer,
+    parse_non_negative_integer, parse_string, parse_url)
+
 
 PH_TESTING_CSS = CSS(string='''
 @page {margin: 0; size: 1000px 1000px}
@@ -31,8 +36,7 @@ def test_no_ph():
 @assert_no_logs
 def test_ph_page():
     document = HTML(string='''
-      <body marginheight=2 topmargin=3 leftmargin=5
-            bgcolor=red text=blue />
+      <body marginheight=2 leftmargin=5 bgcolor=red text=blue />
     ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
     page, = document.pages
     html, = page._page_box.children
@@ -40,7 +44,7 @@ def test_ph_page():
     assert body.margin_top == 2
     assert body.margin_bottom == 2
     assert body.margin_left == 5
-    assert body.margin_right == 0
+    assert body.margin_right == 5
     assert body.style['background_color'] == (1, 0, 0, 1)
     assert body.style['color'] == (0, 0, 1, 1)
 
@@ -296,8 +300,8 @@ def test_ph_embedded():
     ('23.4', 23),
     ('3\u0660', 3),
 ])
-def test_parse_html_integer(string, expected):
-    assert parse_html_integer(string) == expected
+def test_parse_integer(string, expected):
+    assert parse_integer(string) == expected
 
 
 @pytest.mark.parametrize('string', [
@@ -309,5 +313,213 @@ def test_parse_html_integer(string, expected):
     '+ 1',
     '\u0660\u0661',
 ])
-def test_parse_html_integer_invalid(string):
-    assert parse_html_integer(string) is None
+def test_parse_integer_invalid(string):
+    assert parse_integer(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', 42),
+    ('0', 0),
+    ('100', 100),
+    ('+123', 123),
+    ('+0', 0),
+    ('-0', 0),
+    ('  42', 42),
+    ('\t7', 7),
+    ('   +0', 0),
+    ('100%', 100),
+    ('42px', 42),
+    ('100,000', 100),
+    ('3.14', 3),
+    ('23.4', 23),
+    ('3\u0660', 3),
+])
+def test_parse_non_negative_integer(string, expected):
+    assert parse_non_negative_integer(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+    '-42',
+    ' \n -5',
+])
+def test_parse_non_negative_integer_invalid(string):
+    assert parse_non_negative_integer(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', (42, 'px')),
+    ('0', (0, 'px')),
+    ('100', (100, 'px')),
+    ('  42', (42, 'px')),
+    ('\t7', (7, 'px')),
+    ('100%', (100, '%')),
+    ('12.3%', (12.3, '%')),
+    ('42px', (42, 'px')),
+    ('100,000', (100, 'px')),
+    ('3.14', (3.14, 'px')),
+    ('23.4', (23.4, 'px')),
+    ('3\u0660', (3, 'px')),
+])
+def test_parse_dimension_value(string, expected):
+    assert parse_dimension_value(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+    '-42',
+    ' \n -5',
+    '+123',
+    '+0',
+    '-0',
+    '   +0',
+])
+def test_parse_dimension_value_invalid(string):
+    assert parse_dimension_value(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', '42px'),
+    ('0', '0px'),
+    ('100', '100px'),
+    ('+123', '123px'),
+    ('+0', '0px'),
+    ('-0', '0px'),
+    ('  42', '42px'),
+    ('\t7', '7px'),
+    ('   +0', '0px'),
+    ('100%', '100px'),
+    ('12.3%', '12px'),
+    ('42px', '42px'),
+    ('100,000', '100px'),
+    ('3.14', '3px'),
+    ('23.4', '23px'),
+    ('3\u0660', '3px'),
+])
+def test_map_to_pixel_length(string, expected):
+    assert map_to_pixel_length(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+    '-42',
+    ' \n -5',
+])
+def test_map_to_pixel_length_invalid(string):
+    assert map_to_pixel_length(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', '42.0px'),
+    ('0', '0.0px'),
+    ('100', '100.0px'),
+    ('  42', '42.0px'),
+    ('\t7', '7.0px'),
+    ('100%', '100.0%'),
+    ('12.3%', '12.3%'),
+    ('42.0px', '42.0px'),
+    ('100,000', '100.0px'),
+    ('3.14', '3.14px'),
+    ('23.4', '23.4px'),
+    ('3\u0660', '3.0px'),
+])
+def test_map_to_dimension_property(string, expected):
+    assert map_to_dimension_property(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+    '-42',
+    ' \n -5',
+    '+123',
+    '+0',
+    '-0',
+    '   +0',
+])
+def test_map_to_dimension_property_invalid(string):
+    assert map_to_dimension_property(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('42', '42.0px'),
+    ('100', '100.0px'),
+    ('  42', '42.0px'),
+    ('\t7', '7.0px'),
+    ('100%', '100.0%'),
+    ('12.3%', '12.3%'),
+    ('42.0px', '42.0px'),
+    ('100,000', '100.0px'),
+    ('3.14', '3.14px'),
+    ('23.4', '23.4px'),
+    ('3\u0660', '3.0px'),
+])
+def test_map_to_dimension_property_ignoring_zero(string, expected):
+    assert map_to_dimension_property_ignoring_zero(string) == expected
+
+
+@pytest.mark.parametrize('string', [
+    '',
+    '   ',
+    '0',
+    '0%',
+    '0.0',
+    'abc',
+    '+',
+    '-',
+    '+ 1',
+    '\u0660\u0661',
+    '-42',
+    ' \n -5',
+    '+123',
+    '+0',
+    '-0',
+    '   +0',
+])
+def test_map_to_dimension_property_ignoring_zero_invalid(string):
+    assert map_to_dimension_property_ignoring_zero(string) is None
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('a', '"a"'),
+    ('a\nb', '"a\\Ab"'),
+    ('a\rb', '"a\\Db"'),
+    ('\n\na', '"\\A\\Aa"'),
+    ('a"b', '"a\\"b"'),
+])
+def test_parse_string(string, expected):
+    assert parse_string(string) == expected
+
+
+@pytest.mark.parametrize(('string', 'expected'), [
+    ('a', 'url("a")'),
+    ('a\nb', 'url("a\\Ab")'),
+    ('a\rb', 'url("a\\Db")'),
+    ('\n\na', 'url("\\A\\Aa")'),
+    ('a"b', 'url("a\\"b")'),
+])
+def test_parse_url(string, expected):
+    assert parse_url(string) == expected
