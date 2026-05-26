@@ -2,6 +2,130 @@ Changelog
 =========
 
 
+Version 69.0
+------------
+
+Released on 2026-05-26.
+
+Command-line API:
+
+* The ``--srgb`` option has been replaced by ``--output-intent=srgb``. Other values are
+  possible: ``device-cmyk`` for CMYK documents with no ICC profile, or the CSS
+  identifier of a ``@color-profile`` rule.
+
+Python API:
+
+* The ``output_intent`` string entry replaces the ``srgb`` boolean in default options.
+
+Features:
+
+* `#2357 <https://github.com/Kozea/WeasyPrint/issues/2357>`_,
+  `#2700 <https://github.com/Kozea/WeasyPrint/pull/2700>`_:
+  Support logical properties
+* `#1194 <https://github.com/Kozea/WeasyPrint/issues/1194>`_,
+  `#2702 <https://github.com/Kozea/WeasyPrint/pull/2702>`_:
+  Support viewport units
+* `#2686 <https://github.com/Kozea/WeasyPrint/issues/2686>`_:
+  Detect redirection loops early in URL fetcher
+* `#2735 <https://github.com/Kozea/WeasyPrint/issues/2735>`_,
+  `#2737 <https://github.com/Kozea/WeasyPrint/pull/2737>`_:
+  Support SVG transform angle units
+* `#2636 <https://github.com/Kozea/WeasyPrint/issues/2636>`_,
+  `#2720 <https://github.com/Kozea/WeasyPrint/pull/2720>`_,
+  `#2773 <https://github.com/Kozea/WeasyPrint/pull/>2773`_:
+  Use HTML parsers for presentational hints
+
+Bug fixes:
+
+* `#2697 <https://github.com/Kozea/WeasyPrint/issues/2697>`_,
+  `#2691 <https://github.com/Kozea/WeasyPrint/pull/2691>`_:
+  Avoid endless loops in grids
+* `#2709 <https://github.com/Kozea/WeasyPrint/pull/2709>`_:
+  Be less strict for gradient rasterization in tests
+* `#2683 <https://github.com/Kozea/WeasyPrint/issues/2683>`_:
+  Fix rendering of emojis in SVG
+* `#2688 <https://github.com/Kozea/WeasyPrint/pull/2688>`_:
+  Always describe font using absolute sizes
+* `#2676 <https://github.com/Kozea/WeasyPrint/issues/2676>`_:
+  Fix inheritance for svg/symbol tags referenced by use tags
+* `#2681 <https://github.com/Kozea/WeasyPrint/pull/2681>`_:
+  Add dc:description field to PDF/A metadata
+* `#2680 <https://github.com/Kozea/WeasyPrint/issues/2680>`_:
+  Force first grid row rendering on empty pages
+* `#2690 <https://github.com/Kozea/WeasyPrint/issues/2690>`_:
+  Compute units in gradients used in border background
+* `#2689 <https://github.com/Kozea/WeasyPrint/issues/2689>`_:
+  Cut flex elements with fixed height and overflowing children
+* `#2651 <https://github.com/Kozea/WeasyPrint/issues/2651>`_,
+  `#2696 <https://github.com/Kozea/WeasyPrint/pull/2696>`_:
+  Fix tests on Debian
+* `#2698 <https://github.com/Kozea/WeasyPrint/issues/2698>`_,
+  `#2699 <https://github.com/Kozea/WeasyPrint/pull/2699>`_:
+  Fix alignment of right-to-left elements with auto width and set min/max-width
+* `#2556 <https://github.com/Kozea/WeasyPrint/issues/2556>`_:
+  Apply presentational hints to svg tags
+* `#2706 <https://github.com/Kozea/WeasyPrint/issues/2706>`_:
+  Handle infinite border radii
+* `#2707 <https://github.com/Kozea/WeasyPrint/issues/2707>`_,
+  `#2708 <https://github.com/Kozea/WeasyPrint/pull/2708>`_,
+  `#2710 <https://github.com/Kozea/WeasyPrint/pull/2710>`_:
+  Get mimetypes from Python code instead of various third-party files
+* `#2717 <https://github.com/Kozea/WeasyPrint/issues/2717>`_,
+  `#2580 <https://github.com/Kozea/WeasyPrint/issues/2580>`_,
+  `#2740 <https://github.com/Kozea/WeasyPrint/pull/2740>`_:
+  Fix table break retry after padding overflow
+* `#2769 <https://github.com/Kozea/WeasyPrint/pull/2769>`_:
+  Add year in PDF/UA-2 metadata
+* `#2768 <https://github.com/Kozea/WeasyPrint/issues/2768>`_:
+  Allow SVG lists of numbers to be split on + character
+* `#2770 <https://github.com/Kozea/WeasyPrint/pull/2770>`_:
+  Add namespace to Document tag in PDF 2
+* `#2771 <https://github.com/Kozea/WeasyPrint/pull/2771>`_:
+  Never try to render SVG use tags with external sources
+* `#2774 <https://github.com/Kozea/WeasyPrint/pull/2774>`_:
+  Fix calc in logical
+
+Documentation:
+
+* `#2703 <https://github.com/Kozea/WeasyPrint/issues/2703>`_,
+  `#2733 <https://github.com/Kozea/WeasyPrint/pull/2733>`_:
+  Document command-line option for papersize and orientation
+
+Contributors:
+
+* Guillaume Ayoub
+* Nils K
+* Rob
+* Daniel Fitzpatrick
+* Elango Subramani
+* Lucie Anglade
+* Markus Mohanty
+* Tomsgu
+* arjenzorgdoc
+
+Backers and sponsors:
+
+* Spacinov
+* Syslifters
+* Kobalt
+* Grip Angebotssoftware
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Method B
+* FieldHub
+* Hammerbacher
+* Yanal-Yves Fargialla
+* Prothesis Dental Solutions
+* Morntag
+* Xavid
+* Charlie S.
+* PDFBolt
+* Kai DeLorenzo
+
+
 Version 68.1
 ------------
 
