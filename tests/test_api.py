@@ -1395,6 +1395,29 @@ def test_url_fetcher_default(assert_pixels_equal):
 
 
 @assert_no_logs
+@pytest.mark.parametrize(('image_name', 'mime'), [
+    ('blue.jpg', 'image/jpeg'),
+    ('pattern.png', 'image/png'),
+])
+def test_url_fetcher_body_replaces_missing_file(image_name, mime):
+    """A URLFetcher returning body bytes for a file: URL whose path doesn't
+    exist on disk must use the response bytes, not try to read from the
+    missing file."""
+    image_bytes = resource_path(image_name).read_bytes()
+
+    class ReplacingFetcher(URLFetcher):
+        def fetch(self, url, headers=None):
+            if 'missing' in url:
+                return URLFetcherResponse(url, image_bytes, {'Content-Type': mime})
+            return super().fetch(url, headers)
+
+    base_url = str(resource_path('dummy.html'))
+    html = f'<body><img src="missing/replaced{Path(image_name).suffix}">'
+    FakeHTML(string=html, url_fetcher=ReplacingFetcher(),
+             base_url=base_url).write_pdf()
+
+
+@assert_no_logs
 def test_url_fetcher_bad_image(assert_pixels_equal):
     string = '<body><img src="custom:foo/bar">'
     css = CSS(string='@page { size: 8px; margin: 2px } body { font-size: 0 }')
