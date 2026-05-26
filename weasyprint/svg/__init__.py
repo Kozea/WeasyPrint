@@ -714,26 +714,42 @@ class SVG:
         return source, color
 
     def set_graphical_state(self, node, font_size, text=False):
-        """Set stroke and fill colors, and line options."""
+        """Set stroke and fill colors, and line options.
+
+        Gradient and pattern setup must happen here (before any subsequent
+        path-construction operators) because color-setting operators are
+        forbidden inside the path object state.
+
+        """
         # Get fill data
         fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
         fill_opacity = alpha_value(node.get('fill-opacity', 1))
         fill_in_gradient = fill_source in self.gradients
         fill_in_pattern = fill_source in self.patterns
-        if fill_color and not (fill_in_gradient or fill_in_pattern):
-            stream_color = color(fill_color)
-            stream_color.alpha *= fill_opacity
-            self.stream.set_color(stream_color)
+        if fill_in_gradient or fill_in_pattern:
+            node._fill_drawn = draw_gradient_or_pattern(
+                self, node, fill_source, font_size, fill_opacity, stroke=False)
+        else:
+            node._fill_drawn = False
+            if fill_color:
+                stream_color = color(fill_color)
+                stream_color.alpha *= fill_opacity
+                self.stream.set_color(stream_color)
 
         # Get stroke data
         stroke_source, stroke_color = self.get_paint(node.get('stroke'))
         stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
         stroke_in_gradient = stroke_source in self.gradients
         stroke_in_pattern = stroke_source in self.patterns
-        if stroke_color and not (stroke_in_gradient or stroke_in_pattern):
-            stream_color = color(stroke_color)
-            stream_color.alpha *= stroke_opacity
-            self.stream.set_color(stream_color, stroke=True)
+        if stroke_in_gradient or stroke_in_pattern:
+            node._stroke_drawn = draw_gradient_or_pattern(
+                self, node, stroke_source, font_size, stroke_opacity, stroke=True)
+        else:
+            node._stroke_drawn = False
+            if stroke_color:
+                stream_color = color(stroke_color)
+                stream_color.alpha *= stroke_opacity
+                self.stream.set_color(stream_color, stroke=True)
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:
             self.stream.set_line_width(stroke_width)
@@ -780,19 +796,20 @@ class SVG:
         self.stream.set_miter_limit(miter_limit)
 
     def fill_stroke(self, node, font_size, text=False):
-        """Paint fill and stroke for a node."""
-        # Get fill data
-        fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
-        fill_opacity = alpha_value(node.get('fill-opacity', 1))
-        fill_drawn = draw_gradient_or_pattern(
-            self, node, fill_source, font_size, fill_opacity, stroke=False)
+        """Paint fill and stroke for a node.
+
+        Gradient and pattern color-space/color operators are emitted earlier
+        in ``set_graphical_state``; this method only paints the path.
+
+        """
+        # Get fill data (gradient/pattern state was set in set_graphical_state)
+        fill_color = self.get_paint(node.get('fill', 'black'))[1]
+        fill_drawn = getattr(node, '_fill_drawn', False)
         fill = fill_color or fill_drawn
 
-        # Get stroke data
-        stroke_source, stroke_color = self.get_paint(node.get('stroke'))
-        stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
-        stroke_drawn = draw_gradient_or_pattern(
-            self, node, stroke_source, font_size, stroke_opacity, stroke=True)
+        # Get stroke data (gradient/pattern state was set in set_graphical_state)
+        stroke_color = self.get_paint(node.get('stroke'))[1]
+        stroke_drawn = getattr(node, '_stroke_drawn', False)
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         stroke = (stroke_color or stroke_drawn) and stroke_width
 
