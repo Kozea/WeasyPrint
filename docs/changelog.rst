@@ -32,8 +32,11 @@ Features:
   Support SVG transform angle units
 * `#2636 <https://github.com/Kozea/WeasyPrint/issues/2636>`_,
   `#2720 <https://github.com/Kozea/WeasyPrint/pull/2720>`_,
-  `#2773 <https://github.com/Kozea/WeasyPrint/pull/>2773`_:
+  `#2773 <https://github.com/Kozea/WeasyPrint/pull/2773>`_:
   Use HTML parsers for presentational hints
+* `#2631 <https://github.com/Kozea/WeasyPrint/issues/2631>`_,
+  `#2778 <https://github.com/Kozea/WeasyPrint/pull/2778>`_:
+  Allow users to set PDF output intent
 
 Bug fixes:
 

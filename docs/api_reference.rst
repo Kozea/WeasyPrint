@@ -387,7 +387,6 @@ From `CSS Fonts Module Level 4`_ we only support the
 .. _CSS Fonts Module Level 3: https://www.w3.org/TR/css-fonts-3/
 .. _CSS Fonts Module Level 4: https://www.w3.org/TR/css-fonts-4/
 
-
 CSS Paged Media Module Level 3
 ++++++++++++++++++++++++++++++
 
@@ -683,7 +682,7 @@ The ``attr()`` functional notation is allowed in the ``content`` and
 All the mathematical functions (``calc()``…) are supported.
 
 .. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/
-.. _CSS Values and Units Module Level 4: https://www.w3.org/TR/css4-values/
+.. _CSS Values and Units Module Level 4: https://www.w3.org/TR/css-values-4/
 
 CSS Multi-column Layout Module
 ++++++++++++++++++++++++++++++
@@ -834,10 +833,22 @@ Unsupported or untested:
 
 .. _CSS Grid Layout Module Level 2: https://www.w3.org/TR/css-grid-2/
 
-CSS Basic User Interface Module Level 3/4
-+++++++++++++++++++++++++++++++++++++++++
+CSS Logical Properties and Values Module Level 1
+++++++++++++++++++++++++++++++++++++++++++++++++
 
-The `CSS Basic User Interface Module Level 3/4`_ "enables authors to style user
+The `CSS Logical Properties and Values Module Level 1`_ "defines how to map between
+flow-relative and physical terms."
+
+All the logical properties and shorthands based on ``start``, ``end``, ``block`` and
+``inline`` are supported. But, as ``writing-mode`` is not supported, the ``block`` and
+``inline`` axes always correspond to the vertical and horizontal axes.
+
+.. _Logical Properties and Values Module Level 1: https://www.w3.org/TR/css-logical-1/
+
+CSS Basic User Interface Module Level 4
++++++++++++++++++++++++++++++++++++++++
+
+The `CSS Basic User Interface Module Level 4`_ "enables authors to style user
 interface related properties and values."
 
 The ``outline-width``, ``outline-style``, ``outline-color`` properties and the
@@ -852,3 +863,5 @@ form fields as PDF form fields (supported for text inputs, check boxes, text
 areas, and select only).
 
 The ``accent-color`` property is **not** supported.
+
+.. _CSS Basic User Interface Module Level 4: https://www.w3.org/TR/css-ui-4/

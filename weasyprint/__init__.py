@@ -46,7 +46,7 @@ VERSION = __version__ = '68.1'
 #:     Whether custom HTML metadata should be stored in the generated PDF.
 #: :param bool presentational_hints:
 #:     Whether HTML presentational hints are followed.
-#: :param string output_intent:
+#: :param str output_intent:
 #:     srgb, device-cmyk, or CSS identifier of the output intent color space.
 #: :param bool optimize_images:
 #:     Whether size of embedded images should be optimized, with no quality
