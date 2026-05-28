@@ -33,7 +33,7 @@ def add_tags(pdf, document, pdf_version, page_streams):
     # Add namespace for PDF 2.
     if str(pdf_version) >= '2.0':  # Cast for bytes and None
         namespace = pydyf.Dictionary({
-            'Type': '/Namepace',
+            'Type': '/Namespace',
             'NS': pydyf.String('http://iso.org/pdf2/ssn'),
         })
         pdf.add_object(namespace)
