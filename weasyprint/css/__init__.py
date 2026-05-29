@@ -450,7 +450,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 color = html.parse_legacy_color(bgcolor)
                 style_attribute = f'background-color:{color}'
                 yield parse_declaration(style_attribute)
-            if element.tag in ('tr', 'td', 'th'):
+            if element.tag in ('td', 'th'):
                 if height := element.get('height'):
                     value = html.map_to_dimension_property_ignoring_zero(height)
                     if value is not None:
@@ -528,15 +528,15 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                             yield parse_declaration('border-style:solid')
         elif element.tag == 'ol':
             # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet.
-            if size := element.get('start'):
-                value = html.parse_integer(size_attr)
+            if start := element.get('start'):
+                value = html.parse_integer(start)
                 if value is not None:
                     yield parse_declaration(f'counter-reset:list-item {value}')
                     yield parse_declaration('counter-increment:list-item -1')
         elif element.tag == 'li':
             # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet.
             if value := element.get('value'):
-                value = html.parse_integer(size_attr)
+                value = html.parse_integer(value)
                 if value is not None:
                     yield parse_declaration(f'counter-reset:list-item {value}')
                     yield parse_declaration('counter-increment:none')

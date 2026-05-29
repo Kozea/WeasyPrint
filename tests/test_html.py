@@ -166,6 +166,25 @@ def test_ph_lists_types():
 
 
 @assert_no_logs
+def test_ph_lists_start():
+    document = HTML(string='''
+      <ol start=3>
+        <li></li>
+      </ol>
+      <ul>
+        <li value=3></li>
+      </ul>
+    ''').render(stylesheets=[PH_TESTING_CSS], presentational_hints=True)
+    page, = document.pages
+    html, = page._page_box.children
+    body, = html.children
+    ol, ul = body.children
+    uli1, = ul.children
+    assert ol.style['counter_reset'] == (('list-item', 3),)
+    assert uli1.style['counter_reset'] == (('list-item', 3),)
+
+
+@assert_no_logs
 def test_ph_tables():
     document = HTML(string='''
       <table align=left rules=none></table>
@@ -180,11 +199,11 @@ def test_ph_tables():
         <tr>
           <td nowrap><h1 align=right></h1><p align=center></p></td>
         </tr>
-        <tr>
+        <tr height=0>
         </tr>
         <tfoot align=justify>
           <tr>
-            <td></td>
+            <td width=1 height=10></td>
           </tr>
         </tfoot>
       </table>
@@ -215,17 +234,20 @@ def test_ph_tables():
     head, = head_group.children
     th, = head.children
     assert th.style['vertical_align'] == 'top'
-    line1, line2 = rows_group.children
-    td, = line1.children
+    tr1, tr2 = rows_group.children
+    td, = tr1.children
     assert td.style['white_space'] == 'nowrap'
     assert td.style['border_top_width'] == 1
     assert td.style['border_top_style'] == 'inset'
     h1, p = td.children
     assert h1.style['text_align_all'] == 'right'
     assert p.style['text_align_all'] == 'center'
-    foot, = foot_group.children
-    tr, = foot.children
-    assert tr.style['text_align_all'] == 'justify'
+    assert tr2.height == 0
+    tr, = foot_group.children
+    td, = tr.children
+    assert td.style['text_align_all'] == 'justify'
+    assert td.height == 10
+    assert td.width == 1
 
 
 @assert_no_logs
