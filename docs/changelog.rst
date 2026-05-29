@@ -5,7 +5,17 @@ Changelog
 Version 69.0
 ------------
 
-Released on 2026-05-26.
+Released on 2026-06-02.
+
+**This is a security update (CVE-2026-49452).**
+
+We strongly recommend to upgrade WeasyPrint to the latest version if you use the
+``--presentational-hints`` option and render untrusted HTML with restricted CSS
+properties.
+
+Security:
+
+* Avoid CSS injection with HTML presentational hints.
 
 Command-line API:
 
