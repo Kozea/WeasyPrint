@@ -35,7 +35,9 @@ Features:
   `#2773 <https://github.com/Kozea/WeasyPrint/pull/2773>`_:
   Use HTML parsers for presentational hints
 * `#2631 <https://github.com/Kozea/WeasyPrint/issues/2631>`_,
-  `#2778 <https://github.com/Kozea/WeasyPrint/pull/2778>`_:
+  `#2778 <https://github.com/Kozea/WeasyPrint/pull/2778>`_,
+  `#2785 <https://github.com/Kozea/WeasyPrint/issues/2785>`_,
+  `#2788 <https://github.com/Kozea/WeasyPrint/pull/2788>`_:
   Allow users to set PDF output intent
 
 Bug fixes:
