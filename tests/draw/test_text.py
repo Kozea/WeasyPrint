@@ -1310,9 +1310,9 @@ def test_unicode_range(assert_pixels):
         }
         body {
           color: red;
-          font-family: uni;
+          font-family: uni, %s;
           font-size: 2px;
           line-height: 0;
           margin: 2px 1px;
         }
-      </style>ADZB''')
+      </style>ADZB''' % SANS_FONTS)
