@@ -11,7 +11,6 @@ from ..urls import get_link_attribute, get_url_tuple
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
 from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, to_pixels
-from .validation import validate_non_shorthand
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -790,22 +789,16 @@ def transform(style, name, value):
 @register_computer('vertical-align')
 def vertical_align(style, name, value):
     """Compute the ``vertical-align`` property."""
-    from ..css import resolve_math
-
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
-    if check_math(value):
-        height, _ = strut(style)
-        result = resolve_math(value, style, 'vertical_align', height)
-        value = validate_non_shorthand((result,), 'vertical-align')[0][1]
-        if value is None:
-            value = 'baseline'
     if value in ('baseline', 'middle', 'text-top', 'text-bottom', 'top', 'bottom'):
         return value
     elif value == 'super':
         return style['font_size'] * 0.5
     elif value == 'sub':
         return style['font_size'] * -0.5
+    elif check_math(value):
+        return value
     elif value.unit == '%':
         height, _ = strut(style)
         return height * value.value / 100

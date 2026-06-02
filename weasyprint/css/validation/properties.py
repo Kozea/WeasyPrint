@@ -82,22 +82,21 @@ def property(property_name=None, proprietary=False, unstable=False,
 
 def validate_non_shorthand(tokens, name, base_url=None, required=False):
     """Validator for non-shorthand properties."""
-    if name.startswith('--'):
-        # TODO: validate content
-        return ((name, tokens),)
-
-    if not required and name not in KNOWN_PROPERTIES:
+    if not required and name not in KNOWN_PROPERTIES and not name.startswith('--'):
         raise InvalidValues('unknown property')
 
-    if not required and name not in PROPERTIES:
+    if not required and name not in PROPERTIES and not name.startswith('--'):
         raise InvalidValues('property not supported yet')
 
-    function = PROPERTIES[name]
     for token in tokens:
         if check_var(token):
             # Found CSS variable, return pending-substitution values.
             return ((name, PendingProperty(tokens, name)),)
 
+    if name.startswith('--'):
+        return ((name, tokens),)
+
+    function = PROPERTIES[name]
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
         value = keyword

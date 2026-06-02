@@ -3,7 +3,7 @@
 import unicodedata
 from math import inf
 
-from ..css import AnonymousStyle, Pending
+from ..css import AnonymousStyle, Pending, check_math
 from ..css.properties import INHERITED
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
@@ -1101,7 +1101,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
             # Later, we will assume for this subtree that its baseline
             # is at y=0.
             child_baseline_y = 0
-        elif isinstance(vertical_align, Pending):
+        elif isinstance(vertical_align, Pending) or check_math(vertical_align):
             height, _ = strut(box.style)
             child_baseline_y = baseline_y - percentage(
                 vertical_align, box.style, height)

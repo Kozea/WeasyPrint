@@ -164,6 +164,14 @@ def test_variable_self():
     ''')
 
 
+def test_variable_self_used():
+    page, = render_pages('''
+      <style>
+        html { --var1: var(--var1); width: var(--var1) }
+      </style>
+    ''')
+
+
 def test_variable_loop():
     page, = render_pages('''
       <style>

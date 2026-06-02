@@ -565,13 +565,10 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-def resolve_var(computed, token, parent_style, known_variables=None):
+def resolve_var(computed, token, parent_style):
     """Return token with resolved CSS variables."""
     if not check_var(token):
         return
-
-    if known_variables is None:
-        known_variables = set()
 
     if token.type == '() block' or token.lower_name != 'var':
         items = []
@@ -579,7 +576,7 @@ def resolve_var(computed, token, parent_style, known_variables=None):
         for i, argument in enumerate(token_items):
             if argument.type in ('function', '() block'):
                 resolved = resolve_var(
-                    computed, argument, parent_style, known_variables.copy())
+                    computed, argument, parent_style)
                 items.extend((argument,) if resolved is None else resolved)
             else:
                 items.append(argument)
@@ -589,23 +586,25 @@ def resolve_var(computed, token, parent_style, known_variables=None):
         else:
             token = tinycss2.ast.FunctionBlock(
                 token.source_line, token.source_column, token.name, items)
-        return resolve_var(computed, token, parent_style, known_variables) or (token,)
+        return resolve_var(computed, token, parent_style) or (token,)
 
     function = Function(token)
     arguments = function.split_comma(single_tokens=False, trailing=True)
     if not arguments or len(arguments[0]) != 1:
-        return []
+        return []  # no arguments or wrong variable name
+
     variable_name = arguments[0][0].value.replace('-', '_')  # first arg is name
-    if variable_name in known_variables:
-        return []  # endless recursion
-    else:
-        known_variables.add(variable_name)
-    default = arguments[1] if len(arguments) > 1 else []
+    if value := computed[variable_name]:
+        return value  # computed value of variable is correct
+
+    if len(arguments) < 2:
+        return []  # no computed value and no default value
+
     computed_value = []
-    for value in (computed[variable_name] or default):
-        resolved = resolve_var(computed, value, parent_style, known_variables.copy())
+    for value in arguments[1]:
+        resolved = resolve_var(computed, value, parent_style)
         computed_value.extend((value,) if resolved is None else resolved)
-    return computed_value
+    return computed_value  # default value with resolved variables
 
 
 def _resolve_calc_sum(computed, tokens, property_name, refer_to):
@@ -1131,7 +1130,9 @@ class ComputedStyle(dict):
             # Property with pending values, validate them.
             solved_tokens = []
             for token in value.tokens:
+                self[key] = None  # mark property as invalid to avoid endless loops
                 tokens = resolve_var(self, token, parent_style)
+                del self[key]
                 if tokens is None:
                     solved_tokens.append(token)
                 else:
@@ -1142,6 +1143,8 @@ class ComputedStyle(dict):
                 if key in INHERITED and parent_style is not None:
                     # Values in parent_style are already computed.
                     self[key] = value = parent_style[key]
+                elif key[:2] == '__':
+                    value = None
                 else:
                     value = INITIAL_VALUES[key]
                     if key not in INITIAL_NOT_COMPUTED:
@@ -1180,17 +1183,22 @@ class ComputedStyle(dict):
             self.specified[key] = value
 
         if check_math(value):
-            function = value
             solved_tokens = []
+            values = value if type(value) is tuple else (value,)
             try:
-                try:
-                    token = resolve_math(function, self, key)
-                except PercentageInMath:
-                    solved_tokens.append(function)
-                else:
-                    if token is None:
-                        raise Exception
-                    solved_tokens.append(token)
+                for value in values:
+                    if check_math(value):
+                        function = value
+                        try:
+                            token = resolve_math(function, self, key)
+                        except PercentageInMath:
+                            solved_tokens.append(function)
+                        else:
+                            if token is None:
+                                raise Exception
+                            solved_tokens.append(token)
+                    else:
+                        solved_tokens.append(value)
                 original_key = key.replace('_', '-')
                 value = validate_non_shorthand(solved_tokens, original_key)[0][1]
             except Exception:

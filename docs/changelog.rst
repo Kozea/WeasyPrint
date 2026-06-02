@@ -89,6 +89,8 @@ Bug fixes:
   Never try to render SVG use tags with external sources
 * `#2774 <https://github.com/Kozea/WeasyPrint/pull/2774>`_:
   Fix calc in logical
+* `#2791 <https://github.com/Kozea/WeasyPrint/pull/2791>`_:
+  Improve management of variables
 
 Documentation:
 
