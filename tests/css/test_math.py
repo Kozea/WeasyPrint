@@ -378,3 +378,41 @@ def test_math_table_column():
         </tbody>
       </table>
     ''')
+
+
+@assert_no_logs
+def test_math_border_spacing_em():
+    render_pages('''
+      <table style="
+          --spacing: 1em; --border-spacing: calc(var(--spacing) * 5);
+          border-spacing: var(--border-spacing) var(--border-spacing)">
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+          </tr>
+        </tbody>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_math_vertical_align_table_percent():
+    render_pages('''
+      <table><tr><td style="vertical-align: calc(1em + 1%)">abc
+    ''')
+
+
+@assert_no_logs
+def test_math_vertical_align_inline_percent():
+    render_pages('''
+      <span style="vertical-align: calc(1em + 1%)">abc
+    ''')
+
+
+@assert_no_logs
+def test_math_vertical_align_page_percent():
+    render_pages('''
+      <style>@page{@top-left{content: "a"; vertical-align: calc(1em + 1%)}}</style>
+      <body>abc
+    ''')
