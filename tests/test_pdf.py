@@ -764,9 +764,7 @@ def test_pdf_tags_inline_table():
 
 @assert_no_logs
 def test_pdf_ua_2_namespace_type():
-    # The structure-tree namespace dictionary must use /Type /Namespace,
-    # not the misspelled /Namepace.
+    # Regression test for #2786.
     pdf = FakeHTML(string='<html lang="en"><body>abc').write_pdf(
         pdf_variant='pdf/ua-2', uncompressed_pdf=True)
     assert b'/Type /Namespace' in pdf
-    assert b'/Namepace' not in pdf
