@@ -371,9 +371,11 @@ def test_python_render(assert_pixels_equal, tmp_path):
 
 @assert_no_logs
 def test_unknown_options():
+    # Regression test for #2731.
     with capture_logs() as logs:
         pdf_bytes = FakeHTML(string='test').write_pdf(zoom=2, unknown=True)
     assert len(logs) == 1
+    assert logs[0].startswith('ERROR')
     assert 'unknown' in logs[0]
     assert pdf_bytes
 
@@ -1578,3 +1580,35 @@ def test_page_copy_relative():
     duplicated_pages = document.copy([*document.pages, *document.pages])
     pngs = duplicated_pages.write_png(split_images=True)
     assert pngs[0] == pngs[1]
+
+
+@assert_no_logs
+def test_unknown_render_option():
+    # Regression test for #2731.
+    with capture_logs() as logs:
+        FakeHTML(string='<body>').render(bogus_option=True)
+    assert len(logs) == 1
+    assert logs[0].startswith('ERROR')
+    assert 'bogus_option' in logs[0]
+
+
+@assert_no_logs
+def test_unknown_options_options_wrapper():
+    # Regression test for #2731: passing options={...} as a kwarg (the
+    # reporter's case) silently dropped the requested PDF variant.
+    with capture_logs() as logs:
+        FakeHTML(string='<body>').write_pdf(options={'pdf_variant': 'pdf/a-2b'})
+    assert len(logs) == 1
+    assert logs[0].startswith('ERROR')
+    assert 'options' in logs[0]
+
+
+@assert_no_logs
+def test_unknown_document_write_pdf_option():
+    # Regression test for #2731.
+    document = FakeHTML(string='<body>').render()
+    with capture_logs() as logs:
+        document.write_pdf(bogus_option=True)
+    assert len(logs) == 1
+    assert logs[0].startswith('ERROR')
+    assert 'bogus_option' in logs[0]

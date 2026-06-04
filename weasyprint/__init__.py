@@ -213,8 +213,8 @@ class HTML:
         :returns: A :class:`document.Document` object.
 
         """
-        for unknown in set(options) - set(DEFAULT_OPTIONS):
-            LOGGER.warning('Unknown rendering option: %s.', unknown)
+        for unknown in sorted(set(options) - set(DEFAULT_OPTIONS)):
+            LOGGER.error('Unknown rendering option: %s.', unknown)
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
@@ -261,9 +261,12 @@ class HTML:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
-        return (
-            self.render(font_config, counter_style, color_profiles, **options)
-            .write_pdf(target, zoom, finisher, **options))
+        document = self.render(
+            font_config, counter_style, color_profiles, **options)
+        # render() has already reported any unknown options; forward only the
+        # known ones so they are not reported a second time by write_pdf().
+        options = {key: options[key] for key in DEFAULT_OPTIONS}
+        return document.write_pdf(target, zoom, finisher, **options)
 
 
 class CSS:
