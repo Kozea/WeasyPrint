@@ -248,6 +248,19 @@ def test_css_parsing():
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
+@assert_no_logs
+def test_css_base_url_as_path():
+    """Regression test for #2764.
+
+    ``CSS()`` must accept a ``pathlib.Path`` ``base_url`` like ``HTML()``
+    does, instead of raising ``TypeError`` in ``url_is_absolute()``.
+    """
+    with chdir(Path(__file__).parent):
+        path = Path('resources') / 'utf8-test.css'
+        # Must not raise.
+        CSS(string=path.read_text('utf-8'), base_url=path)
+
+
 def check_png_pattern(assert_pixels_equal, png_bytes, x2=False, blank=False,
                       rotated=False):
     if blank:
