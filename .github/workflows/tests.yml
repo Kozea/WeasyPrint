@@ -26,11 +26,13 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew update
+          brew upgrade fontconfig
           brew install --cask font-dejavu
           brew install pango ghostscript
       - name: Install DejaVu, Pango and Ghostscript (Windows)
         if: matrix.os == 'windows-latest'
         run: |
+          C:\msys64\usr\bin\bash -lc 'pacman -Syu --noconfirm'
           C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-ttf-dejavu mingw-w64-x86_64-pango mingw-w64-x86_64-ghostscript --noconfirm'
           xcopy "C:\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
           echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH
