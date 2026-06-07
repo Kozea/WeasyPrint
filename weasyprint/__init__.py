@@ -291,6 +291,8 @@ class CSS:
             filename or url or getattr(file_obj, 'name', 'CSS string'))
         if url_fetcher is None:
             url_fetcher = URLFetcher()
+        if isinstance(base_url, Path):
+            base_url = str(base_url)
         result = select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher, check_css_mime_type=_check_mime_type)
