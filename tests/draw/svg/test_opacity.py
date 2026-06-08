@@ -146,6 +146,22 @@ def test_translate_opacity(assert_same_renderings):
 
 
 @assert_no_logs
+def test_group_opacity_transformed_child(assert_same_renderings):
+    assert_same_renderings(
+        opacity_source % '''
+            <g opacity="0.5">
+              <rect x="0" y="0" width="4" height="4" fill="red"
+                    transform="translate(5 5)" />
+            </g>
+        ''',
+        opacity_source % '''
+            <rect x="0" y="0" width="4" height="4" fill="rgb(255, 127, 127)"
+                  transform="translate(5 5)" />
+        ''',
+    )
+
+
+@assert_no_logs
 def test_translate_use_opacity(assert_same_renderings):
     # Regression test for #1976.
     assert_same_renderings(
