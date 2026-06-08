@@ -4,6 +4,7 @@ from collections import defaultdict
 from itertools import count, cycle
 from math import inf
 
+from ..css.functions import check_math
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from ..logger import LOGGER
@@ -226,6 +227,55 @@ def _get_template_tracks(tracks):
             else:
                 tracks_list.append(list(track))
     return tracks_list
+
+
+def grid_content_width(context, box, outer=True, function='max-content'):
+    """Return a simple intrinsic width for grid containers.
+
+    This does not implement the whole grid intrinsic sizing algorithm, but it
+    handles common non-spanning row-flow grids by summing track contributions
+    instead of treating the grid as a regular block.
+
+    """
+    assert function in ('min-content', 'max-content')
+
+    width = box.style['width']
+    if width != 'auto' and not check_math(width) and width.unit != '%':
+        from .preferred import block_max_content_width, block_min_content_width
+        if function == 'min-content':
+            return block_min_content_width(context, box, outer)
+        else:
+            return block_max_content_width(context, box, outer)
+
+    columns = _get_template_tracks(box.style['grid_template_columns'])
+    columns_sizing = [_get_sizing_functions(column) for column in columns[1::2]]
+    columns_number = len(columns_sizing) or 1
+    tracks_widths = [0] * columns_number
+
+    column_gap = box.style['column_gap']
+    if column_gap == 'normal' or check_math(column_gap) or column_gap.unit == '%':
+        column_gap = 0
+    else:
+        column_gap = column_gap.value
+
+    content_width = (
+        min_content_width if function == 'min-content' else max_content_width)
+    for index, child in enumerate(
+            child for child in box.children if not child.is_absolutely_positioned()):
+        column = index % columns_number
+        tracks_widths[column] = max(
+            tracks_widths[column], content_width(context, child))
+
+    for i, sizing in enumerate(columns_sizing):
+        min_function, max_function = sizing
+        for track_function in (min_function, max_function):
+            if _is_length(track_function) and not check_math(track_function):
+                tracks_widths[i] = max(tracks_widths[i], track_function.value)
+
+    width = sum(tracks_widths) + max(0, columns_number - 1) * column_gap
+
+    from .preferred import adjust
+    return adjust(box, outer, width)
 
 
 def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribution,
