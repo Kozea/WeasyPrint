@@ -569,16 +569,27 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             # 8.3 Set the used cross-size of the flex line.
             line.cross_size = max(collected_cross_size, non_collected_cross_size)
 
-    # 8.3 If the flex container is single-line…
-    if len(flex_lines) == 1:
-        line, = flex_lines
+    def min_max_cross_size(cross_size):
         min_cross_size = getattr(box, f'min_{cross}')
         if min_cross_size == 'auto':
             min_cross_size = -inf
         max_cross_size = getattr(box, f'max_{cross}')
         if max_cross_size == 'auto':
             max_cross_size = inf
-        line.cross_size = max(min_cross_size, min(line.cross_size, max_cross_size))
+        return max(min_cross_size, min(cross_size, max_cross_size))
+
+    # 8.3 If the flex container is single-line…
+    if len(flex_lines) == 1:
+        line, = flex_lines
+        line.cross_size = min_max_cross_size(line.cross_size)
+
+    # 15 Determine the flex container’s used cross size.
+    # TODO: Use the updated algorithm.
+    if cross == 'height' and getattr(box, cross) == 'auto':
+        # Otherwise, use the sum of the flex lines' cross sizes…
+        cross_size = sum(line.cross_size for line in flex_lines)
+        cross_size += (len(flex_lines) - 1) * cross_gap
+        setattr(box, cross, min_max_cross_size(cross_size))
 
     # 9 Handle 'align-content: stretch'.
     align_content = box.style['align_content']
@@ -850,11 +861,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     # TODO: Use the updated algorithm.
     if getattr(box, cross) == 'auto':
         # Otherwise, use the sum of the flex lines' cross sizes…
-        # TODO: Handle min-max.
         # TODO: What about align-content here?
         cross_size = sum(line.cross_size for line in flex_lines)
         cross_size += (len(flex_lines) - 1) * cross_gap
-        setattr(box, cross, cross_size)
+        setattr(box, cross, min_max_cross_size(cross_size))
 
     if len(flex_lines) > 1:
         # 15 If the cross size property is a definite size, use that…
