@@ -489,7 +489,11 @@ class SVG:
         # Handle text anchor and set text bounding box
         text_anchor_shift = False
         if node.display and TAGS.get(node.tag) == text:
-            if (text_anchor := node.get('text-anchor')) in ('middle', 'end'):
+            text_anchor = node.get('text-anchor')
+            direction = node.get('direction', 'ltr')
+            if (text_anchor == 'middle' or
+                    (text_anchor == 'end' and direction != 'rtl') or
+                    (text_anchor in (None, 'start') and direction == 'rtl')):
                 text_anchor_shift = True
                 group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
                 original_streams.append(self.stream)
