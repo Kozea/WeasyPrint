@@ -15,7 +15,7 @@ from .formatting_structure.build import build_formatting_structure
 from .html import get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
-from .logger import PROGRESS_LOGGER
+from .logger import LOGGER, PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import VARIANTS, generate_pdf
 from .pdf.metadata import DocumentMetadata
@@ -327,6 +327,8 @@ class Document:
             ``target``).
 
         """
+        for unknown in sorted(set(options) - set(DEFAULT_OPTIONS)):
+            LOGGER.error('Unknown PDF option: %s.', unknown)
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
