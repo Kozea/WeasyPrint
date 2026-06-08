@@ -22,6 +22,49 @@ def test_text_fill(assert_pixels):
 
 
 @assert_no_logs
+def test_text_combining_character(assert_same_renderings):
+    assert_same_renderings('''
+      <style>
+        @page { size: 20px 20px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="15" font-family="weasyprint" font-size="16" fill="blue">
+          é
+        </text>
+      </svg>
+    ''', '''
+      <style>
+        @page { size: 20px 20px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="15" font-family="weasyprint" font-size="16" fill="blue">
+          é
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_ligature(assert_pixels):
+    assert_pixels('''
+        BBB_________________
+        BBB_________________
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" font-family="weasyprint" font-size="2" fill="blue">
+          liga
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_stroke(assert_pixels):
     assert_pixels('''
         _BBBBBBBBBBBB_______
@@ -246,6 +289,66 @@ def test_text_anchor_end(assert_pixels):
         <text x="18" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue" text-anchor="end">
           ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_direction_rtl_anchor_start(assert_pixels):
+    assert_pixels('''
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" direction="rtl"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="18" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_direction_rtl_anchor_end(assert_pixels):
+    assert_pixels('''
+        __BBBBBB____________
+        __BBBBBB____________
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue" direction="rtl" text-anchor="end">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_unicode_bidi_override(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+        BBBBBBBBBB__________
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="3" font-family="weasyprint" font-size="4"
+              fill="blue" direction="rtl" unicode-bidi="bidi-override">
+          liga
         </text>
       </svg>
     ''')
