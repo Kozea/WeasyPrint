@@ -1762,6 +1762,103 @@ def test_flex_auto_break_before():
 
 
 @assert_no_logs
+def test_flex_direction_row_break_before_page():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px; margin: 0 }
+        body { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 20px }
+        div { width: 4px }
+      </style>
+      <article>
+        <div>A</div>
+        <div style="break-before: page">B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.children[0].children[0].text == 'B'
+    assert div2.children[0].children[0].text == 'C'
+    assert div1.position_x == 0
+    assert div2.position_x == 4
+
+
+@assert_no_logs
+def test_flex_direction_row_break_after_page():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px; margin: 0 }
+        body { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; width: 20px }
+        div { width: 4px }
+      </style>
+      <article>
+        <div style="break-after: page">A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.children[0].children[0].text == 'B'
+    assert div2.children[0].children[0].text == 'C'
+    assert div1.position_x == 0
+    assert div2.position_x == 4
+
+
+@assert_no_logs
+def test_flex_direction_row_wrap_break_after_page():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px; margin: 0 }
+        body { font: 2px/1 weasyprint; margin: 0 }
+        article { display: flex; flex-wrap: wrap; width: 8px }
+        div { width: 4px }
+      </style>
+      <article>
+        <div>A</div>
+        <div style="break-after: page">B</div>
+        <div>C</div>
+        <div>D</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div2.children[0].children[0].text == 'B'
+    assert div1.position_y == div2.position_y == 0
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.children[0].children[0].text == 'C'
+    assert div2.children[0].children[0].text == 'D'
+    assert div1.position_x == 0
+    assert div2.position_x == 4
+    assert div1.position_y == div2.position_y == 0
+
+
+@assert_no_logs
 def test_flex_grow_in_flex_column():
     page, = render_pages('''
       <html style="width: 14px">
