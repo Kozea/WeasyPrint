@@ -18,6 +18,7 @@ ffi.cdef('''
     typedef uint32_t hb_codepoint_t;
     hb_tag_t hb_tag_from_string (const char *str, int len);
     void hb_tag_to_string (hb_tag_t tag, char *buf);
+    hb_face_t * hb_face_reference (hb_face_t *face);
     void hb_face_destroy (hb_face_t *face);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);

@@ -1,6 +1,14 @@
 """Test the fonts features."""
 
-from .testing_utils import assert_no_logs, render_pages
+import gc
+
+from weasyprint import CSS
+from weasyprint.css import InitialStyle
+from weasyprint.pdf.fonts import Font
+from weasyprint.text.fonts import FontConfiguration, get_pango_font_key
+from weasyprint.text.line_break import create_layout
+
+from .testing_utils import BASE_URL, assert_no_logs, render_pages
 
 
 @assert_no_logs
@@ -14,6 +22,29 @@ def test_font_face():
     body, = html.children
     line, = body.children
     assert line.width == 3 * 16
+
+
+def test_font_face_harfbuzz_face_lifetime():
+    font_config = FontConfiguration()
+    CSS(string='''
+      @font-face {
+        font-family: repro;
+        src: url(weasyprint.otf);
+      }
+    ''', base_url=BASE_URL, font_config=font_config)
+    style = InitialStyle(font_config)
+    style['font_family'] = ('repro',)
+    layout = create_layout(
+        'ab', style, context=None, max_width=None, justification_spacing=0)
+    line, _ = layout.get_first_line()
+    pango_font = line.runs.data.item.analysis.font
+    _, description, font_size = get_pango_font_key(pango_font)
+    font = Font(pango_font, description, font_size)
+
+    del font_config, layout, line, pango_font, style
+    gc.collect()
+
+    font.clean({1: 'a', 2: 'b'}, hinting=False)
 
 
 @assert_no_logs

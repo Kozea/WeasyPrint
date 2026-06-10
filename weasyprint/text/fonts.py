@@ -353,7 +353,8 @@ def get_pango_font_hb_face(pango_font):
     """Get Harfbuzz face out of given Pango font."""
     fc_font = ffi.cast('PangoFcFont *', pango_font)
     fontmap = ffi.cast('PangoFcFontMap *', pango.pango_font_get_font_map(pango_font))
-    return pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
+    hb_face = pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
+    return ffi.gc(harfbuzz.hb_face_reference(hb_face), harfbuzz.hb_face_destroy)
 
 
 def get_hb_object_data(hb_object, ot_color=None, glyph=None):
