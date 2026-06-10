@@ -162,7 +162,7 @@ class Document:
                 css = CSS(
                     guess=css, media_type=html.media_type,
                     font_config=font_config, counter_style=counter_style,
-                    color_profiles=color_profiles)
+                    color_profiles=color_profiles, url_fetcher=html.url_fetcher)
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, options['presentational_hints'], font_config,

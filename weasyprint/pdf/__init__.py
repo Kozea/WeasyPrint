@@ -276,7 +276,7 @@ def generate_pdf(document, target, zoom, **options):
                 pdf.info[key] = pydyf.String(value)
     if options['xmp_metadata']:
         for url in options['xmp_metadata']:
-            result = select_source(url)
+            result = select_source(url, url_fetcher=document.url_fetcher)
             with result as (file_obj, base_url, charset, _):
                 xmp_metadata = file_obj.read()
                 if charset:

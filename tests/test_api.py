@@ -1332,6 +1332,20 @@ def test_url_fetcher_body_replaces_missing_file(image_name, mime):
 
 
 @assert_no_logs
+def test_url_fetcher_bad_xmp_metadata(assert_pixels_equal):
+    html = FakeHTML(string='abc', url_fetcher=Fetcher())
+    with pytest.raises(FatalURLFetchingError, match='Forbidden URL'):
+        html.write_pdf(xmp_metadata=['file://forbidden.css'])
+
+
+@assert_no_logs
+def test_url_fetcher_bad_css(assert_pixels_equal):
+    html = FakeHTML(string='abc', url_fetcher=Fetcher())
+    with pytest.raises(FatalURLFetchingError, match='Forbidden URL'):
+        html.render(stylesheets=['file://forbidden.css'])
+
+
+@assert_no_logs
 def test_url_fetcher_bad_image(assert_pixels_equal):
     string = '<body><img src="custom:foo/bar">'
     css = CSS(string='@page { size: 8px; margin: 2px } body { font-size: 0 }')
