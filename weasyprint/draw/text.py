@@ -165,7 +165,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             font, font_size = stream.add_font(pango_font)
 
             # Workaround for https://gitlab.gnome.org/GNOME/pango/-/issues/530.
-            if pango.pango_version() < 14802:
+            # This is also needed by raster emoji fonts, see #2800.
+            if pango.pango_version() < 14802 or font.png:
                 font_size = textbox.style['font_size']
 
             # Go through the run glyphs.
