@@ -14,8 +14,8 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
       - name: Install requirements
         run: python -m pip install flit
       - name: Build packages
@@ -37,6 +37,7 @@ jobs:
           pandoc docs/changelog.rst -f rst -t gfm | csplit - /##/ "{1}" -f .part
           sed -r "s/^([A-Z].*)\:\$/## \1/" .part01 | sed -r "s/^ *//" | sed -rz "s/([^\n])\n([^\n^-])/\1 \2/g" | tail -n +5 > .body
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body_path: .body
+          draft: true
