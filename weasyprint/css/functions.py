@@ -176,7 +176,13 @@ def check_var(token):
 def check_math(token):
     # TODO: validate for real.
     if type(token) is tuple:
-        return any(check_math(token) for token in token)
+        return any(check_math(item) for item in token)
+    # Fast path: only function tokens can be math functions. Avoid allocating a
+    # Function object (and thus return early) for the common case of plain
+    # values like dimensions, which have no 'function' type. This matches
+    # Function.__init__, which leaves name=None for non-function tokens.
+    if getattr(token, 'type', None) != 'function':
+        return
     function = Function(token)
     if (name := function.name) is None:
         return
