@@ -196,7 +196,7 @@ class FontConfiguration:
             root = Element('fontconfig')
             match = SubElement(root, 'match', target='scan')
             test = SubElement(match, 'test', name='file', compare='eq')
-            SubElement(test, 'string').text = str(font_path)
+            SubElement(test, 'string').text = font_path.as_posix()
             # Prepend, as replacing the font family breaks Pango, see #2510.
             edit = SubElement(match, 'edit', name='family', mode='prepend')
             SubElement(edit, 'string').text = rule_descriptors['font_family']
@@ -214,7 +214,7 @@ class FontConfiguration:
                 SubElement(edit, 'const').text = text
             match = SubElement(root, 'match', target='font')
             test = SubElement(match, 'test', name='file', compare='eq')
-            SubElement(test, 'string').text = str(font_path)
+            SubElement(test, 'string').text = font_path.as_posix()
             descriptors = {
                 rules[0][0].replace('-', '_'): rules[0][1] for rules in
                 rule_descriptors.get('font_variant', [])}
@@ -242,7 +242,7 @@ class FontConfiguration:
             # too as explained in Behdad's blog entry.
             fontconfig.FcConfigParseAndLoadFromMemory(self._config, xml, True)
             font_added = fontconfig.FcConfigAppFontAddFile(
-                self._config, str(font_path).encode(PREFERRED_ENCODING))
+                self._config, font_path.as_posix().encode(PREFERRED_ENCODING))
             if font_added:
                 return pangoft2.pango_fc_font_map_config_changed(
                     ffi.cast('PangoFcFontMap *', self.font_map))
