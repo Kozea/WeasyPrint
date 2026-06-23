@@ -239,6 +239,72 @@ def create_layout(text, style, context, max_width, justification_spacing):
     return layout
 
 
+def _hashable(value):
+    """Make a (possibly nested) computed-style value hashable for cache keys."""
+    if isinstance(value, list):
+        return tuple(_hashable(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(_hashable(item) for item in value)
+    return value
+
+
+def split_first_line_cached(text, style, context, max_width, justification_spacing,
+                            is_line_start=True, minimum=False):
+    """Cached variant of :func:`split_first_line` for preferred-width measurement.
+
+    The preferred-width code shapes text only to read a width and then discards
+    the Pango layout; the same (text, shaping properties, constraints) tuple
+    recurs many times (repeated table cells, the min- and max-content passes,
+    multi-pass layout). The width is a pure function of those inputs, so the
+    result is memoised on the layout context (so it lives only for one render).
+
+    The key captures every style property the text layer reads, so equal keys
+    imply identical shaping. The returned layout is always ``None`` -- the only
+    callers (in :mod:`..layout.preferred`) discard it. Output stays
+    byte-identical; any missed key dimension or hidden side effect would change
+    the rendered PDF and be caught by the regression oracles.
+    """
+    try:
+        cache = context.text_measure_cache
+    except AttributeError:
+        cache = context.text_measure_cache = {}
+
+    try:
+        key = (
+            text, max_width, justification_spacing, is_line_start, minimum,
+            style['font_size'], style['font_style'], style['font_weight'],
+            style['font_stretch'], style['font_kerning'],
+            style['font_language_override'], style['letter_spacing'],
+            style['word_spacing'], style['white_space'], style['lang'],
+            style['direction'], style['hyphens'], style['hyphenate_character'],
+            style['hyphenate_limit_zone'], style['tab_size'],
+            style['overflow_wrap'], style['word_break'],
+            style['font_variant_alternates'], style['font_variant_caps'],
+            style['font_variant_east_asian'], style['font_variant_ligatures'],
+            style['font_variant_numeric'], style['font_variant_position'],
+            _hashable(style['font_family']),
+            _hashable(style['font_feature_settings']),
+            _hashable(style['font_variation_settings']),
+            _hashable(style['hyphenate_limit_chars']),
+            _hashable(style['line_height']),
+            _hashable(style['text_decoration_line']),
+        )
+        cached = cache.get(key)
+    except TypeError:
+        # Unhashable style value: skip the cache rather than risk an error.
+        return split_first_line(
+            text, style, context, max_width, justification_spacing,
+            is_line_start, minimum)
+
+    if cached is None:
+        _, length, resume_index, width, height, baseline = split_first_line(
+            text, style, context, max_width, justification_spacing,
+            is_line_start, minimum)
+        cached = (length, resume_index, width, height, baseline)
+        cache[key] = cached
+    return (None, *cached)
+
+
 def split_first_line(text, style, context, max_width, justification_spacing,
                      is_line_start=True, minimum=False):
     """Fit as much as possible in the available width for one line of text.

@@ -16,7 +16,7 @@ from ..css import resolve_math
 from ..css.functions import check_math
 from ..css.validation import validate_non_shorthand
 from ..formatting_structure import boxes
-from ..text.line_break import can_break_text, split_first_line
+from ..text.line_break import can_break_text, split_first_line_cached
 from .replaced import default_image_sizing
 
 
@@ -358,7 +358,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             resume_index = new_resume_index = 0
             while new_resume_index is not None:
                 resume_index += new_resume_index
-                _, _, new_resume_index, width, _, _ = split_first_line(
+                _, _, new_resume_index, width, _, _ = split_first_line_cached(
                     child_text[resume_index:].decode(), child.style, context, max_width,
                     child.justification_spacing, is_line_start=is_line_start,
                     minimum=True)
@@ -804,7 +804,7 @@ def flex_max_content_width(context, box, outer=True):
 
 def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
-    from .inline import split_first_line, split_text_box
+    from .inline import split_text_box
 
     # Find last box child, keep last parent to remove nested trailing spaces.
     last_parent = None
@@ -847,7 +847,7 @@ def trailing_whitespace_size(context, box):
             return old_box.width - stripped_box.width
     else:
         # Stripped text is empty, render spaces to get width.
-        _, _, _, width, _, _ = split_first_line(
+        _, _, _, width, _, _ = split_first_line_cached(
             box.text, box.style, context, None, box.justification_spacing)
         # Remove possible trailing spaces from previous child.
         if last_parent and len(last_parent.children) >= 2:
