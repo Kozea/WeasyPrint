@@ -113,7 +113,18 @@ class Box:
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        style = AnonymousStyle(parent.style)
+        # An AnonymousStyle is fully determined by its parent style (it only
+        # ever pulls inherited values from the parent or initial values), so
+        # every anonymous box sharing a parent can share one immutable style
+        # object. Cache it on the parent style (which lives for one render) to
+        # avoid recomputing the same values -- and re-allocating a dict -- for
+        # each anonymous child. Boxes that need to mutate their style copy it
+        # first (Box.copy / style.copy), so sharing the base is safe.
+        parent_style = parent.style
+        try:
+            style = parent_style.anonymous_style
+        except AttributeError:
+            style = parent_style.anonymous_style = AnonymousStyle(parent_style)
         return cls(parent.element_tag, style, parent.element, *args, **kwargs)
 
     def copy(self):
