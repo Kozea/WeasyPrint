@@ -195,6 +195,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
         if child_boxes and child_boxes[0].style['float'] == 'footnote':
             footnote = child_boxes[0]
+            # Copy before mutating: computed styles may be shared between
+            # elements (style-sharing cache), and an in-place change would
+            # corrupt every other box that shares this style.
+            footnote.style = footnote.style.copy()
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
             call_style = style_for(footnote.element, 'footnote-call')
@@ -970,6 +974,10 @@ def wrap_table(box, children):
     # Non-inherited properties of the table element apply to one
     # of the wrapper and the table. The other get the initial value.
     # TODO: put this in a method of the table object
+    # Copy before mutating: computed styles may be shared between elements
+    # (style-sharing cache), so changing the table style in place would corrupt
+    # every other box that shares it.
+    table.style = table.style.copy()
     for name in properties.TABLE_WRAPPER_BOX_PROPERTIES:
         wrapper.style[name] = table.style[name]
         table.style[name] = properties.INITIAL_VALUES[name]

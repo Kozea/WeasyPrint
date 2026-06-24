@@ -73,6 +73,11 @@ class StyleFor:
         #     values: a PropertyValue-like object
         self._computed_styles = {}
 
+        # Style-sharing cache: elements with the same cascaded declarations,
+        # the same parent computed style and the same attributes get identical
+        # computed styles, so they can share one immutable style object.
+        self._computed_cache = {}
+
         # Set when the first page is created, used for viewport-based units.
         self.initial_page_sizes = {'box': None, 'area': None}
 
@@ -172,9 +177,41 @@ class StyleFor:
             root_style = computed_styles[root, None]
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
+        # Share the computed style with any earlier element that has the same
+        # cascaded declarations, the same parent style and the same attributes.
+        # A computed value is a pure function of (cascaded, parent_style,
+        # root_style) except for the element-attribute-derived properties
+        # (anchor/link/lang and attr()-based content/string-set), which are
+        # captured by including the element's attributes in the key. Equal keys
+        # therefore imply byte-identical computed styles. The cascade is built
+        # in tree order, so a shared parent style lets children share too.
+        share_key = None
+        if parent_style is not None:
+            try:
+                attrib = getattr(element, 'attrib', None)
+                share_key = (
+                    id(parent_style), id(root_style), pseudo_type,
+                    frozenset((name, id(value), weight)
+                              for name, (value, weight) in cascaded.items()),
+                    None if attrib is None else frozenset(attrib.items()),
+                )
+            except TypeError:
+                # Unhashable cascaded weight/value (e.g. some page rules):
+                # skip sharing for this element rather than risk an error.
+                share_key = None
+            if share_key is not None:
+                computed = self._computed_cache.get(share_key)
+                if computed is not None:
+                    computed_styles[element, pseudo_type] = computed
+                    if target_collector and computed['anchor']:
+                        target_collector.collect_anchor(computed['anchor'])
+                    return
+
         computed = computed_styles[element, pseudo_type] = ComputedStyle(
             parent_style, cascaded, element, pseudo_type, root_style, base_url,
             self.font_config, self.initial_page_sizes)
+        if share_key is not None:
+            self._computed_cache[share_key] = computed
         if target_collector and computed['anchor']:
             target_collector.collect_anchor(computed['anchor'])
 
