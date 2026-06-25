@@ -195,7 +195,7 @@ easiest way to install these libraries is to use MSYS2. Here are the steps you
 have to follow:
 
 - Install `MSYS2`_ keeping the default options.
-- After installation, in MSYS2’s shell, execute ``pacman -S mingw-w64-x86_64-pango``.
+- After installation, in MSYS2 UCRT64 shell, execute ``pacman -S mingw-w64-ucrt-x86_64-pango``.
 - Close MSYS2’s shell.
 
 You can then launch a Windows command prompt by clicking on the Start menu,
@@ -298,7 +298,7 @@ On Windows, you can set the ``WEASYPRINT_DLL_DIRECTORIES`` environment variable
 to list the folders where the DLL files can be found. For example, in
 ``cmd.exe``::
 
-  set WEASYPRINT_DLL_DIRECTORIES=C:\msys64\mingw64\bin
+  set WEASYPRINT_DLL_DIRECTORIES=C:\msys64\ucrt64\bin
 
 On macOS, you can set the ``DYLD_FALLBACK_LIBRARY_PATH`` environment variable::
 
