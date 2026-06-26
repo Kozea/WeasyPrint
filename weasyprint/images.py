@@ -108,7 +108,7 @@ class RasterImage:
         stream.draw_x_object(image_name)
 
     def cache_image_data(self, data, filename=None, slot='source'):
-        if filename:
+        if filename and Path(filename).is_file():
             return LazyLocalImage(filename)
         else:
             key = f'{self.id}-{slot}-{self._dpi or ""}'
