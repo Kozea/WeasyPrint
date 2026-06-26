@@ -3,10 +3,9 @@
 import gc
 
 from weasyprint import CSS
-from weasyprint.css import InitialStyle
 from weasyprint.pdf.fonts import Font
-from weasyprint.text.fonts import FontConfiguration, get_pango_font_key
-from weasyprint.text.line_break import create_layout
+from weasyprint.text.ffi import ffi, gobject, pango
+from weasyprint.text.fonts import FontConfiguration
 
 from .testing_utils import BASE_URL, assert_no_logs, render_pages
 
@@ -28,22 +27,23 @@ def test_font_face_harfbuzz_face_lifetime():
     font_config = FontConfiguration()
     CSS(string='''
       @font-face {
-        font-family: repro;
+        font-family: bug;
         src: url(weasyprint.otf);
       }
-    ''', base_url=BASE_URL, font_config=font_config)
-    style = InitialStyle(font_config)
-    style['font_family'] = ('repro',)
-    layout = create_layout(
-        'ab', style, context=None, max_width=None, justification_spacing=0)
-    line, _ = layout.get_first_line()
-    pango_font = line.runs.data.item.analysis.font
-    _, description, font_size = get_pango_font_key(pango_font)
-    font = Font(pango_font, description, font_size)
-
-    del font_config, layout, line, pango_font, style
+    ''',
+    base_url=BASE_URL, font_config=font_config)
+    context = ffi.gc(
+        pango.pango_font_map_create_context(font_config.font_map),
+        gobject.g_object_unref)
+    font_description = ffi.gc(
+        pango.pango_font_description_new(), pango.pango_font_description_free)
+    pango.pango_font_description_set_family(font_description, ffi.new('char[]', b'bug'))
+    pango_font = ffi.gc(
+        pango.pango_font_map_load_font(font_config.font_map, context, font_description),
+        gobject.g_object_unref)
+    font = Font(pango_font, font_description, 10)
+    del context, font_description, pango_font, font_config
     gc.collect()
-
     font.clean({1: 'a', 2: 'b'}, hinting=False)
 
 
