@@ -467,7 +467,8 @@ def _dlopen(ffi, *names, allow_fail=False):
 if hasattr(os, 'add_dll_directory') and not hasattr(sys, 'frozen'):  # pragma: no cover
     dll_directories = os.getenv(
         'WEASYPRINT_DLL_DIRECTORIES',
-        'C:\\msys64\\mingw64\\bin;'
+        'C:\\msys64\\ucrt64\\bin;'
+        'C:\\msys64\\mingw64\\bin;' # keep mingw64 for backward compatibility
         'C:\\Program Files\\GTK3-Runtime Win64\\bin').split(';')
     for dll_directory in dll_directories:
         with suppress((OSError, FileNotFoundError)):
