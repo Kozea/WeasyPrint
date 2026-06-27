@@ -337,6 +337,13 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if href := element.get('href'):
             yield parse_declaration(f'-weasy-link:"{href}"')
 
+        if id_ := element.get('id'):
+            yield parse_declaration(f'-weasy-anchor:"{id_}"')
+
+        if element.tag == 'a':
+            if name := element.get('name'):
+                yield parse_declaration(f'-weasy-anchor:"{name}"')
+
         # Apply presentational hints.
         if not presentational_hints:
             continue

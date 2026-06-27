@@ -737,29 +737,19 @@ def line_height(style, name, value):
     return ('PIXELS', pixels)
 
 
-@register_computer('anchor')
-def anchor(style, name, values):
-    """Compute the ``anchor`` property."""
-    if values != 'none':
-        _, key = values
-        anchor_name = style.element.get(key) or None
-        return anchor_name
-
-
 @register_computer('link')
 def link(style, name, values):
     """Compute the ``link`` property."""
     name, value = values
     if name == 'string':
         return get_link(value, style.base_url)
-    return values
+    elif name == 'url':
+        return values
 
 
 @register_computer('lang')
 def lang(style, name, values):
     """Compute the ``lang`` property."""
-    if values == 'none':
-        return
     name, value = values
     if name == 'string':
         return value
