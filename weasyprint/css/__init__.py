@@ -326,14 +326,17 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             declarations = tinycss2.parse_blocks_contents(style)
             yield specificity, element, declarations, base_url
 
-        # Apply presentational hints.
-        if not presentational_hints:
-            continue
-
         specificity = (0, 0, 0)
         def parse_declaration(style_attribute, element=element):
             declaration = tinycss2.parse_one_declaration(style_attribute)
             return specificity, element, (declaration,), base_url
+
+        if lang := element.get('lang'):
+            yield parse_declaration(f'-weasy-lang:"{lang}"')
+
+        # Apply presentational hints.
+        if not presentational_hints:
+            continue
 
         if element.tag == 'body':
             # TODO: we should check the container frame element.

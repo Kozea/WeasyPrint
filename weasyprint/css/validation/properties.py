@@ -1987,11 +1987,6 @@ def lang(token):
     """Validation for ``lang``."""
     if get_keyword(token) == 'none':
         return 'none'
-    function = Function(token)
-    if arguments := function.split_space():
-        prototype = (function.name, [argument.type for argument in arguments])
-        if prototype == ('attr', ['ident']):
-            return ('attr()', arguments[0].value)
     elif token.type == 'string':
         return ('string', token.value)
 
