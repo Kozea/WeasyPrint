@@ -51,8 +51,6 @@ See respective docstrings for details.
 import itertools
 import sys
 
-from ..css import AnonymousStyle
-
 
 class Box:
     """Abstract base class for all boxes."""
@@ -113,19 +111,9 @@ class Box:
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        # An AnonymousStyle is fully determined by its parent style (it only
-        # ever pulls inherited values from the parent or initial values), so
-        # every anonymous box sharing a parent can share one immutable style
-        # object. Cache it on the parent style (which lives for one render) to
-        # avoid recomputing the same values -- and re-allocating a dict -- for
-        # each anonymous child. Boxes that need to mutate their style copy it
-        # first (Box.copy / style.copy), so sharing the base is safe.
-        parent_style = parent.style
-        try:
-            style = parent_style.anonymous_style
-        except AttributeError:
-            style = parent_style.anonymous_style = AnonymousStyle(parent_style)
-        return cls(parent.element_tag, style, parent.element, *args, **kwargs)
+        return cls(
+            parent.element_tag, parent.style.anonymous_style, parent.element,
+            *args, **kwargs)
 
     def copy(self):
         """Return shallow copy of the box."""

@@ -14,6 +14,7 @@ on other functions in this module.
 
 import math
 from collections import namedtuple
+from functools import cached_property
 from itertools import groupby
 from logging import DEBUG, WARNING
 from math import inf
@@ -1006,10 +1007,19 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
     return resolve_math(token, computed, property_name, refer_to) or token
 
 
-class InitialStyle(dict):
+class Style(dict):
+    """Abstract class for all style dictionaries."""
+    parent_style = None
+    is_root_element = False
+
+    @cached_property
+    def anonymous_style(self):
+        return AnonymousStyle(self)
+
+
+class InitialStyle(Style):
     """Dummy computed style used to store initial values."""
     def __init__(self, font_config):
-        self.parent_style = None
         self.specified = self
         self.cache = {}
         self.font_config = font_config
@@ -1019,7 +1029,7 @@ class InitialStyle(dict):
         return value
 
 
-class AnonymousStyle(dict):
+class AnonymousStyle(Style):
     """Computed style used for anonymous boxes."""
     def __init__(self, parent_style):
         # border-*-style is none, so border-width computes to zero.
@@ -1033,7 +1043,6 @@ class AnonymousStyle(dict):
             'outline_width': 0,
         })
         self.parent_style = parent_style
-        self.is_root_element = False
         self.specified = self
         self.cache = parent_style.cache
         self.font_config = parent_style.font_config
@@ -1063,7 +1072,7 @@ class AnonymousStyle(dict):
         return value
 
 
-class ComputedStyle(dict):
+class ComputedStyle(Style):
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
                  root_style, base_url, font_config, initial_page_sizes):
@@ -1270,7 +1279,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
                            target_collector=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
-        return AnonymousStyle(parent_style)
+        return parent_style.anonymous_style
 
 
 def _parse_layer(tokens):

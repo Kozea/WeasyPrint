@@ -3,7 +3,7 @@
 import unicodedata
 from math import inf
 
-from ..css import AnonymousStyle, Pending, check_math
+from ..css import Pending, check_math
 from ..css.properties import INHERITED
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
@@ -331,7 +331,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
                     # otherwise it is similar to a floated element."
-                    children_style = AnonymousStyle(letter_style)
+                    children_style = letter_style.anonymous_style
                     if letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             f'{box.element_tag}::first-letter',
