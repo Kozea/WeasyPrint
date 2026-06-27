@@ -1893,16 +1893,10 @@ def anchor(token):
 @single_token
 def link(token, base_url):
     """Validation for ``link``."""
-    if get_keyword(token) == 'none':
-        return 'none'
-    parsed_url = get_url(token, base_url)
-    if parsed_url:
-        return parsed_url
-    function = Function(token)
-    if arguments := function.split_space():
-        prototype = (function.name, [argument.type for argument in arguments])
-        if prototype == ('attr', ['ident']):
-            return ('attr()', arguments[0].value)
+    if token.type == 'url':
+        return get_url(token, base_url)
+    elif token.type == 'string':
+        return ('string', token.value)
 
 
 @property()

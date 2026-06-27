@@ -14,7 +14,6 @@ https://dev.w3.org/html5/spec-LC/rendering.html#the-css-user-agent-style-sheet-a
 
 [id] { -weasy-anchor: attr(id) }
 a[name] { -weasy-anchor: attr(name) }
-a[href] { -weasy-link: attr(href) }
 
 /* Display and visibility */
 

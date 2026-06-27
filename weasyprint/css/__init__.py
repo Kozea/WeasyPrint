@@ -334,6 +334,9 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if lang := element.get('lang'):
             yield parse_declaration(f'-weasy-lang:"{lang}"')
 
+        if href := element.get('href'):
+            yield parse_declaration(f'-weasy-link:"{href}"')
+
         # Apply presentational hints.
         if not presentational_hints:
             continue
@@ -1503,8 +1506,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                 if tokens[0].type == 'string':
                     url = url_join(
                         base_url, tokens[0].value, allow_relative=False,
-                        context='@import at %s:%s',
-                        context_args=(rule.source_line, rule.source_column))
+                        context=f'@import at {rule.source_line}:{rule.source_column}')
                 else:
                     url_tuple = get_url(tokens[0], base_url)
                     if url_tuple and url_tuple[1][0] == 'external':

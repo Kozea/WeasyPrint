@@ -7,7 +7,7 @@ from tinycss2.color5 import parse_color
 
 from ..logger import LOGGER
 from ..text.line_break import strut
-from ..urls import get_link_attribute, get_url_tuple
+from ..urls import get_link, get_url_tuple
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
 from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, to_pixels
@@ -749,11 +749,9 @@ def anchor(style, name, values):
 @register_computer('link')
 def link(style, name, values):
     """Compute the ``link`` property."""
-    if values == 'none':
-        return
-    type_, value = values
-    if type_ == 'attr()':
-        return get_link_attribute(style.element, value, style.base_url)
+    name, value = values
+    if name == 'string':
+        return get_link(value, style.base_url)
     return values
 
 
@@ -762,11 +760,9 @@ def lang(style, name, values):
     """Compute the ``lang`` property."""
     if values == 'none':
         return
-    name, key = values
-    if name == 'attr()':
-        return style.element.get(key) or None
-    elif name == 'string':
-        return key
+    name, value = values
+    if name == 'string':
+        return value
 
 
 @register_computer('tab-size')
