@@ -72,7 +72,7 @@ class StyleFor:
         # values: style dict objects:
         #     keys: property name as a string
         #     values: a PropertyValue-like object
-        self._computed_styles = {}
+        self._computed_styles = computed_styles = {}
 
         # Set when the first page is created, used for viewport-based units.
         self.initial_page_sizes = {'box': None, 'area': None}
@@ -82,9 +82,11 @@ class StyleFor:
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         layer_order = inf
+        elements_declarations = {}
         for specificity, element, declarations, base_url in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             style = cascaded_styles.setdefault((element, None), {})
+            elements_declarations[element] = tuple(declarations)
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
@@ -98,25 +100,40 @@ class StyleFor:
         # computed styles before their children, for inheritance.
 
         # Iterate on all elements, even if there is no cascaded style for them.
+        computed_cache = {}
         for element in html.wrapper_element.iter_subtree():
+            etree_element = element.etree_element
+            parent = element.parent.etree_element if element.parent else None
+            parent_id = id(computed_styles[parent, None]) if element.parent else None
+            element_declarations = elements_declarations.get(etree_element)
+            selectors_keys = []
             for sheet, origin, sheet_specificity in sheets:
-                # Add declarations for matched elements
+                # Add declarations for matching elements.
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, (declarations, layer) = selector
                     layer_order = inf if layer is None else sheet.layers.index(layer)
+                    selectors_keys.append(
+                        (sheet, specificity, id(declarations), layer_order))
                     specificity = sheet_specificity or specificity
-                    style = cascaded_styles.setdefault(
-                        (element.etree_element, pseudo_type), {})
+                    style = cascaded_styles.setdefault((etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, layer_order, specificity)
                         old_weight = style.get(name, (None, None))[1]
                         if old_weight is None or old_weight <= weight:
                             style[name] = values, weight
-            parent = element.parent.etree_element if element.parent else None
-            self.set_computed_styles(
-                element.etree_element, root=html.etree_element, parent=parent,
-                base_url=html.base_url, target_collector=target_collector)
+
+            # Store computed styles.
+            key = (parent_id, element_declarations, tuple(selectors_keys))
+            if key in computed_cache:
+                # Equivalent computed style already exsists, share it.
+                computed_styles[etree_element, None] = computed_cache[key]
+            else:
+                # No equivalent computed style found, create it.
+                self.set_computed_styles(
+                    etree_element, root=html.etree_element, parent=parent,
+                    base_url=html.base_url, target_collector=target_collector)
+                computed_cache[key] = computed_styles[etree_element, None]
 
         # Then computed styles for pseudo elements, in any order.
         # Pseudo-elements inherit from their associated element so they come

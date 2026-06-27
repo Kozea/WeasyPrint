@@ -195,6 +195,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
         if child_boxes and child_boxes[0].style['float'] == 'footnote':
             footnote = child_boxes[0]
+            footnote.style = footnote.style.copy()
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
             call_style = style_for(footnote.element, 'footnote-call')
