@@ -7,10 +7,10 @@ from tinycss2.color5 import parse_color
 
 from ..logger import LOGGER
 from ..text.line_break import strut
-from ..urls import get_link, get_url_tuple
+from ..urls import get_link
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
-from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, to_pixels
+from .units import LENGTH_UNITS, to_pixels
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -219,40 +219,6 @@ def register_computer(name):
         COMPUTER_FUNCTIONS[name] = function
         return function
     return decorator
-
-
-def compute_attr(style, values):
-    # TODO: use real token parsing instead of casting with Python types, and follow new
-    # syntax. See https://drafts.csswg.org/css-values-5/#attr-notation.
-    func_name, value = values
-    assert func_name == 'attr()'
-    attr_name, type_or_unit, fallback = value
-    try:
-        attr_value = style.element.get(attr_name, fallback)
-        if type_or_unit == 'string':
-            pass  # Keep the string
-        elif type_or_unit == 'url':
-            attr_value = get_url_tuple(attr_value, style.base_url)
-        elif type_or_unit == 'color':
-            attr_value = parse_color(attr_value.strip(), style['color_scheme'])
-        elif type_or_unit == 'integer':
-            attr_value = int(attr_value.strip())
-        elif type_or_unit == 'number':
-            attr_value = float(attr_value.strip())
-        elif type_or_unit == '%':
-            attr_value = Dimension(float(attr_value.strip()), '%')
-            type_or_unit = 'length'
-        elif type_or_unit in LENGTH_UNITS:
-            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
-            type_or_unit = 'length'
-        elif type_or_unit in ANGLE_TO_RADIANS:
-            attr_value = Dimension(float(attr_value.strip()), type_or_unit)
-            type_or_unit = 'angle'
-        else:
-            return
-    except Exception:
-        return
-    return (type_or_unit, attr_value)
 
 
 @register_computer('background-image')
@@ -517,35 +483,13 @@ def gap(style, name, value):
 def _content_list(style, values):
     computed_values = []
     for value in values:
-        if value[0] in ('string', 'content', 'url', 'quote', 'leader()'):
-            computed_value = value
-        elif value[0] == 'attr()':
-            assert value[1][1] == 'string'
-            computed_value = compute_attr(style, value)
-        elif value[0] in (
-                'counter()', 'counters()', 'content()', 'element()',
-                'string()'):
-            # Other values need layout context, their computed value cannot be
-            # better than their specified value yet.
-            # See build.compute_content_list.
-            computed_value = value
-        elif value[0] in (
-                'target-counter()', 'target-counters()', 'target-text()'):
-            anchor_token = value[1][0]
-            if anchor_token[0] == 'attr()':
-                attr = compute_attr(style, anchor_token)
-                if attr is None:
-                    computed_value = None
-                else:
-                    computed_value = (value[0], (attr, *value[1][1:]))
-            else:
-                computed_value = value
-        if computed_value is None:
-            LOGGER.warning('Unable to compute %r value for content: %r' % (
-                style.element, ', '.join(str(item) for item in value)))
+        if value[0] in (
+                'string', 'content', 'url', 'quote', 'leader()',
+                'counter()', 'counters()', 'content()', 'element()', 'string()',
+                'attr()', 'target-counter()', 'target-counters()', 'target-text()'):
+            computed_values.append(value)
         else:
-            computed_values.append(computed_value)
-
+            LOGGER.warning(f'Unable to compute content: {value}')
     return tuple(computed_values)
 
 

@@ -174,7 +174,7 @@ class StyleFor:
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
         computed = computed_styles[element, pseudo_type] = ComputedStyle(
-            parent_style, cascaded, element, pseudo_type, root_style, base_url,
+            parent_style, cascaded, pseudo_type, root_style, base_url,
             self.font_config, self.initial_page_sizes)
         if target_collector and computed['anchor']:
             target_collector.collect_anchor(computed['anchor'])
@@ -1087,13 +1087,12 @@ class AnonymousStyle(Style):
 
 class ComputedStyle(Style):
     """Computed style used for non-anonymous boxes."""
-    def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url, font_config, initial_page_sizes):
+    def __init__(self, parent_style, cascaded, pseudo_type, root_style, base_url,
+                 font_config, initial_page_sizes):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
         self.is_root_element = parent_style is None
-        self.element = element
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
@@ -1103,8 +1102,8 @@ class ComputedStyle(Style):
 
     def copy(self):
         copy = ComputedStyle(
-            self.parent_style, self.cascaded, self.element, self.pseudo_type,
-            self.root_style, self.base_url, self.font_config, self.initial_page_sizes)
+            self.parent_style, self.cascaded, self.pseudo_type, self.root_style,
+            self.base_url, self.font_config, self.initial_page_sizes)
         copy.update(self)
         copy.specified = self.specified.copy()
         return copy

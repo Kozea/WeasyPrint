@@ -9,6 +9,7 @@ targeted anchors has been done.
 import copy
 
 from ..logger import LOGGER
+from ..urls import get_url_tuple
 
 
 class TargetLookupItem:
@@ -104,9 +105,16 @@ class TargetCollector:
         tree again.
 
         """
+        if anchor_token[0] == 'attr()':
+            attr_name, type_, fallback = anchor_token[1]
+            attr_value = source_box.element.get(attr_name, fallback)
+            if type_ == 'string':
+                anchor_token = ('string', attr_value)
+            elif type_ == 'url':
+                url_tuple = get_url_tuple(attr_value, source_box.style.base_url)
+                anchor_token = ('url', url_tuple)
         anchor_name = anchor_name_from_token(anchor_token)
-        item = self.target_lookup_items.get(
-            anchor_name, TargetLookupItem('undefined'))
+        item = self.target_lookup_items.get(anchor_name, TargetLookupItem('undefined'))
 
         if item.state == 'pending':
             self.had_pending_targets = True
