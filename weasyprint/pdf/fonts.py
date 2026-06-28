@@ -12,8 +12,10 @@ from fontTools.varLib.instancer import instantiateVariableFont
 
 from ..logger import LOGGER
 from ..text.constants import PANGO_STRETCH_PERCENT
-from ..text.ffi import FROM_UNITS, ffi, harfbuzz, harfbuzz_subset, pango
 from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
+
+from ..text.ffi import (  # isort:skip
+    FROM_UNITS, ffi, harfbuzz, harfbuzz_subset, harfbuzz_vector, pango)
 
 
 class Font:
@@ -98,7 +100,13 @@ class Font:
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
         if harfbuzz.hb_version_atleast(7, 0, 0):
-            self.colr = harfbuzz.hb_ot_color_has_paint(self.hb_face)
+            self.colr = (
+                harfbuzz.hb_ot_color_has_paint(self.hb_face) or
+                harfbuzz.hb_ot_color_has_layers(self.hb_face))
+            if self.colr and not harfbuzz_vector:
+                LOGGER.warning(
+                    'Please install harfbuzz-vector to display '
+                    f'"{self.family}" COLR emoji fonts.')
         else:
             self.colr = False
         self.glyph_count = harfbuzz.hb_face_get_glyph_count(self.hb_face)
