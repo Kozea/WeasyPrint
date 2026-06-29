@@ -406,12 +406,13 @@ class ParentBox(Box):
             raise ValueError('Table wrapper without a table')
 
     def page_values(self):
+        # See https://www.w3.org/TR/css-break-4/#break-propagation.
+        # The specification only includes in-flow boxes, but as page breaks can appear
+        # between floats, it makes sense to include them here too.
         start_value, end_value = super().page_values()
-        # TODO: We should find Class A possible page breaks according to
-        # https://drafts.csswg.org/css-page-3/#propdef-page
-        # Keep only children in normal flow for now.
         children = [
-            child for child in self.children if child.is_in_normal_flow()]
+            child for child in self.children
+            if child.is_in_normal_flow() or child.is_floated()]
         if children:
             if len(children) == 1:
                 page_values = children[0].page_values()
