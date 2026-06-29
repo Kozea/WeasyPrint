@@ -237,7 +237,7 @@ def relative_positioning(box, containing_block):
 
 def _out_of_flow_layout(context, box, index, child, new_children,
                         page_is_empty, absolute_boxes, fixed_boxes,
-                        adjoining_margins, bottom_space, next_page):
+                        adjoining_margins, bottom_space):
     stop = False  # whether we should stop parent rendering after this layout
     resume_at = None  # where to resume in-flow rendering
     new_child = None  # child rendered by this layout
@@ -300,7 +300,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
-    return stop, resume_at, new_child, out_of_flow_resume_at, next_page
+    return stop, resume_at, new_child, out_of_flow_resume_at
 
 
 def _break_line(context, box, line, new_children, needed, page_is_empty, index,
@@ -736,11 +736,9 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
 
         if not stop and not child.is_in_normal_flow():
             # Layout out-of-flow child.
-            stop, resume_at, new_child, out_of_flow_resume_at, next_page = (
-                _out_of_flow_layout(
-                    context, box, index, child, new_children, page_is_empty,
-                    absolute_boxes, fixed_boxes, adjoining_margins,
-                    bottom_space, next_page))
+            stop, resume_at, new_child, out_of_flow_resume_at = _out_of_flow_layout(
+                context, box, index, child, new_children, page_is_empty, absolute_boxes,
+                fixed_boxes, adjoining_margins, bottom_space)
             if out_of_flow_resume_at:
                 context.add_broken_out_of_flow(
                     new_child, child, box, out_of_flow_resume_at)
