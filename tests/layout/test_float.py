@@ -844,42 +844,103 @@ def test_first_letter_float():
 
 @assert_no_logs
 def test_float_break_after_page():
-    # https://github.com/Kozea/WeasyPrint/issues/2277
-    # break-after: page on a floated element should force a page break.
-    pages = render_pages('''
-      <style>
-        @page { size: 100px; margin: 10px }
-      </style>
+    page1, page2 = render_pages('''
       <div style="break-after: page; float: left">float</div>
       <div>end</div>
     ''')
-    assert len(pages) == 2
-    html1, = pages[0].children
-    body1, = html1.children
-    float_div, = body1.children
-    assert float_div.position_y == 10
-    html2, = pages[1].children
-    body2, = html2.children
-    end_div, = body2.children
-    assert end_div.position_y == 10
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'float'
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'end'
+
+
+@assert_no_logs
+def test_float_in_block_break_after_page():
+    page1, page2 = render_pages('''
+      <div>
+        <div style="break-after: page; float: left">float</div>
+      </div>
+      <div>end</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].children[0].text == 'float'
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'end'
 
 
 @assert_no_logs
 def test_float_break_before_page():
-    # break-before: page on a floated element should force a page break.
-    pages = render_pages('''
-      <style>
-        @page { size: 100px; margin: 10px }
-      </style>
+    page1, page2 = render_pages('''
       <div>start</div>
       <div style="break-before: page; float: left">float</div>
     ''')
-    assert len(pages) == 2
-    html1, = pages[0].children
-    body1, = html1.children
-    start_div, = body1.children
-    assert start_div.position_y == 10
-    html2, = pages[1].children
-    body2, = html2.children
-    float_div, = body2.children
-    assert float_div.position_y == 10
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'start'
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'float'
+
+
+@assert_no_logs
+def test_float_in_div_break_before_page():
+    page1, page2 = render_pages('''
+      <div>start</div>
+      <div>
+        <div style="break-before: page; float: left">float</div>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'start'
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].children[0].text == 'float'
+
+
+@assert_no_logs
+def test_float_break_after_page_no_fit():
+    page1, page2, page3 = render_pages('''
+      <style>
+        @page { size: 100px }
+        html { line-height: 20px }
+      </style>
+      <div style="height: 90px">start</div>
+      <div style="break-after: right; float: left">float</div>
+      <div>end</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'start'
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'float'
+    html, = page3.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert div.children[0].children[0].text == 'end'
