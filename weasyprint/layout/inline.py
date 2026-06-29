@@ -1147,7 +1147,11 @@ def text_align(context, line, available_width, last):
     # "When the total width of the inline-level boxes on a line is less than
     # the width of the line box containing them, their horizontal distribution
     # within the line box is determined by the 'text-align' property."
-    if line.width >= available_width:
+    line_width = line.width
+    if line.style['white_space'] == 'pre-wrap':
+        line_width = max(0, line_width - trailing_whitespace_size(
+            context, line, white_space=('pre-wrap',)))
+    if line_width >= available_width:
         return 0
 
     align = line.style['text_align_all']
@@ -1163,7 +1167,7 @@ def text_align(context, line, available_width, last):
             align = 'end'
     if align == 'start':
         return 0
-    offset = available_width - line.width
+    offset = available_width - line_width
     if align == 'justify':
         if space_collapse:
             # Justification of texts where white space is not collapsing is

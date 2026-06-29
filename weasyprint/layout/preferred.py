@@ -802,7 +802,8 @@ def flex_max_content_width(context, box, outer=True):
         return adjust(box, outer, max(max_contents))
 
 
-def trailing_whitespace_size(context, box):
+def trailing_whitespace_size(
+        context, box, white_space=('normal', 'nowrap', 'pre-line')):
     """Return the size of the trailing whitespace of ``box``."""
     from .inline import split_first_line, split_text_box
 
@@ -817,8 +818,8 @@ def trailing_whitespace_size(context, box):
     if not isinstance(box, boxes.TextBox) or not box.text:
         # There’s no text in last child.
         return 0
-    elif box.style['white_space'] not in ('normal', 'nowrap', 'pre-line'):
-        # Spaces don’t collapse.
+    elif box.style['white_space'] not in white_space:
+        # Spaces aren’t handled by this caller.
         return 0
     elif box.style['font_size'] == 0:
         # Trailing spaces take no space.
