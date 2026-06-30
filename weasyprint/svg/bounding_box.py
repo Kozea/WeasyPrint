@@ -3,7 +3,7 @@
 from math import atan, atan2, cos, inf, isinf, pi, radians, sin, sqrt, tan
 
 from .path import PATH_LETTERS
-from .utils import normalize, point, transform
+from .utils import normalize, point
 
 EMPTY_BOUNDING_BOX = inf, inf, 0, 0
 
@@ -232,7 +232,8 @@ def bounding_box_use(svg, node, font_size):
     else:
         x, y = svg.point(node.get('x'), node.get('y'), font_size)
         box = bounding_box(svg, tree, font_size, True)
-        return box[0] + x, box[1] + y, box[2], box[3]
+        box = (box[0] + x, box[1] + y, box[2], box[3])
+        return transform_bounding_box(svg, tree, font_size, box)
 
 
 def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
@@ -350,16 +351,9 @@ def extend_bounding_box(bounding_box, points):
 
 def transform_bounding_box(svg, node, font_size, bounding_box):
     """Apply node transform to a bounding box."""
-    transform_string = node.get('transform')
-    if not transform_string:
+    matrix = svg.get_node_transform_matrix(node, font_size)
+    if not matrix:
         return bounding_box
-
-    matrix = transform(
-        transform_string, node.get('transform-origin'), font_size,
-        svg.inner_diagonal)
-    if not matrix.determinant:
-        return EMPTY_BOUNDING_BOX
-
     minx, miny, width, height = bounding_box
     maxx, maxy = minx + width, miny + height
     points = (

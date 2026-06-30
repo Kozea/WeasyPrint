@@ -155,6 +155,19 @@ def test_group_opacity_transformed_child(assert_same_renderings):
             </g>
         ''',
         opacity_source % '''
+            <g opacity="0.5"><g transform="translate(3 3)">
+              <rect x="0" y="0" width="4" height="4" fill="red"
+                    transform="translate(2 2)" />
+            </g></g>
+        ''',
+        opacity_source % '''
+            <defs>
+              <rect id="r" x="0" y="0" width="4" height="4" fill="red"
+                    transform="translate(5 5)" />
+            </defs>
+            <use href="#r" opacity="0.5" />
+        ''',
+        opacity_source % '''
             <rect x="0" y="0" width="4" height="4" fill="rgb(255, 127, 127)"
                   transform="translate(5 5)" />
         ''',
