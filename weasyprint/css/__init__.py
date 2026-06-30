@@ -720,6 +720,11 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
                     unit = '%'
             if sign == '*':
                 value *= calc.value
+            elif calc.value == 0:
+                # Division by zero resolves to ±infinity or NaN (IEEE-754), as
+                # required by CSS Values 4, instead of raising. This matches the
+                # value of an equivalent calc(infinity * ...) expression.
+                value = math.nan if value == 0 else math.copysign(inf, value)
             else:
                 value /= calc.value
             sign = None
