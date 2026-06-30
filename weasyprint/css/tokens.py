@@ -390,8 +390,10 @@ def get_percentage(token, negative=True):
         except (PercentageInMath, RelativeLengthInMath):
             return
         else:
-            # Range clamp.
-            if not negative:
+            # Range clamp. Skip function/number tokens, which have no value to
+            # clamp: a math function wrapping a non-resolvable argument (e.g.
+            # scale(calc(0))) stays a FunctionBlock here, like in get_length().
+            if not negative and token.type not in ('function', 'number'):
                 token.value = max(0, token.value)
     if token.type == 'percentage' and (negative or token.value >= 0):
         return Dimension(token.value, '%')
