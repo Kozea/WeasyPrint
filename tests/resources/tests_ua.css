@@ -23,10 +23,6 @@ colgroup  { display: table-column-group }
 td, th    { display: table-cell }
 caption   { display: table-caption }
 
-*[lang]   { -weasy-lang: attr(lang) }
-a[href]   { -weasy-link: attr(href) }
-a[name]   { -weasy-anchor: attr(name) }
-*[id]     { -weasy-anchor: attr(id) }
 h1        { bookmark-level: 1; bookmark-label: content(text) }
 h2        { bookmark-level: 2; bookmark-label: content(text) }
 h3        { bookmark-level: 3; bookmark-label: content(text) }

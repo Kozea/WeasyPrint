@@ -49,7 +49,7 @@ def property(property_name=None, proprietary=False, unstable=False,
 
     :param proprietary:
         Proprietary (vendor-specific, non-standard) are prefixed: anchors can
-        for example be set using ``-weasy-anchor: attr(id)``.
+        for example be set using ``-weasy-anchor: "id"``.
         See https://www.w3.org/TR/CSS/#proprietary
     :param unstable:
         Mark properties that are defined in specifications that didn't reach
@@ -1880,29 +1880,18 @@ def size(tokens):
 @single_token
 def anchor(token):
     """Validation for ``anchor``."""
-    if get_keyword(token) == 'none':
-        return 'none'
-    function = Function(token)
-    if arguments := function.split_space():
-        prototype = (function.name, [argument.type for argument in arguments])
-        if prototype == ('attr', ['ident']):
-            return ('attr()', arguments[0].value)
+    if token.type == 'string':
+        return token.value
 
 
 @property(proprietary=True, wants_base_url=True)
 @single_token
 def link(token, base_url):
     """Validation for ``link``."""
-    if get_keyword(token) == 'none':
-        return 'none'
-    parsed_url = get_url(token, base_url)
-    if parsed_url:
-        return parsed_url
-    function = Function(token)
-    if arguments := function.split_space():
-        prototype = (function.name, [argument.type for argument in arguments])
-        if prototype == ('attr', ['ident']):
-            return ('attr()', arguments[0].value)
+    if token.type == 'url':
+        return get_url(token, base_url)
+    elif token.type == 'string':
+        return ('string', token.value)
 
 
 @property()
@@ -1987,11 +1976,6 @@ def lang(token):
     """Validation for ``lang``."""
     if get_keyword(token) == 'none':
         return 'none'
-    function = Function(token)
-    if arguments := function.split_space():
-        prototype = (function.name, [argument.type for argument in arguments])
-        if prototype == ('attr', ['ident']):
-            return ('attr()', arguments[0].value)
     elif token.type == 'string':
         return ('string', token.value)
 

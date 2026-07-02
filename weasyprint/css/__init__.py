@@ -72,7 +72,7 @@ class StyleFor:
         # values: style dict objects:
         #     keys: property name as a string
         #     values: a PropertyValue-like object
-        self._computed_styles = {}
+        self._computed_styles = computed_styles = {}
 
         # Set when the first page is created, used for viewport-based units.
         self.initial_page_sizes = {'box': None, 'area': None}
@@ -82,9 +82,11 @@ class StyleFor:
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         layer_order = inf
+        elements_declarations = {}
         for specificity, element, declarations, base_url in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             style = cascaded_styles.setdefault((element, None), {})
+            elements_declarations[element] = tuple(declarations)
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
@@ -98,25 +100,40 @@ class StyleFor:
         # computed styles before their children, for inheritance.
 
         # Iterate on all elements, even if there is no cascaded style for them.
+        computed_cache = {}
         for element in html.wrapper_element.iter_subtree():
+            etree_element = element.etree_element
+            parent = element.parent.etree_element if element.parent else None
+            parent_id = id(computed_styles[parent, None]) if element.parent else None
+            element_declarations = elements_declarations.get(etree_element)
+            selectors_keys = []
             for sheet, origin, sheet_specificity in sheets:
-                # Add declarations for matched elements
+                # Add declarations for matching elements.
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, (declarations, layer) = selector
                     layer_order = inf if layer is None else sheet.layers.index(layer)
+                    selectors_keys.append(
+                        (sheet, specificity, id(declarations), layer_order))
                     specificity = sheet_specificity or specificity
-                    style = cascaded_styles.setdefault(
-                        (element.etree_element, pseudo_type), {})
+                    style = cascaded_styles.setdefault((etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, layer_order, specificity)
                         old_weight = style.get(name, (None, None))[1]
                         if old_weight is None or old_weight <= weight:
                             style[name] = values, weight
-            parent = element.parent.etree_element if element.parent else None
-            self.set_computed_styles(
-                element.etree_element, root=html.etree_element, parent=parent,
-                base_url=html.base_url, target_collector=target_collector)
+
+            # Store computed styles.
+            key = (parent_id, element_declarations, tuple(selectors_keys))
+            if key in computed_cache:
+                # Equivalent computed style already exsists, share it.
+                computed_styles[etree_element, None] = computed_cache[key]
+            else:
+                # No equivalent computed style found, create it.
+                self.set_computed_styles(
+                    etree_element, root=html.etree_element, parent=parent,
+                    base_url=html.base_url, target_collector=target_collector)
+                computed_cache[key] = computed_styles[etree_element, None]
 
         # Then computed styles for pseudo elements, in any order.
         # Pseudo-elements inherit from their associated element so they come
@@ -174,7 +191,7 @@ class StyleFor:
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
         computed = computed_styles[element, pseudo_type] = ComputedStyle(
-            parent_style, cascaded, element, pseudo_type, root_style, base_url,
+            parent_style, cascaded, pseudo_type, root_style, base_url,
             self.font_config, self.initial_page_sizes)
         if target_collector and computed['anchor']:
             target_collector.collect_anchor(computed['anchor'])
@@ -326,14 +343,27 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             declarations = tinycss2.parse_blocks_contents(style)
             yield specificity, element, declarations, base_url
 
-        # Apply presentational hints.
-        if not presentational_hints:
-            continue
-
         specificity = (0, 0, 0)
         def parse_declaration(style_attribute, element=element):
             declaration = tinycss2.parse_one_declaration(style_attribute)
             return specificity, element, (declaration,), base_url
+
+        if lang := element.get('lang'):
+            yield parse_declaration(f'-weasy-lang:"{lang}"')
+
+        if href := element.get('href'):
+            yield parse_declaration(f'-weasy-link:"{href}"')
+
+        if id_ := element.get('id'):
+            yield parse_declaration(f'-weasy-anchor:"{id_}"')
+
+        if element.tag == 'a':
+            if name := element.get('name'):
+                yield parse_declaration(f'-weasy-anchor:"{name}"')
+
+        # Apply presentational hints.
+        if not presentational_hints:
+            continue
 
         if element.tag == 'body':
             # TODO: we should check the container frame element.
@@ -1079,13 +1109,12 @@ class AnonymousStyle(Style):
 
 class ComputedStyle(Style):
     """Computed style used for non-anonymous boxes."""
-    def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url, font_config, initial_page_sizes):
+    def __init__(self, parent_style, cascaded, pseudo_type, root_style, base_url,
+                 font_config, initial_page_sizes):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
         self.is_root_element = parent_style is None
-        self.element = element
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
@@ -1095,8 +1124,8 @@ class ComputedStyle(Style):
 
     def copy(self):
         copy = ComputedStyle(
-            self.parent_style, self.cascaded, self.element, self.pseudo_type,
-            self.root_style, self.base_url, self.font_config, self.initial_page_sizes)
+            self.parent_style, self.cascaded, self.pseudo_type, self.root_style,
+            self.base_url, self.font_config, self.initial_page_sizes)
         copy.update(self)
         copy.specified = self.specified.copy()
         return copy
@@ -1505,8 +1534,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                 if tokens[0].type == 'string':
                     url = url_join(
                         base_url, tokens[0].value, allow_relative=False,
-                        context='@import at %s:%s',
-                        context_args=(rule.source_line, rule.source_column))
+                        context=f'@import at {rule.source_line}:{rule.source_column}')
                 else:
                     url_tuple = get_url(tokens[0], base_url)
                     if url_tuple and url_tuple[1][0] == 'external':

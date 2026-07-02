@@ -195,6 +195,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
         if child_boxes and child_boxes[0].style['float'] == 'footnote':
             footnote = child_boxes[0]
+            footnote.style = footnote.style.copy()
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
             call_style = style_for(footnote.element, 'footnote-call')
@@ -422,6 +423,14 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if image is not None:
                 content_boxes.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
+        elif type_ == 'attr()':
+            attr_name, attr_type, attr_fallback = value
+            if attr_type == 'string':
+                add_text(parent_box.element.get(attr_name, ''))
+            else:
+                LOGGER.warning(
+                    'Only strings are allowed for content attr() functions,'
+                    f' not {attr_type}')
         elif type_ == 'content()':
             added_text = extract_text(value, parent_box)
             add_text(added_text)
