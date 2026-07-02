@@ -742,7 +742,6 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         box.padding_left + box.margin_left + box.border_left_width)
     right_spacing = (
         box.padding_right + box.margin_right + box.border_right_width)
-    content_box_left = position_x
 
     children = []
     waiting_children = []
@@ -905,7 +904,16 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         if translation_needed:
             for child in new_box.children:
                 child.translate(dx=left_spacing)
-        new_box.width = position_x - content_box_left
+        new_box.width = 0
+        children = new_box.children
+        if new_box.style['direction'] == 'ltr':
+            children = children[::-1]
+        for child in children:
+            if child.is_in_normal_flow():
+                new_box.width = (
+                    child.position_x + child.margin_width() -
+                    new_box.content_box_x())
+                break
         new_box.translate(dx=float_widths['left'], ignore_floats=True)
 
     _adjust_line_height(new_box)
