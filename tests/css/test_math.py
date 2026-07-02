@@ -88,6 +88,38 @@ def test_math_functions(width):
 
 
 @assert_no_logs
+@pytest.mark.parametrize(('width', 'reference'), [
+    # A positive numerator over zero is +infinity, ...
+    ('calc(100px / 0)', 'calc(infinity * 1px)'),
+    ('calc(50px / 0)', 'calc(infinity * 1px)'),
+    ('calc(10em / 0)', 'calc(infinity * 1px)'),
+    # ... a negative numerator is -infinity, ...
+    ('calc(-100px / 0)', 'calc(-infinity * 1px)'),
+    # ... and zero over zero is NaN.
+    ('calc(0px / 0)', 'calc(nan * 1px)'),
+    # The divisor may evaluate to zero rather than being a literal zero.
+    ('calc(100px / (1 - 1))', 'calc(infinity * 1px)'),
+    # The resulting infinity keeps propagating through later operations.
+    ('calc(100px / 0 + 100px)', 'calc(infinity * 1px)'),
+    ('calc(-1px / 0 * 100)', 'calc(-infinity * 1px)'),
+])
+def test_calc_division_by_zero(width, reference):
+    # A division by zero inside calc() resolves to +/-infinity or NaN
+    # (IEEE-754), as required by CSS Values and Units 4, instead of raising a
+    # ZeroDivisionError. The result must match the equivalent calc(infinity *
+    # ...) / calc(nan * ...) expression that WeasyPrint already supports.
+    def render(value):
+        page, = render_pages(
+            '<div style="font-size: 10px; height: 1px; width: %s"></div>'
+            % value)
+        html, = page.children
+        body, = html.children
+        div, = body.children
+        return div.width
+    assert render(width) == render(reference)
+
+
+@assert_no_logs
 @pytest.mark.parametrize('width', [
     'calc',
     '(calc)',
