@@ -30,7 +30,7 @@ class PendingExpander(Pending):
         super().__init__(tokens, validator.keywords['name'])
         self.validator = validator
 
-    def validate(self, tokens, wanted_key):
+    def validate(self, tokens, wanted_key, base_url):
         for key, value in self.validator(tokens):
             if key.startswith('-'):
                 key = f'{self.validator.keywords["name"]}{key}'

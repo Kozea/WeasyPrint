@@ -1152,7 +1152,7 @@ class ComputedStyle(Style):
                 else:
                     solved_tokens.extend(tokens)
             try:
-                value = value.solve(solved_tokens, wanted_key)
+                value = value.solve(solved_tokens, wanted_key, self.base_url)
             except InvalidValues:
                 if key in INHERITED and parent_style is not None:
                     # Values in parent_style are already computed.
