@@ -810,9 +810,14 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             if box.height != 'auto':
                 box_bottom = box.position_y + box.border_height()
                 bottom_margin = collapse_margin(adjoining_margins)
-                if context.overflows(box_bottom, position_y - bottom_margin):
-                    # Box height is fixed and it overflows the page, forget
-                    # overflowing children.
+                content_bottom = position_y - bottom_margin
+                if (context.overflows(box_bottom, content_bottom) and
+                        not context.overflows_page(bottom_space, content_bottom)):
+                    # Box height is fixed and children overflow its bottom
+                    # inside the current page, forget overflowing children. If
+                    # children also overflow the page, the break is a page
+                    # break and the next children have to be rendered on the
+                    # next page.
                     resume_at = None
             adjoining_margins = []
             break
