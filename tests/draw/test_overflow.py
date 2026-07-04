@@ -116,10 +116,10 @@ def test_overflow_5(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('edge', (
+@pytest.mark.parametrize('edge', [
     'border: 2px solid blue',
     'padding: 2px; background: blue',
-))
+])
 def test_overflow_6(edge, assert_pixels):
     # Regression test for #2798. The second div’s unbreakable border or
     # padding overflows the page bottom, the following text must not be
@@ -152,6 +152,36 @@ def test_overflow_6(edge, assert_pixels):
       <div style="height: 5px; background: red"></div>
       <div style="{edge}"></div>
       ab
+      ''')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('edge', [
+    'border: 2px solid blue',
+    'padding: 2px; background: blue',
+])
+def test_overflow_7(edge, assert_pixels):
+    assert_pixels('''
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+    ''', '''
+      <style>
+        @page { size: 8px }
+        body { color: blue; font-family: weasyprint; line-height: 1;
+                font-size: 2px }
+        article { height: 8px }
+      </style>
+      <article>
+        <div style="height: 5px; background: red"></div>
+        <div style="{edge}"></div>
+        ab
+      </article>
       ''')
 
 
