@@ -768,3 +768,27 @@ def test_pdf_ua_2_namespace_type():
     pdf = FakeHTML(string='<html lang="en"><body>abc').write_pdf(
         pdf_variant='pdf/ua-2', uncompressed_pdf=True)
     assert b'/Type /Namespace' in pdf
+
+
+@assert_no_logs
+def test_svg_gradient_color_ops_before_path():
+    # Regression test for #2762. SVG gradient color-setting operators
+    # (CS/SCN) must appear before path-construction operators (m/l/c/re),
+    # per ISO 32000-1 §8.5.2.1 — color operators are forbidden in the
+    # path object state.
+    pdf = FakeHTML(string='''
+      <svg viewBox="0 0 100 10" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g">
+            <stop stop-color="transparent" offset="0"/>
+            <stop stop-color="#008dd4" offset="1"/>
+          </linearGradient>
+        </defs>
+        <path d="M 0,5 h 100" fill="none" stroke="url(#g)" stroke-width="10"/>
+      </svg>
+    ''').write_pdf()
+    cs_offset = pdf.find(b'/Pattern CS')
+    assert cs_offset != -1
+    lineto_offset = pdf.find(b'100 5 l')
+    assert lineto_offset != -1
+    assert cs_offset < lineto_offset

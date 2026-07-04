@@ -128,12 +128,8 @@ def text(svg, node, font_size):
         svg.cursor_position = (x + dx, y + dy)
         return
 
-    svg.stream.push_state()
-    svg.set_graphical_state(node, font_size, text=True)
-    svg.stream.begin_text()
-    emoji_lines = []
-
-    # Draw letters
+    # Layout letters.
+    layouts = []
     for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
         if x:
             svg.cursor_d_position[0] = 0
@@ -157,11 +153,19 @@ def text(svg, node, font_size):
             (x_position, y_position - baseline),
             (x_position + width, y_position - baseline + height))
         # TODO: Use ink extents instead of logical from line_break.line_size().
-        node.text_bounding_box = extend_bounding_box(
-            node.text_bounding_box, points)
+        node.text_bounding_box = extend_bounding_box(node.text_bounding_box, points)
+        layouts.append((layout, x_position, y_position, x, y, angle))
 
+    # Set state after we have bounding box for gradients and patterns, before drawing.
+    svg.stream.push_state()
+    fill, stroke = svg.set_graphical_state(node, font_size)
+    svg.stream.begin_text()
+
+    # Draw letters.
+    emoji_lines = []
+    for layout, x_position, y_position, x, y, angle in layouts:
         layout.reactivate(style)
-        svg.fill_stroke(node, font_size, text=True)
+        svg.fill_stroke(fill, stroke, text=True)
         matrix = Matrix(a=scale_x, d=-1, e=x_position, f=y_position)
         if angle:
             a, c = cos(angle), sin(angle)
@@ -173,5 +177,6 @@ def text(svg, node, font_size):
     svg.stream.end_text()
     svg.stream.pop_state()
 
+    # Draw emojis.
     for x, y, emojis in emoji_lines:
         draw_emojis(svg.stream, style, x, y, emojis)

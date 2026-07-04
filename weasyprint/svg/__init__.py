@@ -9,7 +9,7 @@ from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
 from .css import parse_declarations, parse_stylesheets
-from .defs import apply_filters, draw_gradient_or_pattern, paint_mask, use
+from .defs import apply_filters, draw_gradient, draw_pattern, paint_mask, use
 from .images import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -461,7 +461,7 @@ class SVG:
 
         # Set graphical state
         if call_fill_stroke:
-            self.set_graphical_state(node, font_size)
+            fill, stroke = self.set_graphical_state(node, font_size)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
@@ -558,7 +558,8 @@ class SVG:
 
         # Fill and stroke
         if call_fill_stroke:
-            self.fill_stroke(node, font_size)
+            even_odd = node.get('fill-rule') == 'evenodd'
+            self.fill_stroke(fill, stroke, even_odd)
 
         # Draw markers
         self.draw_markers(node, font_size, fill_stroke)
@@ -713,30 +714,37 @@ class SVG:
 
         return source, color
 
-    def set_graphical_state(self, node, font_size, text=False):
-        """Set stroke and fill colors, and line options."""
+    def set_graphical_state(self, node, font_size):
+        """Set stroke and fill colors, gradients, patterns, and line options."""
         # Get fill data
-        fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
-        fill_opacity = alpha_value(node.get('fill-opacity', 1))
-        fill_in_gradient = fill_source in self.gradients
-        fill_in_pattern = fill_source in self.patterns
-        if fill_color and not (fill_in_gradient or fill_in_pattern):
-            stream_color = color(fill_color)
-            stream_color.alpha *= fill_opacity
+        source, fill = self.get_paint(node.get('fill', 'black'))
+        opacity = alpha_value(node.get('fill-opacity', 1))
+        if gradient := self.gradients.get(source):
+            fill = draw_gradient(self, node, gradient, font_size, opacity, stroke=False)
+        elif pattern := self.patterns.get(source):
+            fill = draw_pattern(self, node, pattern, font_size, opacity, stroke=False)
+        elif fill:
+            stream_color = color(fill)
+            stream_color.alpha *= opacity
             self.stream.set_color(stream_color)
 
         # Get stroke data
-        stroke_source, stroke_color = self.get_paint(node.get('stroke'))
-        stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
-        stroke_in_gradient = stroke_source in self.gradients
-        stroke_in_pattern = stroke_source in self.patterns
-        if stroke_color and not (stroke_in_gradient or stroke_in_pattern):
-            stream_color = color(stroke_color)
-            stream_color.alpha *= stroke_opacity
-            self.stream.set_color(stream_color, stroke=True)
-        stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
-        if stroke_width:
-            self.stream.set_line_width(stroke_width)
+        if stroke_width := self.length(node.get('stroke-width', '1px'), font_size):
+            source, stroke = self.get_paint(node.get('stroke'))
+            opacity = alpha_value(node.get('stroke-opacity', 1))
+            if gradient := self.gradients.get(source):
+                stroke = draw_gradient(
+                    self, node, gradient, font_size, opacity, stroke=True)
+            elif pattern := self.patterns.get(source):
+                stroke = draw_pattern(
+                    self, node, pattern, font_size, opacity, stroke=True)
+            elif stroke:
+                stream_color = color(stroke)
+                stream_color.alpha *= opacity
+                self.stream.set_color(stream_color, stroke=True)
+                self.stream.set_line_width(stroke_width)
+        else:
+            stroke = None
 
         # Apply dash array
         dash_array = tuple(
@@ -779,27 +787,12 @@ class SVG:
             miter_limit = 4
         self.stream.set_miter_limit(miter_limit)
 
-    def fill_stroke(self, node, font_size, text=False):
+        return fill, stroke
+
+    def fill_stroke(self, fill, stroke, even_odd=False, text=False):
         """Paint fill and stroke for a node."""
-        # Get fill data
-        fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
-        fill_opacity = alpha_value(node.get('fill-opacity', 1))
-        fill_drawn = draw_gradient_or_pattern(
-            self, node, fill_source, font_size, fill_opacity, stroke=False)
-        fill = fill_color or fill_drawn
-
-        # Get stroke data
-        stroke_source, stroke_color = self.get_paint(node.get('stroke'))
-        stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
-        stroke_drawn = draw_gradient_or_pattern(
-            self, node, stroke_source, font_size, stroke_opacity, stroke=True)
-        stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
-        stroke = (stroke_color or stroke_drawn) and stroke_width
-
-        # Fill and stroke
-        even_odd = node.get('fill-rule') == 'evenodd'
         if text:
-            if stroke and fill:
+            if fill and stroke:
                 text_rendering = 2
             elif stroke:
                 text_rendering = 1
