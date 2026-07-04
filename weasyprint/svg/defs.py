@@ -53,16 +53,6 @@ def use(svg, node, font_size):
     svg.stream.transform(e=x, f=y)
 
 
-def draw_gradient_or_pattern(svg, node, name, font_size, opacity, stroke):
-    """Draw given gradient or pattern."""
-    if name in svg.gradients:
-        return draw_gradient(
-            svg, node, svg.gradients[name], font_size, opacity, stroke)
-    elif name in svg.patterns:
-        return draw_pattern(
-            svg, node, svg.patterns[name], font_size, opacity, stroke)
-
-
 def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     """Draw given gradient node."""
     # TODO: merge with Gradient.draw
