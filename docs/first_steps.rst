@@ -21,7 +21,7 @@ WeasyPrint |version| depends on:
 * fontTools_ ≥ 4.59.2
 
 .. _Python: https://www.python.org/
-.. _Pango: https://pango.gnome.org/
+.. _Pango: https://pango.org/
 .. _CFFI: https://cffi.readthedocs.io/
 .. _pydyf: https://doc.courtbouillon.org/pydyf/
 .. _tinyhtml5: https://doc.courtbouillon.org/tinyhtml5/
