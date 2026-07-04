@@ -98,6 +98,17 @@ def draw_border(stream, box):
             draw_rounded_border(stream, box, styles[0], colors[0])
         return
 
+    # Dotted/dashed fast path: uniform border with no rounded corners. We
+    # stroke one line per side using PDF dash arrays, which is orders of
+    # magnitude smaller in the PDF than the generic per-segment clip path.
+    no_radii = all(rx == 0 and ry == 0 for rx, ry in box.rounded_border_box()[4:])
+    dotted_dashed = set(styles) in ({'dotted'}, {'dashed'})
+    one_width = len(set(widths)) == 1
+    if dotted_dashed and single_color and four_sides and one_width and no_radii:
+        with stream.artifact():
+            draw_dotted_dashed_border(stream, box, styles[0], widths[0], colors[0])
+        return
+
     # We're not smart enough to find a good way to draw the borders, we must
     # draw them side by side. Order is not specified, but this one seems to be
     # close to what other browsers do.
@@ -597,6 +608,52 @@ def draw_rect_border(stream, box, widths, style, color):
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
     stream.fill(even_odd=True)
+
+
+def draw_dotted_dashed_border(stream, box, style, width, color):
+    """Fast path: uniform dotted or dashed border with no rounded corners.
+
+    Dotted uses a round line cap with a zero-length dash, so each "on"
+    position becomes a filled circle. Dashed uses a butt cap with equal
+    dash/gap, so each "on" segment becomes a flush rectangle. Either way,
+    one stroked line per side replaces hundreds of per-segment paths. Each
+    side picks its own dash period so dots/dashes land on both corners,
+    matching the per-side spacing of the generic path.
+
+    """
+    bbx, bby, bbw, bbh = box.rounded_border_box()[:4]
+    half = width / 2
+    # Round caps extend the line by half on each end, so dotted endpoints
+    # must be inset to keep dots centered on the corners. Butt caps don't
+    # extend, so dashed runs flush from corner to corner.
+    inset = half if style == 'dotted' else 0
+
+    def dash(outer_length):
+        if style == 'dotted':
+            # Dot at each corner with equal spacing in between.
+            count = max(2, int(outer_length // (2 * width)) + 1)
+            return [0, (outer_length - width) / (count - 1)]
+        # Target dash size = 3 * width; equal dash/gap so an integer count
+        # fits flush between the two corners.
+        count = int(outer_length // (6 * width)) + 1
+        dash_length = outer_length / (2 * count - 1)
+        return [dash_length, dash_length]
+
+    with stream.stacked():
+        stream.set_color(color, stroke=True)
+        stream.set_line_width(width)
+        stream.set_line_cap(1 if style == 'dotted' else 0)
+        sides = (
+            (bbx + inset, bby + half, bbx + bbw - inset, bby + half, bbw),
+            (bbx + bbw - half, bby + inset, bbx + bbw - half, bby + bbh - inset, bbh),
+            (bbx + inset, bby + bbh - half, bbx + bbw - inset, bby + bbh - half, bbw),
+            (bbx + half, bby + inset, bbx + half, bby + bbh - inset, bbh),
+        )
+        for x1, y1, x2, y2, outer_length in sides:
+            stream.set_dash(dash(outer_length), 0)
+            stream.move_to(x1, y1)
+            stream.line_to(x2, y2)
+            stream.stroke()
 
 
 def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
