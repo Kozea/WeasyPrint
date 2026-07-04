@@ -87,11 +87,11 @@ DEFAULT_OPTIONS = {
 
 __all__ = [
     'CSS', 'DEFAULT_OPTIONS', 'HTML', 'VERSION', 'Attachment', 'Document', 'Page',
-    '__version__', 'default_url_fetcher']
+    '__version__']
 
 
 # Import after setting the version, as the version is used in other modules
-from .urls import URLFetcher, default_url_fetcher, select_source  # noqa: I001, E402
+from .urls import URLFetcher, select_source  # noqa: I001, E402
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa: E402
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.

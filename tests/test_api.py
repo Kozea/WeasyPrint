@@ -18,7 +18,7 @@ from urllib.parse import urljoin, uses_relative
 import pytest
 from PIL import Image
 
-from weasyprint import CSS, HTML, __main__, default_url_fetcher
+from weasyprint import CSS, HTML, __main__
 from weasyprint.pdf.anchors import resolve_links
 
 from .draw import parse_pixels
@@ -1288,71 +1288,6 @@ def test_links_12():
 
 # Make relative URL references work with our custom URL scheme.
 uses_relative.append('weasyprint-custom')
-
-
-@pytest.mark.filterwarnings('ignore')
-@assert_no_logs
-def test_deprecated_url_fetcher(assert_pixels_equal):
-    path = resource_path('pattern.png')
-    pattern_png = path.read_bytes()
-
-    def fetcher(url):
-        if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
-            return {'string': pattern_png, 'mime_type': 'image/png'}
-        elif url == 'weasyprint-custom:foo/bar.css':
-            return {
-                'string': 'body { background: url(é_%e9_pattern)',
-                'mime_type': 'text/css'}
-        elif url == 'weasyprint-custom:foo/bar.no':
-            return {
-                'string': 'body { background: red }',
-                'mime_type': 'text/no'}
-        else:
-            return default_url_fetcher(url)
-
-    base_url = str(resource_path('dummy.html'))
-    css = CSS(string='''
-        @page { size: 8px; margin: 2px }
-        body { margin: 0; font-size: 0 }
-    ''', base_url=base_url)
-
-    def test(html, blank=False):
-        html = FakeHTML(string=html, url_fetcher=fetcher, base_url=base_url)
-        check_png_pattern(
-            assert_pixels_equal, html.write_png(stylesheets=[css]),
-            blank=blank)
-
-    test('<body><img src="pattern.png">')  # Test a "normal" URL
-    test(f'<body><img src="{path.as_uri()}">')
-    test(f'<body><img src="{path.as_uri()}?ignored">')
-    test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
-    test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
-    test('<body><li style="list-style: inside '
-         'url(weasyprint-custom:foo/é_%e9_pattern)">')
-    test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
-    test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
-    test('<style>@import url(weasyprint-custom:foo/bar.css);</style><body>')
-    test('<style>@import url("weasyprint-custom:foo/bar.css");</style><body>')
-
-    with capture_logs() as logs:
-        test('<body><img src="custom:foo/bar">', blank=True)
-    assert len(logs) == 1
-    assert logs[0].startswith(
-        "ERROR: Failed to load image at 'custom:foo/bar'")
-
-    with capture_logs() as logs:
-        test(
-            '<link rel=stylesheet href="weasyprint-custom:foo/bar.css">'
-            '<link rel=stylesheet href="weasyprint-custom:foo/bar.no"><body>')
-    assert len(logs) == 1
-    assert logs[0].startswith('ERROR: Unsupported stylesheet type text/no')
-
-    def fetcher_2(url):
-        assert url == 'weasyprint-custom:%C3%A9_%e9.css'
-        return {'string': '', 'mime_type': 'text/css'}
-    FakeHTML(
-        string='<link rel=stylesheet href="weasyprint-custom:é_%e9.css"><body',
-        url_fetcher=fetcher_2).render()
 
 
 class Fetcher(URLFetcher):

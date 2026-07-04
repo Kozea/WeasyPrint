@@ -5,7 +5,6 @@ import os.path
 import re
 import sys
 import traceback
-import warnings
 import zlib
 from email.message import EmailMessage
 from gzip import GzipFile
@@ -180,24 +179,6 @@ def ensure_url(string):
 
     """
     return string if url_is_absolute(string) else path2url(string)
-
-
-def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
-                        allowed_protocols=None):
-    """Fetch an external resource such as an image or stylesheet.
-
-    This function is deprecated, use ``URLFetcher`` instead.
-
-    """
-    warnings.warn(
-        'default_url_fetcher is deprecated and will be removed in WeasyPrint 69.0, '
-        'please use URLFetcher instead. For security reasons, HTTP redirects are not '
-        'supported anymore with default_url_fetcher, but are with URLFetcher.\n\nSee '
-        'https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#url-fetchers',
-        category=DeprecationWarning)
-    fetcher = URLFetcher(
-        timeout, ssl_context, http_headers, allowed_protocols, allow_redirects=False)
-    return fetcher.fetch(url)
 
 
 @contextlib.contextmanager
@@ -466,23 +447,9 @@ def fetch(url_fetcher, url):
     try:
         resource = url_fetcher(url)
     except Exception as exception:
-        if getattr(url_fetcher, '_fail_on_errors', False):
+        if url_fetcher._fail_on_errors:
             raise FatalURLFetchingError(f'Error fetching "{url}"') from exception
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
-
-    if isinstance(resource, dict):
-        warnings.warn(
-            'Returning dicts in URL fetchers is deprecated and will be removed '
-            'in WeasyPrint 69.0, please return URLFetcherResponse instead.',
-            category=DeprecationWarning)
-        if 'url' not in resource:
-            resource['url'] = resource.get('redirected_url', url)
-        resource['body'] = resource.get('file_obj', resource.get('string'))
-        content_type = resource.get('mime_type', 'application/octet-stream')
-        if charset := resource.get('encoding'):
-            content_type += f'; charset={charset}'
-        resource['headers'] = {'Content-Type': content_type}
-        resource = URLFetcherResponse(**resource)
 
     assert isinstance(resource, URLFetcherResponse), (
         'URL fetcher must return either a dict or a URLFetcherResponse instance')
