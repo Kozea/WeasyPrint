@@ -40,8 +40,8 @@ from .validation.properties import validate_non_shorthand
 
 from .tokens import (  # isort:skip
     E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, PercentageInMath,
-    RelativeLengthInMath, get_angle, get_url, remove_whitespace, split_on_comma,
-    tokenize)
+    RelativeLengthInMath, get_angle, get_length, get_url, remove_whitespace,
+    split_on_comma, tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = frozenset((
@@ -366,6 +366,16 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             if name := element.get('name'):
                 yield parse_declaration(f'-weasy-anchor:"{name}"')
 
+        if element.tag == '{http://www.w3.org/2000/svg}svg':
+            # Handle presentation attributes. Only do that for height and width at top
+            # level now, so that intrinsic size is defined by CSS, not SVG.
+            # See: https://www.w3.org/TR/SVG2/styling.html#PresentationAttributes.
+            for attribute in ('width', 'height'):
+                if length := element.get(attribute):
+                    token = tinycss2.parse_one_component_value(length)
+                    if get_length(token, percentage=True):
+                        yield parse_declaration(f'{attribute}:{length}')
+
         # Apply presentational hints.
         if not presentational_hints:
             continue
@@ -528,9 +538,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             if color := element.get('color'):
                 color = html.parse_legacy_color(color)
                 yield parse_declaration(f'color:{color}')
-        elif element.tag in (
-                'iframe', 'applet', 'embed', 'img', 'input', 'object',
-                '{http://www.w3.org/2000/svg}svg'):
+        elif element.tag in ('iframe', 'applet', 'embed', 'img', 'input', 'object'):
             if element.tag != 'input' or element.get('type', '').lower() == 'image':
                 align = element.get('align', '').lower()
                 if align in ('middle', 'center'):
