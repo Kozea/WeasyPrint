@@ -215,7 +215,8 @@ def bounding_box_g(svg, node, font_size):
     for child in node:
         child_bounding_box = svg.calculate_bounding_box(child, font_size)
         if is_valid_bounding_box(child_bounding_box):
-            minx, miny, width, height = child_bounding_box
+            minx, miny, width, height = transform_bounding_box(
+                svg, child, font_size, child_bounding_box)
             maxx, maxy = minx + width, miny + height
             bounding_box = extend_bounding_box(
                 bounding_box, ((minx, miny), (maxx, maxy)))
@@ -231,7 +232,8 @@ def bounding_box_use(svg, node, font_size):
     else:
         x, y = svg.point(node.get('x'), node.get('y'), font_size)
         box = bounding_box(svg, tree, font_size, True)
-        return box[0] + x, box[1] + y, box[2], box[3]
+        box = (box[0] + x, box[1] + y, box[2], box[3])
+        return transform_bounding_box(svg, tree, font_size, box)
 
 
 def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
@@ -345,6 +347,21 @@ def extend_bounding_box(bounding_box, points):
         min(minx, *x_list), min(miny, *y_list),
         max(maxx, *x_list), max(maxy, *y_list))
     return minx, miny, maxx - minx, maxy - miny
+
+
+def transform_bounding_box(svg, node, font_size, bounding_box):
+    """Apply node transform to a bounding box."""
+    matrix = svg.get_node_transform_matrix(node, font_size)
+    if not matrix:
+        return bounding_box
+    minx, miny, width, height = bounding_box
+    maxx, maxy = minx + width, miny + height
+    points = (
+        matrix.transform_point(minx, miny),
+        matrix.transform_point(minx, maxy),
+        matrix.transform_point(maxx, miny),
+        matrix.transform_point(maxx, maxy))
+    return extend_bounding_box(EMPTY_BOUNDING_BOX, points)
 
 
 def is_valid_bounding_box(bounding_box):

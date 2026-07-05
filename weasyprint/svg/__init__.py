@@ -811,16 +811,17 @@ class SVG:
             else:
                 self.stream.end()
 
-    def transform(self, node, font_size):
-        """Apply a transformation string to the node."""
-        transform_origin = node.get('transform-origin')
-        transform_string = node.get('transform')
-        if not transform_string:
-            return
+    def get_node_transform_matrix(self, node, font_size):
+        """Get the transformation matrix of a node."""
+        if transform_string := node.get('transform'):
+            origin = node.get('transform-origin')
+            matrix = transform(transform_string, origin, font_size, self.inner_diagonal)
+            if matrix.determinant:
+                return matrix
 
-        matrix = transform(
-            transform_string, transform_origin, font_size, self.inner_diagonal)
-        if matrix.determinant:
+    def transform(self, node, font_size):
+        """Apply the transformation string of a node to the stream."""
+        if matrix := self.get_node_transform_matrix(node, font_size):
             self.stream.transform(*matrix.values)
 
     def inherit_element(self, element, defs):
