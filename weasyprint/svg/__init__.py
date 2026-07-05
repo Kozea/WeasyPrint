@@ -537,7 +537,8 @@ class SVG:
                 if new_chunk:
                     new_stream = self.stream
                     self.stream = original_streams[-1]
-                self.draw_node(child, font_size, fill_stroke)
+                context = node if node.tag == 'use' else context
+                self.draw_node(child, font_size, fill_stroke, context)
                 if new_chunk:
                     self.stream = new_stream
                 visible_text_child = (
