@@ -763,6 +763,17 @@ def test_pdf_tags_inline_table():
 
 
 @assert_no_logs
+def test_pdf_tags_split_table_with_caption():
+    # Regression test for #2761.
+    FakeHTML(string='''
+      <html lang="en" style="font: 2px/1 weasyprint">
+        <style>@page { size: 3px }</style>
+        <table><caption>caption</caption><tr><td>td</td></tr></table>
+      </html>
+    ''').write_pdf(pdf_tags=True)
+
+
+@assert_no_logs
 def test_pdf_ua_2_namespace_type():
     # Regression test for #2786.
     pdf = FakeHTML(string='<html lang="en"><body>abc').write_pdf(

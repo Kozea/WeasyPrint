@@ -402,8 +402,6 @@ class ParentBox(Box):
         for child in self.children:
             if isinstance(child, TableBox):
                 return child
-        else:  # pragma: no cover
-            raise ValueError('Table wrapper without a table')
 
     def page_values(self):
         # See https://www.w3.org/TR/css-break-4/#break-propagation.
