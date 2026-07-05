@@ -44,29 +44,14 @@ from .tokens import (  # isort:skip
     tokenize)
 
 # Reject anything not in here:
-PSEUDO_ELEMENTS = (
+PSEUDO_ELEMENTS = frozenset((
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
-    'footnote-call', 'footnote-marker')
-
+    'footnote-call', 'footnote-marker'))
 PAGE_MARGIN_BOXES = frozenset((
-    'bottom-center',
-    'bottom-left',
-    'bottom-left-corner',
-    'bottom-right',
-    'bottom-right-corner',
-    'footnote',
-    'left-bottom',
-    'left-middle',
-    'left-top',
-    'right-bottom',
-    'right-middle',
-    'right-top',
-    'top-center',
-    'top-left',
-    'top-left-corner',
-    'top-right',
-    'top-right-corner',
-))
+    'bottom-center', 'bottom-left', 'bottom-left-corner', 'bottom-right',
+    'bottom-right-corner', 'left-bottom', 'left-middle', 'left-top',
+    'right-bottom', 'right-middle', 'right-top', 'top-center', 'top-left',
+    'top-left-corner', 'top-right', 'top-right-corner', 'footnote'))
 
 PageSelectorType = namedtuple(
     'PageSelectorType', ['side', 'blank', 'first', 'index', 'name'])
@@ -1626,30 +1611,23 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                 for margin_rule in content:
                     if margin_rule.type != 'at-rule':
                         continue
+                    line, column = margin_rule.source_line, margin_rule.source_column
                     if margin_rule.lower_at_keyword not in PAGE_MARGIN_BOXES:
                         LOGGER.warning(
-                            'Unknown @page rule %s at %d:%d',
-                            margin_rule, margin_rule.source_line,
-                            margin_rule.source_column)
+                            'Unknown @page rule %s at %d:%d', margin_rule, line, column)
                         continue
                     if margin_rule.content is None:
                         LOGGER.warning(
-                            'Empty @page rule %s at %d:%d',
-                            margin_rule, margin_rule.source_line,
-                            margin_rule.source_column)
+                            'Empty @page rule %s at %d:%d', margin_rule, line, column)
                         continue
                     if remove_whitespace(margin_rule.prelude):
                         LOGGER.warning(
-                            'Invalid @page rule %s prelude %r, '
-                            'the whole rule was ignored at %d:%d.',
-                            margin_rule,
-                            tinycss2.serialize(margin_rule.prelude),
-                            margin_rule.source_line,
-                            margin_rule.source_column)
+                            'Invalid prelude %r for @page rule %s at %d:%d',
+                            tinycss2.serialize(margin_rule.prelude), margin_rule,
+                            line, column)
                         continue
                     declarations = list(preprocess_declarations(
-                        base_url,
-                        tinycss2.parse_blocks_contents(margin_rule.content)))
+                        base_url, tinycss2.parse_blocks_contents(margin_rule.content)))
                     if declarations:
                         selector_list = [(
                             specificity, f'@{margin_rule.lower_at_keyword}',
