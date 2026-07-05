@@ -44,9 +44,14 @@ from .tokens import (  # isort:skip
     tokenize)
 
 # Reject anything not in here:
-PSEUDO_ELEMENTS = (
+PSEUDO_ELEMENTS = frozenset((
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
-    'footnote-call', 'footnote-marker')
+    'footnote-call', 'footnote-marker'))
+PAGE_MARGIN_BOXES = frozenset((
+    'bottom-center', 'bottom-left', 'bottom-left-corner', 'bottom-right',
+    'bottom-right-corner', 'left-bottom', 'left-middle', 'left-top',
+    'right-bottom', 'right-middle', 'right-top', 'top-center', 'top-left',
+    'top-left-corner', 'top-right', 'top-right-corner', 'footnote'))
 
 PageSelectorType = namedtuple(
     'PageSelectorType', ['side', 'blank', 'first', 'index', 'name'])
@@ -1501,8 +1506,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
             tokens = remove_whitespace(rule.prelude)
             url = None
+            invalid_syntax = True
             if tokens:
                 if tokens[0].type == 'string':
+                    invalid_syntax = False
                     url = url_join(
                         base_url, tokens[0].value, allow_relative=False,
                         context='@import at %s:%s',
@@ -1510,8 +1517,15 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                 else:
                     url_tuple = get_url(tokens[0], base_url)
                     if url_tuple and url_tuple[1][0] == 'external':
+                        invalid_syntax = False
                         url = url_tuple[1][1]
             if url is None:
+                if invalid_syntax:
+                    LOGGER.warning(
+                        'Invalid @import rule %r, '
+                        'the whole rule was ignored at %d:%d.',
+                        tinycss2.serialize(rule.prelude),
+                        rule.source_line, rule.source_column)
                 continue
 
             new_layer = None
@@ -1595,11 +1609,25 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     page_rules.append((rule, selector_list, declarations))
 
                 for margin_rule in content:
-                    if margin_rule.type != 'at-rule' or margin_rule.content is None:
+                    if margin_rule.type != 'at-rule':
+                        continue
+                    line, column = margin_rule.source_line, margin_rule.source_column
+                    if margin_rule.lower_at_keyword not in PAGE_MARGIN_BOXES:
+                        LOGGER.warning(
+                            'Unknown @page rule %s at %d:%d', margin_rule, line, column)
+                        continue
+                    if margin_rule.content is None:
+                        LOGGER.warning(
+                            'Empty @page rule %s at %d:%d', margin_rule, line, column)
+                        continue
+                    if remove_whitespace(margin_rule.prelude):
+                        LOGGER.warning(
+                            'Invalid prelude %r for @page rule %s at %d:%d',
+                            tinycss2.serialize(margin_rule.prelude), margin_rule,
+                            line, column)
                         continue
                     declarations = list(preprocess_declarations(
-                        base_url,
-                        tinycss2.parse_blocks_contents(margin_rule.content)))
+                        base_url, tinycss2.parse_blocks_contents(margin_rule.content)))
                     if declarations:
                         selector_list = [(
                             specificity, f'@{margin_rule.lower_at_keyword}',
