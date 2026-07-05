@@ -10,13 +10,6 @@ https://dev.w3.org/html5/spec-LC/rendering.html#the-css-user-agent-style-sheet-a
 
 */
 
-/* WeasyPrint-only features */
-
-[id] { -weasy-anchor: attr(id) }
-a[name] { -weasy-anchor: attr(name) }
-[lang] { -weasy-lang: attr(lang) }
-a[href] { -weasy-link: attr(href) }
-
 /* Display and visibility */
 
 [hidden], area, base, basefont, command, datalist, head, input[type=hidden i], link, menu[type=context i], meta, noembed, noframes, param, rp, script, source, style, template, title, track { display: none }

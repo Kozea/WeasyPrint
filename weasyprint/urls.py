@@ -109,11 +109,9 @@ def get_url_attribute(element, attr_name, base_url, allow_relative=False):
     Otherwise return an URI, absolute if possible.
 
     """
-    value = element.get(attr_name, '').strip()
-    if value:
-        return url_join(
-            base_url or '', value, allow_relative, '<%s %s="%s">',
-            (element.tag, attr_name, value))
+    if value := element.get(attr_name, '').strip():
+        context = f'<{element.tag} {attr_name}="{value}">'
+        return url_join(base_url or '', value, allow_relative, context)
 
 
 def get_url_tuple(url, base_url):
@@ -126,7 +124,7 @@ def get_url_tuple(url, base_url):
         return ('external', iri_to_uri(urljoin(base_url, url)))
 
 
-def url_join(base_url, url, allow_relative, context, context_args):
+def url_join(base_url, url, allow_relative, context):
     """Like urllib.urljoin, but warn if base_url is required but missing."""
     if url_is_absolute(url):
         return iri_to_uri(url)
@@ -135,24 +133,21 @@ def url_join(base_url, url, allow_relative, context, context_args):
     elif allow_relative:
         return iri_to_uri(url)
     else:
-        LOGGER.error(
-            f'Relative URI reference without a base URI: {context}',
-            *context_args)
+        LOGGER.error(f'Relative URI reference without a base URI: {context}')
         return None
 
 
-def get_link_attribute(element, attr_name, base_url):
+def get_link(url, base_url):
     """Get the URL value of an element attribute.
 
     Return ``('external', absolute_uri)``, or ``('internal',
     unquoted_fragment_id)``, or ``None``.
 
     """
-    attr_value = element.get(attr_name, '').strip()
-    if attr_value.startswith('#') and len(attr_value) > 1:
+    if url.startswith('#') and len(url) > 1:
         # Do not require a base_url when the value is just a fragment.
-        return ('url', ('internal', unquote(attr_value[1:])))
-    uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
+        return ('url', ('internal', unquote(url[1:])))
+    uri = url_join(base_url or '', url, allow_relative=True, context=url)
     if uri:
         if base_url:
             try:
