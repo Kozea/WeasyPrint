@@ -15,7 +15,7 @@ def bounding_box(svg, node, font_size, stroke):
     box = BOUNDING_BOX_METHODS[node.tag](svg, node, font_size)
     if not is_valid_bounding_box(box):
         return EMPTY_BOUNDING_BOX
-    if stroke and node.tag != 'g' and any(svg.get_paint(node.get('stroke'))):
+    if stroke and node.tag != 'g' and any(node.get_paint('stroke')):
         stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
         box = (
             box[0] - stroke_width / 2, box[1] - stroke_width / 2,

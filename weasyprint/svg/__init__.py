@@ -332,6 +332,29 @@ class Node:
             svg.inner_width, svg.inner_height = svg.concrete_width, svg.concrete_height
         svg.inner_diagonal = hypot(svg.inner_width, svg.inner_height) / sqrt(2)
 
+    def get_paint(self, attribute, context=None):
+        """Get paint fill or stroke attribute with a color or a URL."""
+        assert attribute in ('fill', 'stroke')
+
+        value = self.get(attribute, 'black' if attribute == 'fill' else '').strip()
+
+        if not value or value == 'none':
+            return None, None
+
+        if value in ('context-fill', 'context-stroke'):
+            if context is None:
+                return None, None
+            return context.get_paint(value.removeprefix('context-'))
+
+        if match := re.compile(r'(url\(.+\)) *(.*)').search(value):
+            source = parse_url(match.group(1)).fragment
+            color = match.group(2) or None
+        else:
+            source = None
+            color = value or None
+
+        return source, color
+
 
 class LazyDefs:
     def __init__(self, name, svg):
@@ -429,7 +452,7 @@ class SVG:
 
         self.draw_node(self.tree, size('12pt'))
 
-    def draw_node(self, node, font_size, fill_stroke=True):
+    def draw_node(self, node, font_size, fill_stroke=True, context=None):
         """Draw a node."""
         if node.tag == 'defs':
             return
@@ -461,7 +484,7 @@ class SVG:
 
         # Set graphical state
         if call_fill_stroke:
-            fill, stroke = self.set_graphical_state(node, font_size)
+            fill, stroke = self.set_graphical_state(node, font_size, context=context)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
@@ -514,7 +537,8 @@ class SVG:
                 if new_chunk:
                     new_stream = self.stream
                     self.stream = original_streams[-1]
-                self.draw_node(child, font_size, fill_stroke)
+                context = node if node.tag == 'use' else context
+                self.draw_node(child, font_size, fill_stroke, context)
                 if new_chunk:
                     self.stream = new_stream
                 visible_text_child = (
@@ -692,32 +716,15 @@ class SVG:
                     self.stream.clip()
                     self.stream.end()
 
-                self.draw_node(child, font_size, fill_stroke)
+                self.draw_node(child, font_size, fill_stroke, context=node)
                 self.stream.pop_state()
 
             position = 'mid' if angles else 'start'
 
-    @staticmethod
-    def get_paint(value):
-        """Get paint fill or stroke attribute with a color or a URL."""
-        if not value or value == 'none':
-            return None, None
-
-        value = value.strip()
-        match = re.compile(r'(url\(.+\)) *(.*)').search(value)
-        if match:
-            source = parse_url(match.group(1)).fragment
-            color = match.group(2) or None
-        else:
-            source = None
-            color = value or None
-
-        return source, color
-
-    def set_graphical_state(self, node, font_size):
+    def set_graphical_state(self, node, font_size, context=None):
         """Set stroke and fill colors, gradients, patterns, and line options."""
         # Get fill data
-        source, fill = self.get_paint(node.get('fill', 'black'))
+        source, fill = node.get_paint('fill', context)
         opacity = alpha_value(node.get('fill-opacity', 1))
         if gradient := self.gradients.get(source):
             fill = draw_gradient(self, node, gradient, font_size, opacity, stroke=False)
@@ -730,7 +737,7 @@ class SVG:
 
         # Get stroke data
         if stroke_width := self.length(node.get('stroke-width', '1px'), font_size):
-            source, stroke = self.get_paint(node.get('stroke'))
+            source, stroke = node.get_paint('stroke', context)
             opacity = alpha_value(node.get('stroke-opacity', 1))
             if gradient := self.gradients.get(source):
                 stroke = draw_gradient(
@@ -760,6 +767,8 @@ class SVG:
                 sum_dashes = sum(float(value) for value in dash_array)
                 offset = sum_dashes - abs(offset) % sum_dashes
             self.stream.set_dash(dash_array, offset)
+        else:
+            self.stream.set_dash((), 0)
 
         # Apply line cap
         line_cap = node.get('stroke-linecap', 'butt')
@@ -858,9 +867,9 @@ class Pattern(SVG):
         self.svg = svg
         self.tree = tree
 
-    def draw_node(self, node, font_size, fill_stroke=True):
+    def draw_node(self, node, font_size, fill_stroke=True, context=None):
         # Store the original tree in self.tree when calling draw(), so that we
         # can reach defs outside the pattern
         if node == self.tree:
             self.tree = self.svg.tree
-        super().draw_node(node, font_size, fill_stroke=True)
+        super().draw_node(node, font_size, fill_stroke, context)
