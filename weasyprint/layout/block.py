@@ -285,6 +285,11 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             resume_at = {index: None}
             out_of_flow_resume_at = None
             stop = True
+            # Deferred to the next page: drop the float from the excluded shapes
+            # so it doesn’t inflate this fragment and push the whole block down.
+            context.excluded_shapes = [
+                shape for shape in context.excluded_shapes
+                if shape is not new_child]
             if new_children and avoid_page_break(page_break, context):
                 # Can’t break inside float, find an earlier page break.
                 result = find_earlier_page_break(
