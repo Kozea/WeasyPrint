@@ -33,8 +33,8 @@ PROPERTIES = {}
 
 class PendingProperty(Pending):
     """Property with validation done when defining calculated values."""
-    def validate(self, tokens, wanted_key):
-        return validate_non_shorthand(tokens, self.name)[0][1]
+    def validate(self, tokens, wanted_key, base_url):
+        return validate_non_shorthand(tokens, self.name, base_url)[0][1]
 
 
 # Validators
