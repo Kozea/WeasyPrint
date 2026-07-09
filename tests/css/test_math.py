@@ -275,6 +275,23 @@ def test_math_functions_percentage_and_font_unit(css_property):
     assert len(math_logs) == len(logs)
 
 
+@assert_no_logs
+@pytest.mark.parametrize('line_height', [
+    'calc(50% + 1em)',
+    'calc(100% + 2px)',
+    'calc(1.2em + 2px)',
+    'calc(1.5 * 1)',
+])
+def test_math_functions_line_height(line_height):
+    # Regression test for #2812.
+    # A calc() line-height is a FunctionBlock with no ``unit`` attribute, so
+    # laying out text (which computes line-height through strut()) must not
+    # raise ``AttributeError: 'FunctionBlock' object has no attribute 'unit'``.
+    render_pages(f'''
+      <p style="line-height: {line_height}">Hello</p>
+    ''')
+
+
 @pytest.mark.parametrize('display', [
     'block', 'inline', 'flex', 'grid',
     'list', 'list-item',
