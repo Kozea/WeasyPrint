@@ -94,7 +94,7 @@ def draw_border(stream, box):
     four_sides = 0 not in widths  # no 0-width border, to avoid PDF artifacts
     if simple_style and single_color and four_sides:
         # Simple case, we only draw rounded rectangles.
-        with stream.artifact():
+        with stream.artifact(), stream.stacked():
             draw_rounded_border(stream, box, styles[0], colors[0])
         return
 
@@ -105,7 +105,7 @@ def draw_border(stream, box):
     dotted_dashed = set(styles) in ({'dotted'}, {'dashed'})
     one_width = len(set(widths)) == 1
     if dotted_dashed and single_color and four_sides and one_width and no_radii:
-        with stream.artifact():
+        with stream.artifact(), stream.stacked():
             draw_dotted_dashed_border(stream, box, styles[0], widths[0], colors[0])
         return
 
@@ -639,21 +639,20 @@ def draw_dotted_dashed_border(stream, box, style, width, color):
         dash_length = outer_length / (2 * count - 1)
         return [dash_length, dash_length]
 
-    with stream.stacked():
-        stream.set_color(color, stroke=True)
-        stream.set_line_width(width)
-        stream.set_line_cap(1 if style == 'dotted' else 0)
-        sides = (
-            (bbx + inset, bby + half, bbx + bbw - inset, bby + half, bbw),
-            (bbx + bbw - half, bby + inset, bbx + bbw - half, bby + bbh - inset, bbh),
-            (bbx + inset, bby + bbh - half, bbx + bbw - inset, bby + bbh - half, bbw),
-            (bbx + half, bby + inset, bbx + half, bby + bbh - inset, bbh),
-        )
-        for x1, y1, x2, y2, outer_length in sides:
-            stream.set_dash(dash(outer_length), 0)
-            stream.move_to(x1, y1)
-            stream.line_to(x2, y2)
-            stream.stroke()
+    stream.set_color(color, stroke=True)
+    stream.set_line_width(width)
+    stream.set_line_cap(1 if style == 'dotted' else 0)
+    sides = (
+        (bbx + inset, bby + half, bbx + bbw - inset, bby + half, bbw),
+        (bbx + bbw - half, bby + inset, bbx + bbw - half, bby + bbh - inset, bbh),
+        (bbx + inset, bby + bbh - half, bbx + bbw - inset, bby + bbh - half, bbw),
+        (bbx + half, bby + inset, bbx + half, bby + bbh - inset, bbh),
+    )
+    for x1, y1, x2, y2, outer_length in sides:
+        stream.set_dash(dash(outer_length), 0)
+        stream.move_to(x1, y1)
+        stream.line_to(x2, y2)
+        stream.stroke()
 
 
 def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):

@@ -623,3 +623,18 @@ def test_image_exif_image_orientation_keep_format():
                src="not-optimized-exif.jpg">''',
         base_url=resource_path('<inline HTML>')).write_pdf()
     assert b'DCTDecode' in pdf
+
+
+@assert_no_logs
+@pytest.mark.parametrize('filename', ['pattern.svg', 'pattern.png'])
+@pytest.mark.parametrize('border', ['1px solid #1111', '1px dotted #1111'])
+def test_image_after_alpha(assert_pixels, filename, border):
+    assert_pixels(centered_image, '''
+      <style>
+         @page { size: 8px; margin: 2px }
+         div { width: 4px; height: 4px; box-sizing: border-box }
+         div + div { margin-top: -4px }
+      </style>
+      <div style="border: %s"></div>
+      <div style="background: url(%s)"></div>
+    ''' % (border, filename))
