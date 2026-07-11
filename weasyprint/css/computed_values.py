@@ -671,22 +671,16 @@ def line_height(style, name, value):
     if value == 'normal':
         return value
     elif check_math(value):
-        # A calc() value is a FunctionBlock with no ``unit`` attribute. Resolve
-        # it here, with percentages referring to the font size, as the rest of
-        # this function does for plain percentages.
-        from . import resolve_math
-        value = resolve_math(value, style, refer_to=style['font_size'])
-        if value is None:
-            return 'normal'
-    if not value.unit:
-        return ('NUMBER', value.value)
+        return value
+    elif not value.unit:
+        return value.value
     elif value.unit == '%':
         factor = value.value / 100
         font_size_value = style['font_size']
         pixels = factor * font_size_value
+        return Dimension(pixels, 'px')
     else:
-        pixels = length(style, name, value, pixels_only=True)
-    return ('PIXELS', pixels)
+        return length(style, name, value)
 
 
 @register_computer('link')
