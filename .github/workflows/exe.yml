@@ -9,8 +9,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
-      - name: Use absolute imports and install Pango (Windows)
+          python-version: '3.14'
+      - name: Use absolute imports and install Pango
         run: |
           C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-ucrt-x86_64-pango mingw-w64-ucrt-x86_64-sed --noconfirm'
           C:\msys64\ucrt64\bin\sed -i 's/^from \. /from weasyprint /' weasyprint/__main__.py
@@ -19,41 +19,28 @@ jobs:
           rm C:\msys64\ucrt64\bin\python.exe
       - name: Install requirements
         run: python -m pip install . pyinstaller
-      - name: Generate one dir executable
-        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint --onedir
-      - name: Move one-dir files to dist root
-        run: |
-          if (Test-Path "dist/weasyprint") {
-            Get-ChildItem -Path "dist/weasyprint" -Force | ForEach-Object {
-              Move-Item -Path $_.FullName -Destination "dist" -Force
-            }
-            Remove-Item "dist/weasyprint" -Recurse -Force
-          }
-      - name: Test one dir executable
-        run: dist/weasyprint --info
-      - name: Store one dir executable
+      - name: Generate onedir executable
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint --onedir --distpath onedir
+      - name: Test onedir executable
+        run: onedir/weasyprint/weasyprint --info
+      - name: Store onedir executable
         uses: actions/upload-artifact@v7
         with:
           name: weasyprint-windows-onedir
           path: |
-            dist
+            onedir/weasyprint
             README.rst
             LICENSE
-      - name: Clean up for single executable
-        run: |
-          if (Test-Path dist) {
-            Remove-Item dist -Recurse -Force
-          }
-      - name: Generate single executable
-        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F
-      - name: Test single executable
-        run: dist/weasyprint --info
-      - name: Store single executable
+      - name: Generate onefile executable
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint --onefile --distpath onefile
+      - name: Test onefile executable
+        run: onefile/weasyprint --info
+      - name: Store onefile executable
         uses: actions/upload-artifact@v7
         with:
-          name: weasyprint-windows-single
+          name: weasyprint-windows-onefile
           path: |
-            dist/weasyprint
-            dist/weasyprint.exe
+            onefile/weasyprint
+            onefile/weasyprint.exe
             README.rst
             LICENSE
