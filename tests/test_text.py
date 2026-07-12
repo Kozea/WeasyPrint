@@ -86,6 +86,54 @@ def test_line_breaking_nbsp():
 
 
 @assert_no_logs
+def test_line_breaking_trailing_inline_width():
+    page, = render_pages('''
+      <style>
+        @page { size: 520px 180px; margin: 20px }
+        body {
+          margin: 0;
+          font-family: weasyprint;
+          font-size: 16px;
+          line-height: 1.25;
+        }
+        div {
+          width: 27ch;
+          text-align: right;
+          border-right: 1px solid black;
+        }
+      </style>
+      <div>
+        <span>
+          aaaaaaaaaa bbbbbbbbbb cccccccccc ddddd <span>e. 43</span>
+          ff&nbsp;<span>ggggg</span>.
+        </span>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    _, line_2, line_3 = div.children
+    span_2, = line_2.children
+    text_2, nested_2 = span_2.children
+    number, = nested_2.children
+    span_3, = line_3.children
+    text_3, nested_3, dot = span_3.children
+    word, = nested_3.children
+
+    assert text_2.text == 'cccccccccc ddddd '
+    assert number.text == 'e. 43'
+    assert text_3.text == 'ff\xa0'
+    assert word.text == 'ggggg'
+    assert dot.text == '.'
+
+    div_right = div.position_x + div.width
+    number_right = nested_2.position_x + nested_2.width
+    span_right = span_2.position_x + span_2.width
+    assert number_right == pytest.approx(div_right)
+    assert span_right == pytest.approx(number_right)
+
+
+@assert_no_logs
 def test_text_dimension():
     string = 'This is a text for test. This is a test for text.py'
     _, _, _, width_1, height_1, _ = make_text(string, 200, font_size=12)
