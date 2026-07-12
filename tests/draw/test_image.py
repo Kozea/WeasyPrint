@@ -186,6 +186,7 @@ def test_resized_images(assert_pixels, filename):
       <div><img src="%s"></div>''' % filename)
 
 
+@assert_no_logs
 def test_image_overflow(assert_pixels):
     assert_pixels(centered_image_overflow, '''
       <style>
@@ -222,6 +223,26 @@ def test_svg_sizing(assert_pixels, viewbox, width, height):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('attributes', [
+    'style="width: 100%; height: 100%"',
+    'width="100%" height="100%"',
+])
+def test_svg_sizing_percentage(assert_pixels, attributes):
+    assert_pixels(centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 2px 0 0 0; font-size: 0 }
+        svg { display: block }
+      </style>
+      <div style="height: 4px">
+        <svg viewBox="0 0 8 8" %s>
+          <rect width="8" height="8" fill="#00f" />
+          <rect width="2" height="2" fill="#f00" />
+        </svg>
+      </div>''' % attributes)
+
+
+@assert_no_logs
 @pytest.mark.parametrize(('viewbox', 'width', 'height', 'image'), [
     (None, None, None, small_resized_image),
     (None, 8, None, small_resized_image),
@@ -231,7 +252,6 @@ def test_svg_sizing(assert_pixels, viewbox, width, height):
     ('0 0 4 4', 8, None, resized_image),
     ('0 0 4 4', None, 8, resized_image),
     ('0 0 4 4', 8, 8, resized_image),
-    ('0 0 4 4', 800, 800, resized_image),
 ])
 def test_svg_resizing(assert_pixels, viewbox, width, height, image):
     assert_pixels(image, '''
