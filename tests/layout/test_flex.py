@@ -2043,3 +2043,20 @@ def test_flex_break_after_page():
     assert div.position_y == 0
     assert div.height == 2
     assert div.children[0].children[0].text == 'c'
+
+
+@assert_no_logs
+def test_flex_break_float():
+    # Regression test for #2815.
+    render_pages('''
+      <style>
+        @page { size: 3px }
+        body { font: 2px/1 weasyprint }
+      </style>
+      <div></div>
+      <div style="display: flex">
+        <div style="overflow: hidden">
+          <div style="float: left">
+            <p>b
+            <p>c
+    ''')
