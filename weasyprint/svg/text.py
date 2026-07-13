@@ -2,6 +2,10 @@
 
 from math import cos, inf, radians, sin
 
+from tinycss2 import parse_component_value_list
+
+from ..css.tokens import remove_whitespace
+from ..css.validation.properties import font_variant_numeric
 from ..matrix import Matrix
 from .bounding_box import extend_bounding_box
 from .utils import normalize, size
@@ -38,6 +42,12 @@ def text(svg, node, font_size):
     style['font_style'] = node.get('font-style', 'normal')
     style['font_weight'] = node.get('font-weight', 400)
     style['font_size'] = font_size
+    if value := node.get('font-variant-numeric'):
+        tokens = remove_whitespace(parse_component_value_list(value))
+        # The simplified SVG cascade can't restore inheritance when an invalid
+        # child value overrides its parent, so invalid values stay initial.
+        if value := font_variant_numeric(tokens):
+            style['font_variant_numeric'] = value
     if node.get('direction') in ('ltr', 'rtl'):
         style['direction'] = node.get('direction')
     if style['font_weight'] == 'normal':

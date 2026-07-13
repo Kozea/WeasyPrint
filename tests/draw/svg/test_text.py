@@ -580,6 +580,53 @@ def test_text_font_face_css(assert_pixels):
 
 
 @assert_no_logs
+def test_text_font_variant_numeric(assert_pixels):
+    assert_pixels('''
+        BBB_________
+        BBB_________
+        BBB_________
+        BBB_________
+        BBBB________
+        BBBB________
+        BBBB________
+        BBBB________
+    ''', '''
+      <style>
+        @font-face {
+          font-family: pnum;
+          src: url(weasyprint-pnum.otf);
+        }
+        @page { size: 12px 8px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="2px" font-family="pnum" font-size="2"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" fill="blue"
+              font-variant-numeric="proportional-nums">12</text>
+      </svg>
+      <svg width="12px" height="2px" font-family="pnum" font-size="2"
+           font-variant-numeric="proportional-nums"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" fill="blue">12</text>
+      </svg>
+      <svg width="12px" height="2px" font-family="pnum" font-size="2"
+           font-variant-numeric="proportional-nums"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" fill="blue">
+          <tspan font-variant-numeric="normal">12</tspan>
+        </text>
+      </svg>
+      <!-- Invalid child values can't restore inheritance in the simplified
+           SVG cascade; this standalone invalid value stays initial. -->
+      <svg width="12px" height="2px" font-family="pnum" font-size="2"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" fill="blue"
+              font-variant-numeric="invalid">12</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_length_adjust_spacing_and_glyphs(assert_pixels):
     assert_pixels('''
         __RR_RR_RR__________
