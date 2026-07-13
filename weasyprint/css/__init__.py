@@ -1091,6 +1091,7 @@ class AnonymousStyle(Style):
             'outline_width': 0,
         })
         self.parent_style = parent_style
+        self.root_style = parent_style.root_style
         self.specified = self
         self.cache = parent_style.cache
         self.font_config = parent_style.font_config
