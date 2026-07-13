@@ -113,7 +113,7 @@ def _get_pdf_tag(tag):
         return tag.upper()
     elif tag in ('thead', 'tbody', 'tfoot'):
         return tag[:2].upper() + tag[2:]
-    elif tag == 'img':
+    elif tag == 'img' or tag == '{http://www.w3.org/2000/svg}svg':
         return 'Figure'
     elif tag in ('caption', 'figcaption'):
         return 'Caption'
@@ -196,7 +196,14 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             'O': '/Layout',
             'BBox': pydyf.Array((x1, y1, x2, y2)),
         })
-        if alt := box.element.attrib.get('alt'):
+        # Add alternate text for images/figures.
+        # If it's an SVG element, we look for the <title> element inside.
+        # Otherwise, we revert to the "alt" attribute if its not an SVG.
+        if box.element.tag == '{http://www.w3.org/2000/svg}svg':
+            title_elem = box.element.find('{http://www.w3.org/2000/svg}title')
+            if title_elem is not None and title_elem.text:
+                element['Alt'] = pydyf.String(title_elem.text)
+        elif alt := box.element.attrib.get('alt'):
             element['Alt'] = pydyf.String(alt)
         else:
             source = box.element.attrib.get('src', 'unknown')
