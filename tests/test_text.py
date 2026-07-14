@@ -818,6 +818,22 @@ def test_hyphenate_manual_4():
 
 
 @assert_no_logs
+def test_hyphenate_manual_after_previous_line():
+    # Regression test for #2614.
+    page, = render_pages('''
+        <style>
+          p { width: 55px; font-size: 11pt; hyphens: manual }
+        </style>
+        <p>An extreme&shy;ly long English word</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    lines = paragraph.children
+    assert lines[1].children[0].text == 'extreme\xad‐'
+
+
+@assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'

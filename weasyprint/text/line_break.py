@@ -339,6 +339,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         break_point = get_next_break_point(second_line_log_attrs)
         if break_point is not None:
             break_point -= len(first_line_text) + 1
+    soft_hyphen = '\xad'
     next_word = second_line_text[:break_point].rstrip(' ')
     if next_word:
         if space_collapse and second_line_text[break_point or -1] == ' ':
@@ -358,7 +359,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     resume_index = first_line.length + 1
                     if resume_index >= len(text.encode()):
                         resume_index = None
-    elif first_line_text:
+    elif first_line_text and not first_line_text.endswith(soft_hyphen):
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout.
         return first_line_metrics(
@@ -369,7 +370,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     lang = style['lang'] and pyphen.language_fallback(style['lang'])
     total, left, right = style['hyphenate_limit_chars']
     hyphenated = False
-    soft_hyphen = '\xad'
 
     auto_hyphenation = manual_hyphenation = False
 
