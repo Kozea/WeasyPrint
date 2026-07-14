@@ -270,7 +270,8 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page_overflow = context.overflows_page(
             bottom_space, new_child.position_y + new_child.height)
         add_child = (
-            (page_is_empty and not new_children) or
+            (page_is_empty and (
+                not new_children or new_child.position_y == box.content_box_y())) or
             not page_overflow or
             box.is_monolithic())
         if add_child:

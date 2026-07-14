@@ -272,6 +272,27 @@ def test_floats_page_breaks_2():
 
 
 @assert_no_logs
+def test_floats_page_breaks_side_by_side():
+    # Don’t move an overflowing float when it’s next to another float.
+    page, = render_pages('''
+      <style>
+        @page { size: 100px; margin: 10px }
+        div { height: 81px; float: left }
+        .left { width: 20% }
+        .right { width: 80% }
+      </style>
+      <div class="left">left</div>
+      <div class="right">right</div>
+    ''')
+
+    divs = [
+        box for box in page.descendants()
+        if box.element_tag == 'div' and box.is_floated()]
+    assert [(div.position_x, div.position_y) for div in divs] == [
+        (10, 10), (26, 10)]
+
+
+@assert_no_logs
 def test_floats_page_breaks_3():
     # Tests floated images shorter than the page
     pages = render_pages('''
