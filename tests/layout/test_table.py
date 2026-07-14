@@ -1946,6 +1946,52 @@ def test_table_row_height_4():
 
 
 @assert_no_logs
+def test_table_row_height_5():
+    # Regression test for #1092.
+    page, = render_pages('''
+      <table style="height: 100px; width: 100px; border-spacing: 0;
+                    font: 10px/10px weasyprint">
+        <tr><td style="vertical-align: middle">test</td></tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    cell, = row.children
+
+    assert table.height == 100
+    assert row_group.height == 100
+    assert row.height == 100
+    assert cell.border_height() == 100
+    assert cell.padding_top == cell.padding_bottom == 45
+
+
+@assert_no_logs
+def test_table_row_height_6():
+    page, = render_pages('''
+      <table style="height: 100px; border-spacing: 0">
+        <tr><td>auto</td></tr>
+        <tr style="height: 20px"><td>fixed</td></tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    auto_row, fixed_row = row_group.children
+
+    assert [auto_row.height, fixed_row.height] == [80, 20]
+    assert fixed_row.position_y == 80
+    assert [
+        row.children[0].border_height() for row in row_group.children
+    ] == [80, 20]
+
+
+@assert_no_logs
 def test_table_vertical_align(assert_pixels):
     assert_pixels('''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr

@@ -580,8 +580,15 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
     if collapse:
         table.skipped_rows = skipped_rows
 
-    # If the height property has a bigger value, just add blank space
-    # below the last row group.
+    # If the height property has a bigger value, distribute the extra height
+    # among rows.
+    content_height = position_y - table.content_box_y()
+    if (
+        skip_stack is None and resume_at is None and
+        table.height != 'auto' and table.height > content_height
+    ):
+        position_y += _distribute_table_height(
+            table, table.height - content_height)
     table.height = max(
         table.height if table.height != 'auto' else 0,
         position_y - table.content_box_y())
@@ -628,6 +635,61 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
     collapsing_through = False
 
     return table, resume_at, next_page, adjoining_margins, collapsing_through
+
+
+def _distribute_table_height(table, extra_height):
+    """Distribute extra table height among rows."""
+    rows = [
+        (group, row)
+        for group in table.children
+        for row in group.children]
+    if not rows:
+        return 0
+
+    auto_rows = [
+        row for group, row in rows
+        if group.style['height'] == 'auto' and
+        row.style['height'] == 'auto' and
+        all(cell.style['height'] == 'auto' for cell in row.children)]
+    distributed_rows = auto_rows or [row for group, row in rows]
+    extra_per_row = extra_height / len(distributed_rows)
+    extra_by_row = {
+        id(row): extra_per_row for row in distributed_rows}
+
+    offset_y = 0
+    for group in table.children:
+        group.translate(dy=offset_y)
+        group_extra = 0
+        for row in group.children:
+            row.translate(dy=group_extra)
+            row_extra = extra_by_row.get(id(row), 0)
+            row.height += row_extra
+            group_extra += row_extra
+        group.height += group_extra
+        offset_y += group_extra
+
+    # Stretch cells to the bottom of the last row they span, keeping their
+    # content aligned as it was before height distribution.
+    for group in table.children:
+        group_rows = group.children
+        for index, row in enumerate(group_rows):
+            for cell in row.children:
+                rowspan = cell.rowspan or len(group_rows) - index
+                last_row = group_rows[min(index + rowspan - 1, len(group_rows) - 1)]
+                extra = (
+                    last_row.position_y + last_row.height -
+                    cell.position_y - cell.border_height())
+                if extra <= 0:
+                    continue
+                if cell.vertical_align == 'bottom':
+                    add_top_padding(cell, extra)
+                elif cell.vertical_align == 'middle':
+                    add_top_padding(cell, extra / 2)
+                    cell.padding_bottom += extra / 2
+                else:
+                    cell.padding_bottom += extra
+
+    return extra_height
 
 
 def add_top_padding(box, extra_padding):
