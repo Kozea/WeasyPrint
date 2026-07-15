@@ -212,7 +212,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     string = string[:-1]
                 else:
                     string += '>'
-                stream.show_text(string)
+                if string:
+                    stream.show_text(string)
                 stream.set_text_rise(-rise)
                 string = ''
                 if offset:
