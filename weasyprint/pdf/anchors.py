@@ -349,7 +349,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     # details on the possible filename and MIME type.
     if attachment.name:
         filename = attachment.name
-    elif url and urlsplit(url).path:
+    elif url and not url.startswith('data:') and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'

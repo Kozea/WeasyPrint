@@ -701,6 +701,24 @@ def test_annotations():
     assert b'test.txt' in pdf
 
 
+@assert_no_logs
+def test_annotations_base64():
+    pdf = FakeHTML(string='''
+      <title>Test document</title>
+      <meta charset="utf-8">
+      <a
+        rel="attachment"
+        href="data:text/plain;base64,c3VwZXI="
+        download>A link that lets you download an attachment</a>
+    ''').write_pdf()
+
+    assert hashlib.md5(b'super').hexdigest().encode() in pdf
+    assert b'/FileAttachment' in pdf
+    assert b'/EmbeddedFiles' not in pdf
+    assert b'c3VwZXI=' not in pdf
+    assert b'attachment.bin' in pdf
+
+
 @pytest.mark.parametrize(('style', 'media', 'bleed', 'trim'), [
     ('bleed: 30pt; size: 10pt',
      [-30, -30, 40, 40],
