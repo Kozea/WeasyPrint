@@ -689,14 +689,16 @@ def test_annotations():
       <title>Test document</title>
       <meta charset="utf-8">
       <a
+        download="test.txt"
         rel="attachment"
         href="data:,some data"
-        download>A link that lets you download an attachment</a>
+      >A link that lets you download an attachment</a>
     ''').write_pdf()
 
     assert hashlib.md5(b'some data').hexdigest().encode() in pdf
     assert b'/FileAttachment' in pdf
     assert b'/EmbeddedFiles' not in pdf
+    assert b'test.txt' in pdf
 
 
 @pytest.mark.parametrize(('style', 'media', 'bleed', 'trim'), [
