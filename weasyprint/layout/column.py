@@ -67,12 +67,24 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     column_children = []
     skip, = skip_stack.keys() if skip_stack else (0,)
     for i, child in enumerate(box.children[skip:], start=skip):
-        if child.style['column_span'] == 'all':
+        span = child.style['column_span']
+        full_span = (
+            span == 'all' or (isinstance(span, int) and span >= count))
+        partial_span = (
+            isinstance(span, int) and 1 < span < count and i == skip and
+            not columns_and_blocks and not column_children)
+        if full_span:
             if column_children:
                 columns_and_blocks.append(
                     (i - len(column_children), column_children))
             columns_and_blocks.append((i, child.copy()))
             column_children = []
+            continue
+        if partial_span:
+            # Integer column spans are underspecified in Multicol Level 2.
+            # Keep the first implementation deliberately narrow: only a
+            # leading direct child can reserve a subset of the columns.
+            columns_and_blocks.append((i, (span, child.copy())))
             continue
         column_children.append(child.copy())
     if column_children:
@@ -109,18 +121,34 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         0 if context.current_footnote_area.height == 'auto'
         else context.current_footnote_area.margin_height()]
     last_footnotes_height = 0
+    pending_column_positions = None
     for index, column_children_or_block in columns_and_blocks:
         if not isinstance(column_children_or_block, list):
             # We have a spanning block, we display it like other blocks
-            block = column_children_or_block
-            resolve_percentages(block, containing_block)
-            block.position_x = box.content_box_x()
+            block_start_y = current_position_y
+            partial_span = isinstance(column_children_or_block, tuple)
+            if partial_span:
+                span, block = column_children_or_block
+                span_width = span * width + (span - 1) * gap
+                block_containing_block = box.copy()
+                block_containing_block.width = span_width
+                resolve_percentages(block, block_containing_block)
+                if style['direction'] == 'rtl':
+                    block.position_x = box.content_box_x() + box.width - span_width
+                else:
+                    block.position_x = box.content_box_x()
+            else:
+                block = column_children_or_block
+                block_containing_block = containing_block
+                resolve_percentages(block, block_containing_block)
+                block.position_x = box.content_box_x()
             block.position_y = current_position_y
             new_child, resume_at, next_page, adjoining_margins, _, _ = (
                 block_level_layout(
-                    context, block, original_bottom_space, skip_stack, containing_block,
-                    page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
-                    first_letter_style, first_line_style))
+                    context, block, original_bottom_space, skip_stack,
+                    block_containing_block, page_is_empty, absolute_boxes,
+                    fixed_boxes, adjoining_margins, first_letter_style,
+                    first_line_style))
             skip_stack = None
             if new_child is None:
                 last_loop = True
@@ -136,18 +164,36 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 column_skip_stack = resume_at
                 break
             page_is_empty = False
+            if partial_span:
+                # The spanner is an exclusion at the block-start edge of its
+                # covered columns. Uncovered columns keep the original start,
+                # so following content can continue there at full height.
+                span_bottom = (
+                    new_child.position_y + new_child.margin_height())
+                pending_column_positions = (
+                    [span_bottom] * span + [block_start_y] * (count - span))
+                current_position_y = block_start_y
+                adjoining_margins = []
+                continue
             continue
 
         # We have a list of children that we have to balance between columns
         column_children = column_children_or_block
 
         # Find the total height available for the first run
-        current_position_y += collapse_margin(adjoining_margins)
+        if pending_column_positions is None:
+            current_position_y += collapse_margin(adjoining_margins)
+            column_positions = [current_position_y] * count
+        else:
+            column_positions = pending_column_positions
+            pending_column_positions = None
+            current_position_y = min(column_positions)
         adjoining_margins = []
-        column_box = _create_column_box(
-            box, containing_block, column_children, width, current_position_y)
-        height = max_height = (
-            context.page_bottom - current_position_y - original_bottom_space)
+        max_heights = [
+            context.page_bottom - position_y - original_bottom_space
+            for position_y in column_positions]
+        irregular_columns = len(set(column_positions)) > 1
+        height = max_height = max_heights[0]
 
         # Try to render columns until the content fits, increase the column
         # height step by step
@@ -167,9 +213,14 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             new_boxes = []
             for i in range(count):
                 # Render one column
+                column_position_y = column_positions[i]
+                column_height = max_heights[i] if irregular_columns else height
+                column_box = _create_column_box(
+                    box, containing_block, column_children, width,
+                    column_position_y)
                 new_box, resume_at, next_page, _, _, _ = block_box_layout(
                     context, column_box,
-                    context.page_bottom - current_position_y - height,
+                    context.page_bottom - column_position_y - column_height,
                     column_skip_stack, containing_block,
                     page_is_empty or not balancing, [], [], [], first_letter_style,
                     first_line_style, discard=False, max_lines=None)
@@ -188,8 +239,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     # Get the empty space at the bottom of the column box
                     consumed_height = (
                         in_flow_children[-1].margin_height() +
-                        in_flow_children[-1].position_y - current_position_y)
-                    empty_space = height - consumed_height
+                        in_flow_children[-1].position_y - column_position_y)
+                    empty_space = column_height - consumed_height
                     consumed_height -= in_flow_children[-1].margin_bottom
 
                     # Get the minimum size needed to render the next box
@@ -237,6 +288,22 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             if last_loop:
                 break
 
+            if irregular_columns:
+                if last_footnotes_height not in footnote_area_heights:
+                    # Keep every column's bottom edge aligned when footnotes
+                    # reduce the page area available to the irregular row.
+                    height_difference = (
+                        last_footnotes_height - footnote_area_heights[-1])
+                    max_heights = [
+                        max_height - height_difference
+                        for max_height in max_heights]
+                    footnote_area_heights.append(last_footnotes_height)
+                    continue
+                if column_skip_stack is None:
+                    break
+                stop_rendering = True
+                break
+
             if balancing:
                 if column_skip_stack is None:
                     # We rendered the whole content, stop
@@ -278,24 +345,41 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     break
 
         # TODO: check style['max']-height
-        bottom_space = max(
-            bottom_space, context.page_bottom - current_position_y - height)
+        if irregular_columns:
+            bottom_space = original_bottom_space
+        else:
+            bottom_space = max(
+                bottom_space, context.page_bottom - current_position_y - height)
 
         # Replace the current box children with real columns
         i = 0
         max_column_height = 0
         columns = []
+        column_heights = []
         while True:
+            if i < count:
+                column_position_y = column_positions[i]
+                column_height = max_heights[i]
+            else:
+                # A constrained multicol container can create overflow columns
+                # after its declared columns. They are not covered by a leading
+                # partial spanner and therefore retain the full block size.
+                column_position_y = min(column_positions)
+                column_height = (
+                    context.page_bottom - column_position_y -
+                    original_bottom_space)
             column_box = _create_column_box(
                 box, containing_block, column_children, width,
-                current_position_y)
+                column_position_y)
             if style['direction'] == 'rtl':
                 column_box.position_x += box.width - (i + 1) * width - i * gap
             else:
                 column_box.position_x += i * (width + gap)
             new_child, column_skip_stack, column_next_page, _, _, _ = (
                 block_box_layout(
-                    context, column_box, bottom_space, skip_stack, containing_block,
+                    context, column_box,
+                    original_bottom_space if irregular_columns else bottom_space,
+                    skip_stack, containing_block,
                     original_page_is_empty, absolute_boxes, fixed_boxes, None,
                     first_letter_style, first_line_style, discard=False,
                     max_lines=None))
@@ -306,6 +390,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             next_page = column_next_page
             skip_stack = column_skip_stack
             columns.append(new_child)
+            column_heights.append(column_height)
             max_column_height = max(
                 max_column_height, new_child.margin_height())
             if skip_stack is None:
@@ -320,10 +405,18 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 break
 
         # Update the current y position and set the columns’ height
-        current_position_y += min(max_height, max_column_height)
-        for column in columns:
-            column.height = max_column_height
-            new_children.append(column)
+        if irregular_columns:
+            current_position_y = max(
+                column.position_y + column_height
+                for column, column_height in zip(columns, column_heights))
+            for column, column_height in zip(columns, column_heights):
+                column.height = column_height
+                new_children.append(column)
+        else:
+            current_position_y += min(max_height, max_column_height)
+            for column in columns:
+                column.height = max_column_height
+                new_children.append(column)
 
         skip_stack = None
         page_is_empty = False
@@ -333,6 +426,11 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Report footnotes above the defined footnotes height
     _report_footnotes(context, footnote_area_heights[-1])
+
+    if pending_column_positions is not None:
+        # A partial spanner with no following column content still contributes
+        # its own block size to an auto-height multicol container.
+        current_position_y = max(pending_column_positions)
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box

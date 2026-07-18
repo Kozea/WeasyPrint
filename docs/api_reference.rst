@@ -693,8 +693,8 @@ specification, content can be flowed into multiple columns with a gap and a
 rule between them."
 
 Simple multi-column layouts are supported in WeasyPrint. Features such as
-constrained height, spanning columns or column breaks are **not**
-supported. Pagination and overflow are not seriously tested.
+constrained height or column breaks are **not** supported. Pagination and
+overflow are not seriously tested.
 
 The ``column-width`` and ``column-count`` properties, and the ``columns``
 shorthand property are supported.
@@ -707,11 +707,20 @@ The ``break-before``, ``break-after`` and ``break-inside`` properties are
 supported.
 
 The ``column-span`` property is supported for direct children of columns.
+Alongside ``none`` and ``all``, a limited form of the positive integer syntax
+from `CSS Multi-column Layout Module Level 2`_ is supported. A leading direct
+child can span the first N columns in the logical direction. Following content
+sequentially fills the shorter covered columns before using the full-height
+uncovered columns. A value of ``1`` behaves as ``none`` and a value equal to or
+greater than the column count behaves as ``all``. Other placements and column
+balancing for partial spans are not supported because their behavior is still
+undefined in the draft specification.
 
 The ``column-fill`` property is supported, with a column balancing algorithm
 that should be efficient with simple cases.
 
 .. _CSS Multi-column Layout Module: https://www.w3.org/TR/css-multicol-1/
+.. _CSS Multi-column Layout Module Level 2: https://drafts.csswg.org/css-multicol-2/
 
 CSS Fragmentation Module Level 3 / 4
 ++++++++++++++++++++++++++++++++++++

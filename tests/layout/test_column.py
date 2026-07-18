@@ -438,6 +438,303 @@ def test_column_span_balance():
 
 
 @assert_no_logs
+def test_leading_partial_column_span():
+    """A leading partial spanner reserves only the columns it covers.
+
+    This test records the deliberately narrow first implementation of integer
+    ``column-span``. The two covered columns start below the spanner and have
+    room for three lines each. The uncovered third column retains the full
+    four-line height. Checking the words as well as the box positions ensures
+    that content stays in one CSS-owned flow instead of being assigned to
+    physical columns before layout.
+    """
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        abc def ghi jkl mno pqr stu vwx yz1 yz2
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, column1, column2, column3 = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (0, 0, 8)
+    assert [column.position_x for column in (column1, column2, column3)] == [0, 4, 8]
+    assert [column.position_y for column in (column1, column2, column3)] == [1, 1, 0]
+    assert [column.height for column in (column1, column2, column3)] == [3, 3, 4]
+
+    words = []
+    for column in (column1, column2, column3):
+        words.append([
+            line.children[0].text
+            for line in column.children[0].children
+        ])
+    assert words == [
+        ['abc', 'def', 'ghi'],
+        ['jkl', 'mno', 'pqr'],
+        ['stu', 'vwx', 'yz1', 'yz2'],
+    ]
+
+
+@assert_no_logs
+def test_leading_partial_column_span_rtl():
+    """Partial spans cover the first columns in the logical direction."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto; direction: rtl;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        abc def ghi jkl mno pqr stu vwx yz1 yz2
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, column1, column2, column3 = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (4, 0, 8)
+    assert [column.position_x for column in (column1, column2, column3)] == [8, 4, 0]
+    assert [column.position_y for column in (column1, column2, column3)] == [1, 1, 0]
+
+
+@assert_no_logs
+def test_leading_partial_column_span_gap():
+    """The partial spanner includes gaps between the columns it covers."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 16px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 2px; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        abc def ghi jkl mno pqr stu vwx yz1 yz2
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, column1, column2, column3 = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (0, 0, 10)
+    assert [column.position_x for column in (column1, column2, column3)] == [0, 6, 12]
+    assert [column.position_y for column in (column1, column2, column3)] == [1, 1, 0]
+
+
+@assert_no_logs
+def test_leading_partial_column_span_four_columns():
+    """Every column outside a partial span keeps its full block size."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 16px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 4; column-gap: 0; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        a01 a02 a03 a04 a05 a06 a07 a08 a09 a10 a11 a12 a13 a14
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, *columns = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (0, 0, 8)
+    assert [column.position_x for column in columns] == [0, 4, 8, 12]
+    assert [column.position_y for column in columns] == [1, 1, 0, 0]
+    assert [column.height for column in columns] == [3, 3, 4, 4]
+
+
+@assert_no_logs
+def test_integer_column_span_all():
+    """An integer covering every column has the established ``all`` layout."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 3 }
+      </style>
+      <div>
+        <section>head</section>
+        abc def ghi
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, column1 = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (0, 0, 12)
+    assert (column1.position_x, column1.position_y) == (0, 1)
+
+
+@assert_no_logs
+def test_partial_column_span_without_following_content():
+    """A lone partial spanner defines the multicol container's auto height."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div { columns: 3; column-gap: 0; line-height: 1 }
+        section { column-span: 2 }
+      </style>
+      <div><section>head</section></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, = div.children
+
+    assert (header.position_x, header.position_y, header.width) == (0, 0, 8)
+    assert div.height == 1
+
+
+@assert_no_logs
+def test_column_span_one_is_not_a_spanner():
+    """The unresolved integer value ``1`` follows the ``none`` behavior."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        section { column-span: 1 }
+      </style>
+      <div><section>head</section>abc def</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+
+    assert all(child.is_column for child in div.children)
+    section = next(
+        box for box in div.children[0].descendants()
+        if box.element_tag == 'section')
+    assert section.width == 4
+
+
+@assert_no_logs
+def test_non_leading_partial_column_span_is_not_a_spanner():
+    """Unsupported partial spans remain in their normal flow column."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          height: 4px; line-height: 1;
+        }
+        p, section { margin: 0 }
+        section { column-span: 2 }
+      </style>
+      <div><p>abc</p><section>head</section>def</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+
+    assert all(child.is_column for child in div.children)
+    section = next(
+        box for box in div.children[0].descendants()
+        if box.element_tag == 'section')
+    assert (section.position_x, section.width) == (0, 4)
+
+
+@assert_no_logs
+def test_partial_column_span_multipage():
+    """Only the first page reserves space for a consumed leading spanner."""
+    page1, page2 = render_pages('''
+      <style>
+        @page { margin: 0; size: 12px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        a01 a02 a03 a04 a05 a06 a07 a08 a09 a10
+        a11 a12 a13 a14 a15 a16 a17 a18 a19 a20
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    header, *columns = div.children
+    assert header.element_tag == 'section'
+    assert [column.position_y for column in columns] == [1, 1, 0]
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert all(child.is_column for child in div.children)
+    assert [column.position_y for column in div.children] == [0, 0, 0]
+
+
+@assert_no_logs
+def test_partial_column_span_overflow_columns():
+    """Inline overflow columns are not shortened by a leading spanner."""
+    page, = render_pages('''
+      <style>
+        @page { margin: 0; size: 20px 4px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        div {
+          columns: 3; column-gap: 0; column-fill: auto;
+          width: 12px; height: 4px; line-height: 1;
+        }
+        section { column-span: 2 }
+      </style>
+      <div>
+        <section>head</section>
+        a01 a02 a03 a04 a05 a06 a07 a08 a09 a10 a11 a12 a13 a14
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    header, *columns = div.children
+
+    assert header.width == 8
+    assert [column.position_x for column in columns] == [0, 4, 8, 12]
+    assert [column.position_y for column in columns] == [1, 1, 0, 0]
+    assert [column.height for column in columns] == [3, 3, 4, 4]
+
+
+@assert_no_logs
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>

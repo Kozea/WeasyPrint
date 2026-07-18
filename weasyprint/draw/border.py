@@ -30,7 +30,7 @@ def draw_column_rules(stream, box):
     border_widths = (0, 0, 0, box.style['column_rule_width'])
     skip_next = True
     for child in box.children:
-        if child.style['column_span'] == 'all':
+        if not child.is_column:
             skip_next = True
             continue
         elif skip_next:

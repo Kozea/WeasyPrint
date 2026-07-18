@@ -83,6 +83,39 @@ def test_column_rule_span(assert_pixels):
 
 
 @assert_no_logs
+def test_leading_partial_column_span(assert_pixels):
+    """A partial spanner and irregular column rules paint in their own areas."""
+    assert_pixels('''
+        RRRra
+        arara
+        arara
+    ''', '''
+      <style>
+        @page { margin: 0; size: 5px 3px }
+        body { margin: 0; font-size: 0 }
+        div {
+          columns: 3; column-gap: 1px; column-fill: auto;
+          column-rule: 1px solid red;
+          width: 5px; height: 3px;
+        }
+        section {
+          column-span: 2; height: 1px; background: red;
+        }
+        img { display: block; width: 1px; height: 1px }
+      </style>
+      <div>
+        <section></section>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+      </div>''')
+
+
+@assert_no_logs
 def test_column_rule_normal(assert_pixels):
     # Regression test for #2217.
     assert_pixels('''
