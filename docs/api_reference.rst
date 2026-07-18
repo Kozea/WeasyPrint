@@ -580,10 +580,11 @@ WeasyPrint also supports the `border images part`_ of this module, including the
 ``border-image-width``, ``border-image-outset`` and ``border-image-repeat``
 properties.
 
-WeasyPrint does **not** support the `box shadow part`_ of this module,
-including the ``box-shadow`` property. This feature has been implemented in a
-`git branch`_ that is not released, as it relies on raster implementation of
-shadows.
+The ``box-shadow`` property is supported when every shadow has a zero blur
+radius. Multiple outer and inner shadows, spread distances, colors, and rounded
+corners are supported and remain vector graphics in PDF output. Declarations
+with a nonzero blur radius are ignored with a warning because PDF has no native
+Gaussian blur operation and raster shadows do not scale losslessly.
 
 .. _CSS Backgrounds and Borders Level 3: https://www.w3.org/TR/css-backgrounds-3/
 .. _border part: https://www.w3.org/TR/css-backgrounds-3/#borders
@@ -591,7 +592,6 @@ shadows.
 .. _rounded corners part: https://www.w3.org/TR/css-backgrounds-3/#corners
 .. _border images part: https://www.w3.org/TR/css-backgrounds-3/#border-images
 .. _box shadow part: https://www.w3.org/TR/css-backgrounds-3/#misc
-.. _git branch: https://github.com/Kozea/WeasyPrint/pull/149
 
 CSS Image Values and Replaced Content Module Level 3 / 4
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
