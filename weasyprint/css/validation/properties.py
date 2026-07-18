@@ -521,10 +521,15 @@ def column_width(token):
 
 
 @property(unstable=True)
-@single_keyword
-def column_span(keyword):
+@single_token
+def column_span(token):
     """``column-span`` property validation."""
-    return keyword in ('all', 'none')
+    keyword = get_keyword(token)
+    if keyword in ('all', 'none'):
+        return keyword
+    if number := get_number(token, integer=True):
+        if number.value >= 1:
+            return number.value
 
 
 @property()

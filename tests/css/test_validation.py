@@ -54,6 +54,25 @@ def test_unstable_prefix():
 
 
 @assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('none', 'none'),
+    ('all', 'all'),
+    ('1', 1),
+    ('2', 2),
+])
+def test_column_span(rule, value):
+    """Integer spans are preserved for the multicol layout algorithm."""
+    assert get_value(f'column-span: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', ['0', '-1', '1.5'])
+def test_column_span_invalid(rule):
+    """The Level 2 grammar only accepts strictly positive integers."""
+    assert_invalid(f'column-span: {rule}')
+
+
+@assert_no_logs
 def test_normal_prefix():
     assert_invalid(
         '-weasy-display: block', 'prefix on this attribute is not supported')
