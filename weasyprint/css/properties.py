@@ -49,6 +49,7 @@ INITIAL_VALUES = {
                              'top', Dimension(0, '%')),),
     'background_repeat': (('repeat', 'repeat'),),
     'background_size': (('auto', 'auto'),),
+    'box_shadow': (),
     'border_bottom_color': 'currentcolor',
     'border_bottom_left_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_bottom_right_radius': (ZERO_PIXELS, ZERO_PIXELS),

@@ -17,7 +17,8 @@ from ..tokens import (  # isort:skip
     InvalidValues, Pending, comma_separated_list, get_angle, get_content_list,
     get_content_list_token, get_custom_ident, get_image, get_keyword, get_length,
     get_number, get_percentage, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_position, remove_whitespace, single_keyword, single_token)
+    parse_2d_position, parse_position, remove_whitespace, single_keyword, single_token,
+    split_on_comma)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -175,6 +176,75 @@ def background_image(token, base_url):
     if get_keyword(token) == 'none':
         return 'none', None
     return get_image(token, base_url)
+
+
+def _parse_box_shadow(tokens):
+    """Parse one box shadow whose blur radius must be zero.
+
+    The length group is intentionally kept consecutive, as required by the
+    grammar. Color and ``inset`` may occur before or after that group.
+    Supporting nonzero blur radii would require raster output, so valid
+    nonzero values get a specific diagnostic instead of being silently
+    accepted and omitted while painting.
+
+    """
+    lengths = []
+    color = None
+    inset = False
+    lengths_closed = False
+
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword == 'inset':
+            if inset:
+                raise InvalidValues('inset keyword specified more than once')
+            inset = True
+            lengths_closed = lengths_closed or bool(lengths)
+            continue
+
+        parsed_color = parse_color(token)
+        if parsed_color is not None:
+            if color is not None:
+                raise InvalidValues('shadow color specified more than once')
+            color = token
+            lengths_closed = lengths_closed or bool(lengths)
+            continue
+
+        length = get_length(token)
+        if length is None:
+            raise InvalidValues('invalid box-shadow component')
+        if lengths_closed:
+            raise InvalidValues('shadow lengths must be consecutive')
+        lengths.append(token)
+
+    if not 2 <= len(lengths) <= 4:
+        raise InvalidValues('box-shadow requires two to four lengths')
+
+    offset_x = get_length(lengths[0])
+    offset_y = get_length(lengths[1])
+    blur = get_length(lengths[2], negative=False) if len(lengths) >= 3 else ZERO_PIXELS
+    spread = get_length(lengths[3]) if len(lengths) == 4 else ZERO_PIXELS
+    if blur is None:
+        raise InvalidValues('box-shadow blur radius must not be negative')
+    if getattr(blur, 'value', None) != 0:
+        raise InvalidValues('nonzero box-shadow blur radius is not supported')
+
+    return offset_x, offset_y, blur, spread, inset, color
+
+
+@property('box-shadow')
+def box_shadow(tokens):
+    """Validation for the lossless, zero-blur ``box-shadow`` subset."""
+    if get_single_keyword(tokens) == 'none':
+        return ()
+
+    shadows = []
+    for part in split_on_comma(tokens):
+        part = remove_whitespace(part)
+        if not part:
+            raise InvalidValues('empty box shadow')
+        shadows.append(_parse_box_shadow(part))
+    return tuple(shadows)
 
 
 @property('list-style-image', wants_base_url=True)

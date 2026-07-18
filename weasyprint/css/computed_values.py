@@ -258,6 +258,27 @@ def color(style, name, values):
     return parse_color(values, style['color_scheme'])
 
 
+@register_computer('box-shadow')
+def box_shadow(style, name, values):
+    """Compute lengths and current colors for zero-blur box shadows."""
+    shadows = []
+    for offset_x, offset_y, blur, spread, inset, color_token in values:
+        color = (
+            parse_color(color_token, style['color_scheme'])
+            if color_token is not None else 'currentcolor')
+        if color == 'currentcolor':
+            color = style['color']
+        shadows.append((
+            length(style, name, offset_x, pixels_only=True),
+            length(style, name, offset_y, pixels_only=True),
+            length(style, name, blur, pixels_only=True),
+            length(style, name, spread, pixels_only=True),
+            inset,
+            color,
+        ))
+    return tuple(shadows)
+
+
 @register_computer('background-position')
 @register_computer('object-position')
 def compute_position(style, name, values):
