@@ -22,6 +22,13 @@ from . import draw
 
 MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
+if os.name == 'nt':
+    # Official Windows installers expose platform-specific command names.
+    GHOSTSCRIPT = (
+        shutil.which('gswin64c') or shutil.which('gswin32c') or 'gs')
+else:
+    GHOSTSCRIPT = 'gs'
+
 
 def document_write_png(document, target=None, resolution=96, antialiasing=1,
                        zoom=4/30, split_images=False):
@@ -29,7 +36,8 @@ def document_write_png(document, target=None, resolution=96, antialiasing=1,
     with NamedTemporaryFile(delete=False) as pdf:
         document.write_pdf(pdf, zoom=zoom)
     command = (
-        'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
+        GHOSTSCRIPT, '-q', '-sDEVICE=png16m',
+        f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
         '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-dUsePDFX3Profile',
         '-sOutputFile=-', pdf.name)
