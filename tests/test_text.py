@@ -818,6 +818,18 @@ def test_hyphenate_manual_4():
 
 
 @assert_no_logs
+def test_hyphenate_manual_keep_hyphen():
+    # Regression test for #2614.
+    page, = render_pages(
+        '<html style="width: 6em; font-family: weasyprint">'
+        '<body style="hyphens: manual">super&shy;aa bb')
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    assert lines[0].children[0].text == 'super\xad‐'
+
+
+@assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'

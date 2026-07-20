@@ -337,8 +337,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         start, end = len(first_line_text) + 1, len(short_text)
         second_line_log_attrs = log_attrs[start:end]
         break_point = get_next_break_point(second_line_log_attrs)
-        if break_point is not None:
-            break_point -= len(first_line_text) + 1
     next_word = second_line_text[:break_point].rstrip(' ')
     if next_word:
         if space_collapse and second_line_text[break_point or -1] == ' ':
