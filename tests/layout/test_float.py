@@ -308,17 +308,11 @@ def test_float_overflow_splits_formatting_context():
     # context on the current page, or the whole block is pushed to the next page
     # instead of being split across the page break.
     page_1, page_2 = render_pages('''
-      <style>
-        @page { size: 100px; margin: 0 }
-        body { margin: 0 }
-        div.bfc { display: flow-root }
-        p { height: 20px; margin: 0 }
-        div.float { float: right; width: 30px; height: 40px }
-      </style>
+      <style>@page { size: 100px }</style>
       <div style="height: 70px"></div>
-      <div class="bfc">
-        <p>a</p>
-        <div class="float"></div>
+      <div style="display: flow-root">
+        <p style="height: 20px">a</p>
+        <div style="float: right; width: 30px; height: 40px"></div>
         <p>b</p>
       </div>
     ''')

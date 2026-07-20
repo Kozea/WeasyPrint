@@ -285,11 +285,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             resume_at = {index: None}
             out_of_flow_resume_at = None
             stop = True
-            # Deferred to the next page: drop the float from the excluded shapes
-            # so it doesn’t inflate this fragment and push the whole block down.
-            context.excluded_shapes = [
-                shape for shape in context.excluded_shapes
-                if shape is not new_child]
+            remove_placeholders(context, [new_child], absolute_boxes, fixed_boxes)
             if new_children and avoid_page_break(page_break, context):
                 # Can’t break inside float, find an earlier page break.
                 result = find_earlier_page_break(
@@ -1111,8 +1107,7 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
     """
     for box in box_list:
         if isinstance(box, boxes.ParentBox):
-            remove_placeholders(
-                context, box.children, absolute_boxes, fixed_boxes)
+            remove_placeholders(context, box.children, absolute_boxes, fixed_boxes)
         if box.style['position'] == 'absolute' and box in absolute_boxes:
             absolute_boxes.remove(box)
         elif box.style['position'] == 'fixed' and box in fixed_boxes:
@@ -1121,6 +1116,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             context.unlayout_footnote(box.footnote)
         if box in context.broken_out_of_flow:
             context.broken_out_of_flow.pop(box)
+        if box in context.excluded_shapes:
+            context.excluded_shapes.remove(box)
 
 
 def avoid_page_break(page_break, context):
