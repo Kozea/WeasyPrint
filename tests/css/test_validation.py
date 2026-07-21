@@ -5,6 +5,7 @@ from math import pi
 
 import pytest
 import tinycss2
+from tinycss2.color5 import parse_color
 
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.validation.properties import PROPERTIES
@@ -1349,3 +1350,56 @@ def test_color_scheme(rule, value):
 ])
 def test_color_scheme_invalid(rule):
     assert_invalid(f'color-scheme: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('none', ()),
+    ('1px 10px', (
+        ((1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), 'currentcolor', False),)),
+    ('1px 10px 0 3cm', (
+        ((1, 'px'), (10, 'px'), (0, None), (3, 'cm'), 'currentcolor', False),)),
+    ('1px 10px inset', (
+        ((1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), 'currentcolor', True),)),
+    ('1px 10px 2px 5cm inset', (
+        ((1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), 'currentcolor', True),)),
+    ('black 1px 10px 2px 5cm', (
+        ((1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), 'black', False),)),
+    ('red 1px 10px inset, blue 1px 10px inset', (
+        ((1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), 'red', True),
+        ((1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), 'blue', True))),
+    ('red 1px 10px 2px 5cm', (
+        ((1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), 'red', False),)),
+    ('inset red 1px 10px 2px 5cm', (
+        ((1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), 'red', True),)),
+    ('1px 10px 2px 5cm red inset', (
+        ((1, 'px'), (10, 'px'), (2, 'px'), (5, 'cm'), 'red', True),)),
+    ('1px 10px, 2px 4px #ff0000', (
+        ((1, 'px'), (10, 'px'), (0, 'px'), (0, 'px'), 'currentcolor', False),
+        ((2, 'px'), (4, 'px'), (0, 'px'), (0, 'px'), 'red', False))),
+])
+def test_box_shadow(rule, value):
+    result = get_value(f'box-shadow: {rule}')
+    for result_shadow, value_shadow in zip(result, value, strict=True):
+        assert result_shadow[:4] == value_shadow[:4]
+        assert result_shadow[5] == value_shadow[5]
+        assert parse_color(result_shadow[4]) == parse_color(result_shadow[4])
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', [
+    '1px 10px,',
+    '1px 10px,,1px',
+    '1px red inset',
+    '1px 1px red blue inset',
+    'blue 1px 1px red',
+    'inset 1px 1px 1px blue inset',
+    '1px 10px red 3px',
+    '1px 10px inset 3px',
+    '1px 1px 1px inset inset',
+    '1px 0 0 3%',
+    '1px 0, none',
+    'none, none',
+])
+def test_box_shadow_invalid(rule):
+    assert_invalid(f'box-shadow: {rule}')

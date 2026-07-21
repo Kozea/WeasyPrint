@@ -310,6 +310,44 @@ def border_style(keyword):
                        'inset', 'outset', 'groove', 'ridge', 'solid')
 
 
+@property('box-shadow')
+def box_shadow(tokens):
+    """`box-shadow` property validation."""
+    if get_single_keyword(tokens) == 'none':
+        return ()
+    shadows = []
+    while tokens := list(tokens):
+        lengths = []
+        color = None
+        inset = False
+        last_length = False
+        while tokens:
+            token = tokens.pop(0)
+            if token.type == 'literal' and token.value == ',' and tokens:
+                break
+            elif token.type == 'ident' and token.value == 'inset' and not inset:
+                inset = True
+                last_length = False
+            elif (length := get_length(token)) and not (lengths and not last_length):
+                lengths.append(length)
+                last_length = True
+            elif not color and parse_color(token):
+                color = token
+                last_length = False
+            else:
+                return
+        if not (2 <= len(lengths) <= 4):
+            return
+        x, y = lengths.pop(0), lengths.pop(0)
+        blur = lengths.pop(0) if lengths else ZERO_PIXELS
+        if blur.value < 0:
+            return
+        spread = lengths.pop(0) if lengths else ZERO_PIXELS
+        color = color or 'currentcolor'
+        shadows.append((x, y, blur, spread, color, inset))
+    return tuple(shadows)
+
+
 @property('break-before')
 @property('break-after')
 @single_keyword

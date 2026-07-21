@@ -258,6 +258,15 @@ def color(style, name, values):
     return parse_color(values, style['color_scheme'])
 
 
+@register_computer('box-shadow')
+def box_shadow(style, name, values):
+    return tuple((
+        length(style, name, x), length(style, name, y),
+        length(style, name, blur), length(style, name, spread),
+        parse_color(color, style['color_scheme']), inset,
+    ) for x, y, blur, spread, color, inset in values)
+
+
 @register_computer('background-position')
 @register_computer('object-position')
 def compute_position(style, name, values):

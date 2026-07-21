@@ -572,26 +572,27 @@ background layers per box), including the ``background``, ``background-color``,
 ``background-position``, ``background-clip``, ``background-origin`` and
 ``background-size`` properties.
 
-WeasyPrint also supports the `rounded corners part`_ of this module, including
+WeasyPrint supports the `rounded corners part`_ of this module, including
 the ``border-radius`` property.
 
-WeasyPrint also supports the `border images part`_ of this module, including the
+WeasyPrint supports the `border images part`_ of this module, including the
 ``border-image``, ``border-image-source``, ``border-image-slice``,
 ``border-image-width``, ``border-image-outset`` and ``border-image-repeat``
 properties.
 
-WeasyPrint does **not** support the `box shadow part`_ of this module,
-including the ``box-shadow`` property. This feature has been implemented in a
-`git branch`_ that is not released, as it relies on raster implementation of
-shadows.
+WeasyPrint supports the `box shadow part`_ of this module, including the
+``box-shadow`` property. Blur should be avoided, as it is approximated using
+gradients, which may be rendered poorly by PDF readers, and are limited in
+some extreme situations (very large or uneven border radii, very large blur
+regions, etc.) Real Gaussian blur requires raster images that are not adapted
+to WeasyPrint’s vector PDF output.
 
 .. _CSS Backgrounds and Borders Level 3: https://www.w3.org/TR/css-backgrounds-3/
 .. _border part: https://www.w3.org/TR/css-backgrounds-3/#borders
 .. _background part: https://www.w3.org/TR/css-backgrounds-3/#backgrounds
 .. _rounded corners part: https://www.w3.org/TR/css-backgrounds-3/#corners
 .. _border images part: https://www.w3.org/TR/css-backgrounds-3/#border-images
-.. _box shadow part: https://www.w3.org/TR/css-backgrounds-3/#misc
-.. _git branch: https://github.com/Kozea/WeasyPrint/pull/149
+.. _box shadow part: https://www.w3.org/TR/css-backgrounds-3/#box-shadow
 
 CSS Image Values and Replaced Content Module Level 3 / 4
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
