@@ -356,7 +356,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if lang := element.get('lang'):
             yield parse_declaration(f'-weasy-lang:"{lang}"')
 
-        if href := element.get('href'):
+        if href := element.get('href', '').strip(html.WHITESPACE):
             yield parse_declaration(f'-weasy-link:"{href}"')
 
         if id_ := element.get('id'):

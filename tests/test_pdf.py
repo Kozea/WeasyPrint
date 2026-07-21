@@ -584,7 +584,9 @@ def test_embedded_files_attachments(tmp_path):
           <link
             rel="attachment"
             title="some file attachment äöü"
-            href="data:,hi%20there">
+            href="
+              data:,hi%20there
+            ">
           <link rel="attachment" href="{absolute_url}">
           <link rel="attachment" href="{relative_tmp_path.name}">
           <h1>Heading 1</h1>
