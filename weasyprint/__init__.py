@@ -91,7 +91,7 @@ __all__ = [
 
 
 # Import after setting the version, as the version is used in other modules
-from .urls import URLFetcher, select_source  # noqa: I001, E402
+from .urls import URLFetcher, normalize_url, select_source  # noqa: I001, E402
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa: E402
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
@@ -105,7 +105,7 @@ def _find_base_url(html_document, fallback_base_url):
     """
     first_base_element = next(iter(html_document.iter('base')), None)
     if first_base_element is not None:
-        href = first_base_element.get('href', '').strip()
+        href = normalize_url(first_base_element.get('href', ''))
         if href:
             return urljoin(fallback_base_url, href)
     return fallback_base_url

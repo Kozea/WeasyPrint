@@ -28,7 +28,13 @@ from PIL.ImageCms import ImageCmsProfile
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
-from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
+from ..urls import (
+    URLFetchingError,
+    fetch,
+    get_url_attribute,
+    normalize_url,
+    url_join,
+)
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS, PHYSICAL_FUNCTIONS
 from .functions import Function, check_math, check_var
@@ -356,7 +362,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if lang := element.get('lang'):
             yield parse_declaration(f'-weasy-lang:"{lang}"')
 
-        if href := element.get('href', '').strip(html.WHITESPACE):
+        if href := normalize_url(element.get('href', '')):
             yield parse_declaration(f'-weasy-link:"{href}"')
 
         if id_ := element.get('id'):
