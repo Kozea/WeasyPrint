@@ -287,7 +287,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
     # links and coalesce link shapes that originate from the same HTML
     # link. This would give a feeling similiar to what browsers do with
     # links that span multiple lines.
-    for link_type, annot_target, rectangle, _ in links:
+    for link_type, annot_target, rectangle, box in links:
         if link_type != 'attachment':
             continue
         if annot_target not in annot_files:
@@ -297,8 +297,9 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # TODO: Use the title attribute as description. The comment
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
+            name = box.element.get('download')
             attachment = Attachment(
-                url=annot_target, url_fetcher=document.url_fetcher)
+                url=annot_target, url_fetcher=document.url_fetcher, name=name)
             annot_files[annot_target] = write_pdf_attachment(
                 pdf, attachment, compress)
         annot_file = annot_files[annot_target]
@@ -348,7 +349,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     # details on the possible filename and MIME type.
     if attachment.name:
         filename = attachment.name
-    elif url and urlsplit(url).path:
+    elif url and not url.startswith('data:') and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
