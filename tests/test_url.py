@@ -33,6 +33,30 @@ def test_malformed_url_link(url, base_url):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('whitespace', ['\t', '\n', '\r\n'])
+def test_html_url_whitespace(whitespace):
+    """Test HTML whitespace in URLs."""
+    pdf = FakeHTML(string=(
+        f'<a href=" \t\nhttps://weasyprint.org/foo{whitespace}bar\r\n ">'
+        'My Link</a>')).write_pdf()
+
+    assert re.findall(b'/URI \\((.*)\\)', pdf) == [
+        b'https://weasyprint.org/foobar']
+
+
+@assert_no_logs
+def test_html_base_url_whitespace():
+    """Test HTML whitespace in the base URL."""
+    pdf = FakeHTML(string='''
+        <base href=" https://weasyprint.org/foo\nbar/ ">
+        <a href="baz">My Link</a>
+    ''').write_pdf()
+
+    assert re.findall(b'/URI \\((.*)\\)', pdf) == [
+        b'https://weasyprint.org/foobar/baz']
+
+
+@assert_no_logs
 def test_base_url_in_var():
     # Regression test for #2789.
     FakeHTML(

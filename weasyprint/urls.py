@@ -22,6 +22,9 @@ from .logger import LOGGER
 UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
 BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
+HTML_WHITESPACE = ' \t\n\f\r'
+URL_WHITESPACE_TRANSLATION = str.maketrans('', '', '\t\n\r')
+
 FILESYSTEM_ENCODING = sys.getfilesystemencoding()
 
 HTTP_HEADERS = {
@@ -97,6 +100,11 @@ def url_is_absolute(url):
     return bool(scheme.match(url))
 
 
+def normalize_url(url):
+    """Remove whitespace ignored in URLs parsed from HTML attributes."""
+    return url.strip(HTML_WHITESPACE).translate(URL_WHITESPACE_TRANSLATION)
+
+
 def get_url_attribute(element, attr_name, base_url, allow_relative=False):
     """Get the URI corresponding to the ``attr_name`` attribute.
 
@@ -109,7 +117,7 @@ def get_url_attribute(element, attr_name, base_url, allow_relative=False):
     Otherwise return an URI, absolute if possible.
 
     """
-    if value := element.get(attr_name, '').strip():
+    if value := normalize_url(element.get(attr_name, '')):
         context = f'<{element.tag} {attr_name}="{value}">'
         return url_join(base_url or '', value, allow_relative, context)
 
