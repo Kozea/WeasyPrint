@@ -339,6 +339,49 @@ def test_float_overflow_splits_formatting_context():
 
 
 @assert_no_logs
+def test_float_margin_overflow_splits_formatting_context():
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 100px; margin: 0 }
+        body { margin: 0 }
+        div.bfc { display: flow-root }
+        p { height: 20px; margin: 0 }
+        div.float {
+          float: right;
+          clear: right;
+          width: 30px;
+          height: 20px;
+        }
+        div.second { margin-bottom: 10px }
+      </style>
+      <div style="height: 31px"></div>
+      <div class="bfc">
+        <p>a</p>
+        <div class="float first"></div>
+        <p>b</p>
+        <div class="float second"></div>
+        <p>c</p>
+      </div>
+    ''')
+
+    html, = page_1.children
+    body, = html.children
+    spacer, bfc_1 = body.children
+    paragraph_a, float_1, paragraph_b = bfc_1.children
+    assert spacer.height == 31
+    assert paragraph_a.element_tag == 'p'
+    assert float_1.is_floated()
+    assert paragraph_b.element_tag == 'p'
+
+    html, = page_2.children
+    body, = html.children
+    bfc_2, = body.children
+    float_2, paragraph_c = bfc_2.children
+    assert float_2.is_floated()
+    assert paragraph_c.element_tag == 'p'
+
+
+@assert_no_logs
 def test_preferred_widths_1():
     def get_float_width(body_width):
         page, = render_pages('''
