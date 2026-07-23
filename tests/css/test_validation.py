@@ -224,6 +224,61 @@ def test_background_image_invalid(rule):
     assert_invalid(f'background-image: {rule}')
 
 
+def serialize_box_shadow(shadow):
+    """Return a stable representation of a parsed box shadow for assertions."""
+    offset_x, offset_y, blur, spread, inset, color = shadow
+    lengths = tuple((length.value, length.unit) for length in (
+        offset_x, offset_y, blur, spread))
+    return lengths, inset, color.serialize() if color is not None else None
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('none', ()),
+    ('1px 2em', (((1, 'px'), (2, 'em'), (0, 'px'), (0, 'px')), False, None)),
+    (
+        'inset rgb(255 0 0 / 50%) -1px 2px 0 3pt',
+        (((-1, 'px'), (2, 'px'), (0, None), (3, 'pt')), True,
+         'rgb(255 0 0 / 50%)'),
+    ),
+])
+def test_box_shadow(rule, value):
+    """Zero-blur shadows preserve lengths, color, and inset semantics."""
+    result = get_value(f'box-shadow: {rule}')
+    if not result:
+        assert result == value
+    else:
+        assert serialize_box_shadow(result[0]) == value
+
+
+@assert_no_logs
+def test_box_shadow_multiple():
+    """Comma-separated shadows keep their author-specified front-to-back order."""
+    result = get_value('box-shadow: 1px 2px red, blue 3px 4px inset')
+    assert tuple(serialize_box_shadow(shadow) for shadow in result) == (
+        (((1, 'px'), (2, 'px'), (0, 'px'), (0, 'px')), False, 'red'),
+        (((3, 'px'), (4, 'px'), (0, 'px'), (0, 'px')), True, 'blue'),
+    )
+
+
+@pytest.mark.parametrize(('rule', 'message'), [
+    ('1px', 'two to four lengths'),
+    ('1px 2px 3px 4px 5px', 'two to four lengths'),
+    ('1px red 2px', 'lengths must be consecutive'),
+    ('1px 2px red blue', 'color specified more than once'),
+    ('inset 1px 2px inset', 'inset keyword specified more than once'),
+    ('1px 2px -1px', 'blur radius must not be negative'),
+    ('1px 2px 1px', 'nonzero box-shadow blur radius is not supported'),
+    ('1px 2px,', 'empty box shadow'),
+    (',1px 2px', 'empty box shadow'),
+    ('none, 1px 2px', 'invalid box-shadow component'),
+    ('1% 2px', 'invalid box-shadow component'),
+])
+def test_box_shadow_invalid(rule, message):
+    """Invalid or raster-only shadows are rejected with actionable diagnostics."""
+    assert_invalid(f'box-shadow: {rule}', message)
+
+
 @pytest.mark.parametrize(('rule', 'value'), [
     # One token, vertical
     ('top', (('left', (50, '%'), 'top', (0, '%')),)),

@@ -12,6 +12,7 @@ from ..matrix import Matrix
 from ..stacking import StackingContext
 from .border import draw_border, draw_line, draw_outline, rounded_box, set_mask_border
 from .color import styled_color
+from .shadow import draw_box_shadows
 from .text import draw_text
 
 
@@ -75,8 +76,7 @@ def draw_stacking_context(stream, stacking_context):
                             boxes.GridContainerBox, boxes.ReplacedBox)):
             set_mask_border(stream, box)
             # The canvas background was removed by layout_backgrounds.
-            draw_background(stream, box.background)
-            draw_border(stream, box)
+            draw_box_background_and_border(stream, box)
 
         with stream.stacked():
             # Dont clip the page box, see #35.
@@ -102,8 +102,7 @@ def draw_stacking_context(stream, stacking_context):
                 if isinstance(block, boxes.TableBox):
                     draw_table(stream, block)
                 else:
-                    draw_background(stream, block.background)
-                    draw_border(stream, block)
+                    draw_box_background_and_border(stream, block)
 
             # Point 5.
             for child_context in stacking_context.float_contexts:
@@ -235,6 +234,20 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             draw_background_image(stream, layer, bg.style)
 
 
+def draw_box_background(stream, box, outer_shadows=True):
+    """Draw a box's outer shadows, background, and inner shadows."""
+    if outer_shadows:
+        draw_box_shadows(stream, box, inset=False)
+    draw_background(stream, box.background)
+    draw_box_shadows(stream, box, inset=True)
+
+
+def draw_box_background_and_border(stream, box):
+    """Draw shadows and background below a box's border."""
+    draw_box_background(stream, box)
+    draw_border(stream, box)
+
+
 def draw_background_image(stream, layer, style):
     if layer.image is None or 0 in layer.size:
         return
@@ -323,22 +336,23 @@ def draw_background_image(stream, layer, style):
 
 def draw_table(stream, table):
     # Draw backgrounds.
-    draw_background(stream, table.background)
+    draw_box_background(stream, table)
+    separate_borders = table.style['border_collapse'] != 'collapse'
     for column_group in table.column_groups:
-        draw_background(stream, column_group.background)
+        draw_box_background(stream, column_group, separate_borders)
         for column in column_group.children:
-            draw_background(stream, column.background)
+            draw_box_background(stream, column, separate_borders)
     for row_group in table.children:
-        draw_background(stream, row_group.background)
+        draw_box_background(stream, row_group, separate_borders)
         for row in row_group.children:
-            draw_background(stream, row.background)
+            draw_box_background(stream, row, separate_borders)
             for cell in row.children:
                 draw_cell_background = (
                     table.style['border_collapse'] == 'collapse' or
                     cell.style['empty_cells'] == 'show' or
                     not cell.empty)
                 if draw_cell_background:
-                    draw_background(stream, cell.background)
+                    draw_box_background(stream, cell, separate_borders)
 
     # Draw borders.
     if table.style['border_collapse'] == 'collapse':
@@ -495,8 +509,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
         draw_stacking_context(stream, stacking_context)
     else:
         set_mask_border(stream, box)
-        draw_background(stream, box.background)
-        draw_border(stream, box)
+        draw_box_background_and_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
