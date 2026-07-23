@@ -260,6 +260,12 @@ def _out_of_flow_layout(context, box, index, child, new_children,
 
     # Float child layout.
     elif child.is_floated():
+        direction = box.style['direction']
+        # Infinite clearance means that an earlier float is still broken.
+        # Retry this float on the next page without laying it out at infinity.
+        if get_clearance(context, child, direction) == inf:
+            return True, {index: None}, None, None
+
         # Check for forced break-before on the float.
         # https://drafts.csswg.org/css-break/#break-between
         new_child, out_of_flow_resume_at = float_layout(
