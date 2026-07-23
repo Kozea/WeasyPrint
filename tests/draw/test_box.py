@@ -154,6 +154,25 @@ def test_borders_box_sizing(assert_pixels):
 
 
 @assert_no_logs
+def test_inline_flex_item_border(assert_same_renderings):
+    source = '''
+      <style>
+        @page { size: 10px }
+        body { display: flex; margin: 0 }
+        div {
+          display: %s;
+          width: 4px;
+          height: 4px;
+          border: 1px solid red;
+        }
+        span { width: 2px; height: 2px; background: blue }
+      </style>
+      <div><span></span></div>
+    '''
+    assert_same_renderings(source % 'flex', source % 'inline-flex')
+
+
+@assert_no_logs
 def test_margin_boxes(assert_pixels):
     assert_pixels('''
         _______________
