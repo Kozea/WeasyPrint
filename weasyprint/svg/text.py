@@ -156,7 +156,7 @@ def text(svg, node, font_size):
             (x_position + width, y_position - baseline + height))
         # TODO: Use ink extents instead of logical from line_break.line_size().
         node.text_bounding_box = extend_bounding_box(node.text_bounding_box, points)
-        layouts.append((layout, x_position, y_position, x, y, angle))
+        layouts.append((layout, x_position, y_position, x, y, angle, baseline))
 
     # Set state after we have bounding box for gradients and patterns, before drawing.
     svg.stream.push_state()
@@ -165,15 +165,16 @@ def text(svg, node, font_size):
 
     # Draw letters.
     emoji_lines = []
-    for layout, x_position, y_position, x, y, angle in layouts:
+    for layout, x_position, y_position, x, y, angle, baseline in layouts:
         layout.reactivate(style)
         svg.fill_stroke(fill, stroke, text=True)
         matrix = Matrix(a=scale_x, d=-1, e=x_position, f=y_position)
         if angle:
             a, c = cos(angle), sin(angle)
             matrix = Matrix(a, -c, c, a) @ matrix
-        emojis = draw_first_line(
-            svg.stream, TextBox(layout, style), 'none', 'none', matrix)
+        text_box = TextBox(layout, style)
+        text_box.baseline = baseline
+        emojis = draw_first_line(svg.stream, text_box, 'none', 'none', matrix)
         emoji_lines.append((x, y, emojis))
 
     svg.stream.end_text()

@@ -18,8 +18,8 @@ from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE, FONTCONFIG_WEIGHT,
     LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE, PANGO_VARIANT)
 from .ffi import (  # isort:skip
-    FROM_UNITS, TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2,
-    unicode_to_char_p)
+    FROM_UNITS, TO_UNITS, ffi, fontconfig, gobject, harfbuzz, harfbuzz_vector, pango,
+    pangoft2, unicode_to_char_p)
 
 PREFERRED_ENCODING = getpreferredencoding(False)
 
@@ -366,6 +366,14 @@ def get_hb_object_data(hb_object, ot_color=None, glyph=None):
         hb_blob = harfbuzz.hb_ot_color_glyph_reference_png(hb_object, glyph)
     elif ot_color == 'svg':
         hb_blob = harfbuzz.hb_ot_color_glyph_reference_svg(hb_object, glyph)
+    elif ot_color == 'colr':
+        if not harfbuzz_vector:
+            return
+        paint = harfbuzz_vector.hb_vector_paint_create_or_fail(
+            harfbuzz_vector.HB_VECTOR_FORMAT_SVG)
+        harfbuzz_vector.hb_vector_paint_glyph(
+            paint, hb_object, glyph, harfbuzz.HB_VECTOR_EXTENTS_MODE_EXPAND)
+        hb_blob = harfbuzz_vector.hb_vector_paint_render(paint)
     else:
         hb_blob = harfbuzz.hb_face_reference_blob(hb_object)
     with ffi.new('unsigned int *') as length:

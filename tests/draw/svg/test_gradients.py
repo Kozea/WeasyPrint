@@ -107,7 +107,7 @@ def test_linear_gradient_multicolor_userspace(assert_pixels):
     assert_pixels('''
         __________
         BBBBBBBBBB
-        BBBBBBBBBB
+        zBBBBBBBBz
         RRRRRRRRRR
         RRRRRRRRRR
         GGGGGGGGGG
@@ -806,6 +806,39 @@ def test_radial_gradient_userspace(assert_pixels):
           </radialGradient>
         </defs>
         <rect x="1" y="1" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_radial_gradient_negative_rect_userspace(assert_pixels):
+    assert_pixels('''
+        ____________
+        rrrrrrrrrrr_
+        rrrrrrrrrrr_
+        rrrrrBBrrrr_
+        rrrrBBBBrrr_
+        rrrBBBBBBrr_
+        rrrBBBBBBrr_
+        rrrrBBBBrrr_
+        rrrrrBBrrrr_
+        rrrrrrrrrrr_
+        rrrrrrrrrrr_
+        ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="6" cy="6" r="5" fx="6" fy="6" fr="2"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="-9" y="1" width="20" height="10" fill="url(#grad)" />
       </svg>
     ''')
 

@@ -275,6 +275,14 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     f = -stream.logical_rect.y
                     f = f * FROM_UNITS / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
+            elif font.colr:
+                svg_data = get_hb_object_data(font.hb_font, 'colr', glyph_id)
+                if svg_data:
+                    tree = ElementTree.fromstring(svg_data)
+                    image = SVGImage(tree, None, None, None)
+                    a = d = 1
+                    e = x_advance - kerning
+                    emojis.append([image, font, a, d, e, -textbox.baseline])
 
             x_advance += (logical_width + offset - kerning) / 1000
 
