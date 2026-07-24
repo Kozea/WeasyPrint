@@ -534,7 +534,7 @@ class Gradient:
 
         if any(alpha != 1 for alpha in alphas):
             alpha_stream = stream.set_alpha_state(
-                0, 0, concrete_width, concrete_height)
+                0, 0, concrete_width, concrete_height / scale_y)
 
             shading_type = 2 if type_ == 'linear' else 3
             sub_functions = (
