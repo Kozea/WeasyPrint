@@ -458,3 +458,32 @@ def test_rect_fill_inherit(assert_pixels):
         <rect x="2" y="2" width="5" height="5" fill="inherit" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_line_dash(assert_pixels):
+    # A line has no interior, so the default fill must not turn the paint
+    # operation into fill-and-stroke: when it did, the gaps between the
+    # dashes were not blank but joined by a continuous thread. Deliberately
+    # no fill="none" here -- that is the workaround this test makes
+    # unnecessary. Same geometry as test_line above, plus a dash pattern.
+    assert_pixels('''
+        _________
+        _________
+        _________
+        _________
+        RR__RR___
+        RR__RR___
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="5" x2="6" y2="5"
+          stroke="red" stroke-width="2" stroke-dasharray="2"/>
+      </svg>
+    ''')

@@ -726,8 +726,15 @@ class SVG:
 
     def set_graphical_state(self, node, font_size, context=None):
         """Set stroke and fill colors, gradients, patterns, and line options."""
-        # Get fill data
-        source, fill = node.get_paint('fill', context)
+        # Get fill data. A 'line' has no interior, so 'fill' cannot paint
+        # anything on it. Leaving the default fill in place makes fill_stroke()
+        # choose the fill-and-stroke painting operator instead of stroke-only,
+        # which changes the rendering: a dashed line comes out with a
+        # continuous thread running through the gaps between the dashes.
+        if node.tag == 'line':
+            source = fill = None
+        else:
+            source, fill = node.get_paint('fill', context)
         opacity = alpha_value(node.get('fill-opacity', 1))
         if gradient := self.gradients.get(source):
             fill = draw_gradient(self, node, gradient, font_size, opacity, stroke=False)
