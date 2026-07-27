@@ -7,16 +7,15 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 from math import inf
 
 from tinycss2 import parse_component_value_list
-from tinycss2.color5 import parse_color
 
 from .. import computed_values
 from ..functions import Function, check_var
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 
 from ..tokens import (  # isort:skip
-    InvalidValues, Pending, comma_separated_list, get_angle, get_content_list,
-    get_content_list_token, get_custom_ident, get_image, get_keyword, get_length,
-    get_number, get_percentage, get_resolution, get_single_keyword, get_url,
+    InvalidValues, Pending, comma_separated_list, get_angle, get_color,
+    get_content_list, get_content_list_token, get_custom_ident, get_image, get_keyword,
+    get_length, get_number, get_percentage, get_resolution, get_single_keyword, get_url,
     parse_2d_position, parse_position, remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
@@ -131,7 +130,7 @@ def background_attachment(keyword):
 @property('text-decoration-color')
 @single_token
 def other_colors(token):
-    if parse_color(token):
+    if get_color(token):
         return token
 
 
@@ -140,7 +139,7 @@ def other_colors(token):
 def outline_color(token):
     if get_keyword(token) == 'invert':
         return 'currentcolor'
-    elif parse_color(token):
+    elif get_color(token):
         return token
 
 
@@ -161,7 +160,7 @@ def empty_cells(keyword):
 @single_token
 def color(token):
     """``*-color`` and ``color`` properties validation."""
-    result = parse_color(token)
+    result = get_color(token)
     if result == 'currentcolor':
         return 'inherit'
     elif result:

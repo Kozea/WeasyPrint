@@ -3,13 +3,12 @@
 from functools import partial
 from math import pi
 
-from tinycss2.color5 import parse_color
-
 from ..logger import LOGGER
 from ..text.line_break import strut
 from ..urls import get_link
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
+from .tokens import get_color
 from .units import LENGTH_UNITS, to_pixels
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
@@ -255,7 +254,7 @@ def image(style, name, image):
 @register_computer('outline-color')
 @register_computer('text-decoration-color')
 def color(style, name, values):
-    return parse_color(values, style['color_scheme'])
+    return get_color(values, style['color_scheme'])
 
 
 @register_computer('background-position')

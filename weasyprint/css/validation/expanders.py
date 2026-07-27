@@ -3,14 +3,13 @@
 import functools
 
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken
-from tinycss2.color5 import parse_color
 
 from ..functions import check_var
 from ..properties import INITIAL_VALUES
 from .descriptors import expand_font_variant
 
 from ..tokens import (  # isort:skip
-    InvalidValues, Pending, get_keyword, get_single_keyword, split_on_comma)
+    InvalidValues, Pending, get_color, get_keyword, get_single_keyword, split_on_comma)
 from .properties import (  # isort:skip
     background_attachment, background_image, background_position, background_repeat,
     background_size, block_ellipsis, border_image_source, border_image_slice,
@@ -312,7 +311,7 @@ def expand_border_side(tokens, name):
 
     """
     for token in tokens:
-        if parse_color(token) is not None:
+        if get_color(token) is not None:
             suffix = '-color'
         elif border_width([token]) is not None:
             suffix = '-width'
@@ -578,7 +577,7 @@ def expand_text_decoration(tokens, name):
             if style:
                 raise InvalidValues
             style.append(token)
-        elif parse_color(token):
+        elif get_color(token):
             if color:
                 raise InvalidValues
             color.append(token)

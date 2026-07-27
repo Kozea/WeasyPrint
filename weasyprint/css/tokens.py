@@ -103,14 +103,14 @@ def parse_color_hint(tokens):
 
 def parse_color_stop(tokens):
     if len(tokens) == 1:
-        color = parse_color(tokens[0])
+        color = get_color(tokens[0])
         if color == 'currentcolor':
             # TODO: return the current color instead
             return parse_color('black'), None
         if color is not None:
             return color, None
     elif len(tokens) == 2:
-        color = parse_color(tokens[0])
+        color = get_color(tokens[0])
         position = get_length(tokens[1], negative=True, percentage=True)
         if color is not None and position is not None:
             return color, position
@@ -453,6 +453,20 @@ def get_resolution(token):
         factor = RESOLUTION_TO_DPPX.get(token.unit.lower())
         if factor is not None:
             return token.value * factor
+
+
+def get_color(token, color_schemes=None):
+    """Parse a <color> token, resolving math functions first."""
+    from . import resolve_math
+
+    if check_math(token):
+        try:
+            token = resolve_math(token) or token
+        except (PercentageInMath, RelativeLengthInMath):
+            # Colors take no length, so relative units and percentages that need a
+            # reference size are always invalid here.
+            return
+    return parse_color(token, color_schemes)
 
 
 def get_image(token, base_url):

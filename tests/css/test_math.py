@@ -30,6 +30,14 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
     'min(100px)',
     'min(100%, 20em, 100px)',
     'calc(min(4, 2) * 50px)',
+    'calc(tan(min(45deg, 60deg)) * 100px)',
+    'calc(tan(max(45deg, 30deg)) * 100px)',
+    'clamp(50px, 100px, 200px)',
+    'clamp(100px, 250px, 50px)',
+    'calc(clamp(1, 2, 3) * 50px)',
+    'calc(clamp(1, 5, 2) * 50px)',
+    'calc(clamp(2, 5, 1) * 50px)',
+    'calc(tan(clamp(30deg, 45deg, 60deg)) * 100px)',
     'calc(sqrt(4) * 50px)',
     'calc(pow(2, 2) * 25px)',
     'calc(hypot(2) * 50px)',
@@ -327,7 +335,6 @@ def test_math_functions_gradient():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_math_functions_color():
     render_pages('''
@@ -336,7 +343,6 @@ def test_math_functions_color():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_math_functions_gradient_color():
     render_pages('''
@@ -344,6 +350,141 @@ def test_math_functions_gradient_color():
         rgba(10, 20, calc(30), calc(80%)) 10%,
         hsl(calc(10 + 10), 20%, 20%) 80%"></div>
     ''')
+
+
+COLOR_PROPERTIES = (
+    'color', 'background_color', 'border_top_color', 'border_right_color',
+    'border_bottom_color', 'border_left_color', 'column_rule_color',
+    'outline_color', 'text_decoration_color')
+
+
+def _computed_colors(declaration):
+    page, = render_pages(f'<div style="{declaration}">a</div>')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    return [str(div.style[name]) for name in COLOR_PROPERTIES]
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('color', 'reference'), [
+    # Numbers, percentages and angles, in each channel of each color function.
+    ('rgb(calc(10 + 10), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(10% * 2), 20%, 30%)', 'rgb(20%, 20%, 30%)'),
+    ('rgba(10, 20, 30, calc(0.25 * 2))', 'rgba(10, 20, 30, 0.5)'),
+    ('rgba(10, 20, calc(30), calc(80%))', 'rgba(10, 20, 30, 80%)'),
+    ('hsl(calc(10 + 10), 20%, 20%)', 'hsl(20, 20%, 20%)'),
+    ('hsl(calc(10deg + 10deg), 20%, 20%)', 'hsl(20deg, 20%, 20%)'),
+    ('hsl(20, calc(10% * 2), 20%)', 'hsl(20, 20%, 20%)'),
+    ('hsla(20, 20%, 20%, calc(0.5))', 'hsla(20, 20%, 20%, 0.5)'),
+    ('hwb(calc(10 + 10) 20% 30%)', 'hwb(20 20% 30%)'),
+    ('lab(calc(50%) 40 50)', 'lab(50% 40 50)'),
+    ('lch(calc(50%) 40 50)', 'lch(50% 40 50)'),
+    ('oklab(calc(0.5) 0.1 0.1)', 'oklab(0.5 0.1 0.1)'),
+    ('oklch(calc(0.5) 0.1 50)', 'oklch(0.5 0.1 50)'),
+    ('color(srgb calc(0.1 + 0.1) 0.2 0.3)', 'color(srgb 0.2 0.2 0.3)'),
+    ('device-cmyk(calc(0.1 + 0.1) 0.2 0.3 0.4)', 'device-cmyk(0.2 0.2 0.3 0.4)'),
+    # Every math function, not just calc().
+    ('rgb(min(20, 40), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(max(10, 20), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(clamp(10, 20, 30), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(clamp(20, 5, 30), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(clamp(1, 50, 20), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(clamp(10%, 20%, 30%), 20%, 30%)', 'rgb(20%, 20%, 30%)'),
+    ('hsl(min(20deg, 30deg), 20%, 20%)', 'hsl(20deg, 20%, 20%)'),
+    ('hsl(max(10deg, 20deg), 20%, 20%)', 'hsl(20deg, 20%, 20%)'),
+    ('hsl(clamp(10deg, 20deg, 30deg), 20%, 20%)', 'hsl(20deg, 20%, 20%)'),
+    ('rgb(round(19.6), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(mod(50, 30), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(abs(-20), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(sqrt(400), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(pow(2, 2), 20, 30)', 'rgb(4, 20, 30)'),
+    ('rgb(hypot(12, 16), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(20 * exp(0)), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(10 * log(100, 10)), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(20 * sign(3)), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(20 * sin(90deg)), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(calc(10) + 10), 20, 30)', 'rgb(20, 20, 30)'),
+    ('rgb(calc(20 + pi * 0), 20, 30)', 'rgb(20, 20, 30)'),
+    ('light-dark(rgb(calc(10 + 10), 20, 30), blue)',
+     'light-dark(rgb(20, 20, 30), blue)'),
+])
+def test_math_functions_color_value(color, reference):
+    # A math function in a color must give the same result as the value it
+    # evaluates to, as required by CSS Values and Units 4.
+    assert _computed_colors(f'color: {color}') == (
+        _computed_colors(f'color: {reference}'))
+
+
+@assert_no_logs
+@pytest.mark.parametrize('css_property', [
+    'color', 'background-color', 'border-top-color', 'border-right-color',
+    'border-bottom-color', 'border-left-color', 'border-block-start-color',
+    'border-block-end-color', 'border-inline-start-color',
+    'border-inline-end-color', 'column-rule-color', 'outline-color',
+    'text-decoration-color',
+])
+def test_math_functions_color_property(css_property):
+    assert _computed_colors(f'{css_property}: rgb(calc(10 + 10), 20, 30)') == (
+        _computed_colors(f'{css_property}: rgb(20, 20, 30)'))
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('shorthand', 'suffix'), [
+    ('background', ''),
+    ('border', '1px solid '),
+    ('border-top', '1px solid '),
+    ('outline', '1px solid '),
+    ('column-rule', '1px solid '),
+    ('text-decoration', 'underline '),
+])
+def test_math_functions_color_shorthand(shorthand, suffix):
+    assert _computed_colors(
+        f'{shorthand}: {suffix}rgb(calc(10 + 10), 20, 30)') == (
+            _computed_colors(f'{shorthand}: {suffix}rgb(20, 20, 30)'))
+
+
+@pytest.mark.parametrize('color', [
+    # Colors take no length, so these can never be resolved.
+    'rgb(calc(1em), 0, 0)',
+    'rgb(calc(10px), 0, 0)',
+    'rgb(calc(10px + 1em), 0, 0)',
+    'rgb(calc(100%), calc(1em), 0)',
+    'hsl(calc(1em), 20%, 20%)',
+    'rgb(min(1px, 2), 0, 0)',
+    'rgb(clamp(1px, 2, 3), 0, 0)',
+    # Resolving math must not make invalid syntax valid.
+    'rgb(calc(10, 20), 20, 30)',
+    'rgb(calc(10)% 20 30)',
+    'lab(calc(20 + 30)% 40 50)',
+    'notacolor(calc(20), 20, 30)',
+    'light-dark(calc(1em), red)',
+    'light-dark(calc(1em), red, red)',
+])
+def test_math_functions_color_error(color):
+    with capture_logs() as logs:
+        render_pages(f'<div style="color: {color}">a</div>')
+    assert len(logs) == 1
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('stops', 'reference'), [
+    ('rgb(calc(10 + 10), 20, 30) 10%, blue 80%', 'rgb(20, 20, 30) 10%, blue 80%'),
+    ('rgb(calc(10 + 10), 20, 30), blue', 'rgb(20, 20, 30), blue'),
+    ('rgba(10, 20, calc(30), calc(80%)) 10%, hsl(calc(10 + 10), 20%, 20%) 80%',
+     'rgba(10, 20, 30, 80%) 10%, hsl(20, 20%, 20%) 80%'),
+])
+def test_math_functions_gradient_color_stops(stops, reference):
+    def gradient_colors(value):
+        page, = render_pages(
+            f'<div style="width: 10px; height: 10px;'
+            f' background: linear-gradient({value})">a</div>')
+        html, = page.children
+        body, = html.children
+        div, = body.children
+        (_, gradient), = div.style['background_image']
+        return [str(color) for color in gradient.colors]
+    assert gradient_colors(stops) == gradient_colors(reference)
 
 
 @assert_no_logs

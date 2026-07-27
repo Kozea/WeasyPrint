@@ -793,6 +793,30 @@ def _resolve_calc_value(computed, tokens):
                 return NAN
 
 
+def _resolve_math_argument(token, computed, property_name, refer_to, unit):
+    """Get the ``(unit, value, token)`` of a min(), max() or clamp() argument.
+
+    ``unit`` is the unit family of the previous arguments, as values of different
+    families can’t be compared. Return ``None`` for invalid arguments.
+
+    """
+    if token.type == 'percentage' and refer_to is not None:
+        token = tokenize(token.value / 100 * refer_to, unit='px')
+    if token.type == 'percentage':
+        argument_unit, value = '%', token.value
+    elif token.type == 'number':
+        argument_unit, value = '', token.value
+    elif token.unit.lower() in ANGLE_UNITS:
+        argument_unit, value = 'rad', to_radians(token)
+    else:
+        argument_unit, value = 'px', to_pixels(token, computed, property_name)
+    if unit not in (None, argument_unit):
+        if '%' in (unit, argument_unit):
+            raise PercentageInMath
+        return
+    return argument_unit, value, token
+
+
 def resolve_math(token, computed=None, property_name=None, refer_to=None):
     """Return token with resolved math functions.
 
@@ -833,33 +857,15 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
             token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
             if token is None:
                 return
-            if token.type == 'percentage':
-                if refer_to is None:
-                    if unit in ('px', ''):
-                        raise PercentageInMath
-                    unit = '%'
-                    value = token
-                else:
-                    unit = 'px'
-                    token = value = tokenize(token.value / 100 * refer_to, unit='px')
-            elif token.type == 'number':
-                if unit == '%':
-                    raise PercentageInMath
-                elif unit == 'px':
-                    return
-                unit = ''
-                value = tokenize(token.value, unit='px')
-            else:
-                if unit == '%':
-                    raise PercentageInMath
-                elif unit == '':
-                    return
-                unit = 'px'
-                value = tokenize(to_pixels(token, computed, property_name), unit='px')
+            resolved = _resolve_math_argument(
+                token, computed, property_name, refer_to, unit)
+            if resolved is None:
+                return
+            unit, value, token = resolved
             update_condition = (
                 target_value is None or
-                (function.name == 'min' and value.value < target_value.value) or
-                (function.name == 'max' and value.value > target_value.value))
+                (function.name == 'min' and value < target_value) or
+                (function.name == 'max' and value > target_value))
             if update_condition:
                 target_value, target_token = value, token
         return tokenize(target_token)
@@ -956,34 +962,23 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return tokenize(math.atan2(y, x), unit='rad')
 
     elif function.name == 'clamp':
-        pixels_list = []
-        unit = None
+        values, tokens_list, unit = [], [], None
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
             if token is None:
                 return
-            if token.type == 'percentage':
-                if refer_to is None:
-                    if unit == 'px':
-                        raise PercentageInMath
-                    unit = '%'
-                    value = token
-                else:
-                    unit = 'px'
-                    token = tokenize(token.value / 100 * refer_to, unit='px')
-            else:
-                if unit == '%':
-                    raise PercentageInMath
-                unit = 'px'
-                pixels = to_pixels(token, computed, property_name)
-                value = tokenize(pixels, unit='px')
-            pixels_list.append(value)
-        min_token, token, max_token = pixels_list
-        if token.value < min_token.value:
-            token = min_token
-        if token.value > max_token.value:
-            token = max_token
-        return tokenize(token)
+            resolved = _resolve_math_argument(
+                token, computed, property_name, refer_to, unit)
+            if resolved is None:
+                return
+            unit, value, token = resolved
+            values.append(value)
+            tokens_list.append(token)
+        # clamp(min, value, max) is max(min, min(value, max)).
+        index = 1 if values[1] <= values[2] else 2
+        if values[index] < values[0]:
+            index = 0
+        return tokenize(tokens_list[index])
 
     elif function.name == 'pow':
         number_token, power_token = [
