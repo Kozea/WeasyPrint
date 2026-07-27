@@ -1,10 +1,10 @@
 """Transform a "before layout" box tree into an "after layout" tree.
 
 Break boxes across lines and pages; determine the size and dimension of each
-box fragement.
+box fragment.
 
 Boxes in the new tree have *used values* in their ``position_x``,
-``position_y``, ``width`` and ``height`` attributes, amongst others.
+``position_y``, ``width`` and ``height`` attributes, among others.
 
 See https://www.w3.org/TR/CSS21/cascade.html#used-value
 
