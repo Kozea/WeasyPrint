@@ -355,35 +355,58 @@ def get_html_metadata(html):
     created = None
     modified = None
     attachments = []
+
+    # Custom metadata stored with original case.
     custom = {}
+    # Used to detect equivalent custom names differing only by case.
+    custom_metadata_names = set()
+
     lang = html.etree_element.attrib.get('lang', None)
     for element in html.wrapper_element.query_all('title', 'meta', 'link'):
         element = element.etree_element
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
         elif element.tag == 'meta':
-            name = ascii_lower(element.get('name', ''))
+            name_original = element.get('name', '')
+            name_lower = ascii_lower(name_original)
             content = element.get('content', '')
-            if name == 'keywords':
+            if name_lower == 'keywords':
                 for keyword in map(strip_whitespace, content.split(',')):
                     if keyword not in keywords:
                         keywords.append(keyword)
-            elif name == 'author':
+            elif name_lower == 'author':
                 authors.append(content)
-            elif name == 'description':
+            elif name_lower == 'description':
                 if description is None:
                     description = content
-            elif name == 'generator':
+            elif name_lower == 'generator':
                 if generator is None:
                     generator = content
-            elif name == 'dcterms.created':
+
+            elif name_lower == 'dcterms.created':
                 if created is None:
-                    created = parse_w3c_date(name, content)
-            elif name == 'dcterms.modified':
+                    created = parse_w3c_date(name_lower, content)
+
+            elif name_lower == 'dcterms.modified':
                 if modified is None:
-                    modified = parse_w3c_date(name, content)
-            elif name and name not in custom:
-                custom[name] = content
+                    modified = parse_w3c_date(name_lower, content)
+
+            elif name_lower:
+                # For custom metadata names, we preserve original case.
+                # Example:
+                #   <meta name="CamelCase" ...>
+                # stays:
+                #   /CamelCase
+                #
+                # If both:
+                #   CamelCase
+                #   camelcase
+                # are present, only the first one is kept ("first occurrence wins" behavior)
+
+                if name_lower not in custom_metadata_names:
+                    custom[name_original] = content
+                    custom_metadata_names.add(name_lower)
+
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
             url = get_url_attribute(element, 'href', html.base_url)

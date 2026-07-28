@@ -9,7 +9,7 @@ from .testing_utils import BASE_URL, assert_no_logs
 from weasyprint.html import (  # isort:skip
     map_to_dimension_property, map_to_dimension_property_ignoring_zero,
     map_to_pixel_length, parse_dimension_value, parse_integer,
-    parse_non_negative_integer, parse_string, parse_url)
+    parse_non_negative_integer, parse_string, parse_url, get_html_metadata)
 
 
 PH_TESTING_CSS = CSS(string='''
@@ -302,6 +302,47 @@ def test_ph_embedded():
     assert img.width == 10
     assert img.height == 20
 
+
+@assert_no_logs
+def test_custom_metadata_preserve_case():
+    metadata = get_html_metadata(HTML(string='''
+      <meta name="SomeExampleAttribute" content="Hello World">
+    '''))
+
+    assert metadata['custom'] == {
+        'SomeExampleAttribute': 'Hello World'
+    }
+
+@assert_no_logs
+def test_custom_metadata_duplicate_key():
+    # The first value encountered should be preserved.
+    metadata = get_html_metadata(HTML(string='''
+      <meta name="SomeExampleAttribute" content="Hello World">
+      <meta name="someEXAMPLEattribute" content="Hello World">
+    '''))
+
+    assert metadata['custom'] == {
+        'SomeExampleAttribute': 'Hello World'
+    }
+
+@assert_no_logs
+def test_standard_metadata_is_lowercased():
+    metadata = get_html_metadata(HTML(string='''
+      <meta name="DesCRIPTION" content="Hello World">
+    '''))
+
+    assert metadata['description'] == 'Hello World'
+
+@assert_no_logs
+def test_standard_metadata_not_also_in_custom():
+    # desCRIPTION ("Hello World 2") should not appear in the custom metadata dict.
+    metadata = get_html_metadata(HTML(string='''
+      <meta name="description" content="Hello World 1">
+      <meta name="desCRIPTION" content="Hello World 2">
+    '''))
+
+    assert metadata['description'] == 'Hello World 1'
+    assert metadata['custom'] == dict()
 
 @pytest.mark.parametrize(('string', 'expected'), [
     ('42', 42),
