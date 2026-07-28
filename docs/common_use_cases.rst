@@ -6,19 +6,20 @@ Regenerate PDFs Automatically
 -----------------------------
 
 During development, you can automatically regenerate a PDF whenever an HTML or
-CSS file changes. On Linux, install ``inotify-tools`` and run:
+CSS file changes. On Linux, macOS and Windows, install watchexec_.
 
-.. code-block:: sh
-
-  while inotifywait -e modify document.html style.css; do
-      python -m weasyprint document.html document.pdf
-  done
-
-On macOS and Windows, install watchexec_ and run:
+To watch specific files, run:
 
 .. code-block:: sh
 
   watchexec --watch document.html --watch style.css -- python -m weasyprint document.html document.pdf
+
+To watch all HTML and CSS files in the current directory and its subdirectories,
+use an extension filter:
+
+.. code-block:: sh
+
+  watchexec -e html,css -- python -m weasyprint document.html document.pdf
 
 Replace the filenames in these examples with your own HTML, CSS and PDF paths.
 
