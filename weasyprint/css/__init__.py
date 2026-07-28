@@ -28,7 +28,7 @@ from PIL.ImageCms import ImageCmsProfile
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
-from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
+from ..urls import URLFetchingError, fetch, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS, PHYSICAL_FUNCTIONS
 from .functions import Function, check_math, check_var
@@ -288,7 +288,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
     The output order is the same as the source order.
 
     """
-    from ..html import element_has_link_type
+    from ..html import element_has_link_type, get_url_attribute
 
     for wrapper in wrapper_element.query_all('style', 'link'):
         element = wrapper.etree_element
@@ -356,13 +356,14 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if lang := element.get('lang'):
             yield parse_declaration(f'-weasy-lang:"{lang}"')
 
-        if href := element.get('href', '').strip(html.WHITESPACE):
-            yield parse_declaration(f'-weasy-link:"{href}"')
-
         if id_ := element.get('id'):
             yield parse_declaration(f'-weasy-anchor:"{id_}"')
 
         if element.tag == 'a':
+            href = html.get_url_attribute(
+                element, 'href', base_url, allow_relative=True)
+            if href:
+                yield parse_declaration(f'-weasy-link:"{href}"')
             if name := element.get('name'):
                 yield parse_declaration(f'-weasy-anchor:"{name}"')
 

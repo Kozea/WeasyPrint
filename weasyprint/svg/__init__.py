@@ -7,7 +7,6 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
-from ..urls import get_url_attribute
 from .css import parse_declarations, parse_stylesheets
 from .defs import apply_filters, draw_gradient, draw_pattern, paint_mask, use
 from .images import image, svg
@@ -202,6 +201,8 @@ class Node:
 
     def get_href(self, base_url):
         """Get the href attribute, with or without a namespace."""
+        from ..html import get_url_attribute
+
         for attr_name in ('{http://www.w3.org/1999/xlink}href', 'href'):
             if url := get_url_attribute(self, attr_name, base_url, allow_relative=True):
                 return url

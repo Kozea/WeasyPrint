@@ -18,7 +18,7 @@ from .css.counters import CounterStyle
 from .formatting_structure import boxes
 from .images import SVGImage
 from .logger import LOGGER
-from .urls import get_url_attribute
+from .urls import url_join
 
 UA_COUNTER_STYLE = CounterStyle()
 UA = (files(css) / 'html5_ua.css').read_text('utf-8')
@@ -28,11 +28,34 @@ UA_STYLESHEET = CSS(string=UA, counter_style=UA_COUNTER_STYLE)
 UA_FORM_STYLESHEET = CSS(string=UA_FORM, counter_style=UA_COUNTER_STYLE)
 PH_STYLESHEET = CSS(string=PH)
 
-# https://html.spec.whatwg.org/multipage/#space-character
+# https://infra.spec.whatwg.org/#ascii-whitespace
 WHITESPACE = ' \t\n\f\r'
+TAB_OR_NEWLINE = '\t\n\r'
 SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{WHITESPACE}]+')
 INTEGER_RE = re.compile(f'^[{WHITESPACE}]*([+-]?)([0-9]+)')
 DIMENSION_RE = re.compile(f'^[{WHITESPACE}]*([0-9]+([.][0-9]*)?)(%)?')
+
+
+def get_url_attribute(element, attr_name, base_url, allow_relative=False):
+    """Get the URI corresponding to the ``attr_name`` attribute.
+
+    Return ``None`` if:
+
+    * the attribute is empty or missing or,
+    * the value is a relative URI but the document has no base URI and
+      ``allow_relative`` is ``False``.
+
+    Otherwise return an URI, absolute if possible.
+
+    """
+    value = element.get(attr_name, '')
+    value = value.strip(WHITESPACE)
+    for character in TAB_OR_NEWLINE:
+        value = value.replace(character, '')
+
+    if value:
+        context = f'<{element.tag} {attr_name}="{value}">'
+        return url_join(base_url or '', value, allow_relative, context)
 
 
 def parse_integer(string):
