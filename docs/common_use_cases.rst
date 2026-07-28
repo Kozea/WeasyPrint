@@ -2,6 +2,49 @@ Common Use Cases
 ================
 
 
+Regenerate PDFs Automatically
+-----------------------------
+
+During development, you can automatically regenerate a PDF whenever an HTML or
+CSS file changes. On Linux, install ``inotify-tools`` and save the following
+script as ``watch.sh``:
+
+.. code-block:: sh
+
+  #!/bin/sh
+
+  input=${1:-document.html}
+  output=${2:-${input%.*}.pdf}
+
+  render() {
+      if ! weasyprint "$input" "$output"; then
+          printf 'PDF generation failed\n' >&2
+      fi
+  }
+
+  render
+  while inotifywait \
+      --quiet \
+      --recursive \
+      --event close_write,create,delete,move \
+      --include '\.(html|css)$' \
+      .; do
+      render
+  done
+
+Make the script executable and give it the paths of the input and output
+files:
+
+.. code-block:: sh
+
+  $ chmod +x watch.sh
+  $ ./watch.sh document.html document.pdf
+
+The script watches the current directory and its subdirectories. Change the
+final ``.`` passed to ``inotifywait`` if the files to watch are stored
+elsewhere.
+
+
 Include in Web Applications
 ---------------------------
 
