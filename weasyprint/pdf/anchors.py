@@ -10,7 +10,7 @@ from urllib.parse import unquote, urlsplit
 import pydyf
 
 from .. import Attachment
-from ..html import get_url_attribute
+from ..html import parse_url
 from ..logger import LOGGER
 from ..text.ffi import ffi, gobject, pango
 from ..text.fonts import get_font_description
@@ -269,7 +269,8 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             pdf.add_object(field)
 
         elif input_type == 'submit' or element.tag == 'button':
-            if action_url := get_url_attribute(form.element, 'action', None):
+            action = form.element.get('action')
+            if action_url := parse_url(action, base_url=None, allow_relative=True):
                 flags = 1 << (3 - 1)  # HTML form format
                 if form.element.get('method', '').lower() != 'post':
                     flags += 1 << (4 - 1)  # GET method

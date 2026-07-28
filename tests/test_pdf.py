@@ -314,7 +314,7 @@ def test_links():
         p { display: block; height: 90pt; margin: 0 0 10pt 0 }
         img { width: 30pt; vertical-align: top }
       </style>
-      <p><a href="https://weasyprint.org"><img src=pattern.png></a></p>
+      <p><a href=" https://weasy\nprint.org\t"><img src=pattern.png></a></p>
       <p style="padding: 0 10pt"><a
          href="#lipsum"><img style="border: solid 1pt"
                              src=pattern.png></a></p>

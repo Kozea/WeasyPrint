@@ -36,8 +36,8 @@ INTEGER_RE = re.compile(f'^[{WHITESPACE}]*([+-]?)([0-9]+)')
 DIMENSION_RE = re.compile(f'^[{WHITESPACE}]*([0-9]+([.][0-9]*)?)(%)?')
 
 
-def get_url_attribute(element, attr_name, base_url, allow_relative=False):
-    """Get the URI corresponding to the ``attr_name`` attribute.
+def parse_url(string, base_url, allow_relative=False):
+    """Parse a valid URL potentially surrounded by spaces.
 
     Return ``None`` if:
 
@@ -48,14 +48,15 @@ def get_url_attribute(element, attr_name, base_url, allow_relative=False):
     Otherwise return an URI, absolute if possible.
 
     """
-    value = element.get(attr_name, '')
-    value = value.strip(WHITESPACE)
-    for character in TAB_OR_NEWLINE:
-        value = value.replace(character, '')
+    if not string:
+        return
 
-    if value:
-        context = f'<{element.tag} {attr_name}="{value}">'
-        return url_join(base_url or '', value, allow_relative, context)
+    string = string.strip(WHITESPACE)
+    for character in TAB_OR_NEWLINE:
+        string = string.replace(character, '')
+
+    if string:
+        return url_join(base_url or '', string, allow_relative, string)
 
 
 def parse_integer(string):
@@ -109,31 +110,6 @@ def parse_legacy_color(string):
     green = round(max(0, min(1, color.green)) * 255)
     blue = round(max(0, min(1, color.blue)) * 255)
     return f'#{red:02x}{green:02x}{blue:02x}'
-
-
-def parse_string(string):
-    """Parse a URL from an HTML attribute value.
-
-    Return a CSS-escaped string, including quotes.
-
-    """
-    string = (
-        string
-        .replace('\\', '\\\\')
-        .replace('"', '\\"')
-        .replace('\n', '\\A')
-        .replace('\r', '\\D')
-        .replace('\f', '\\C'))
-    return f'"{string}"'
-
-
-def parse_url(string):
-    """Parse a URL from an HTML attribute value.
-
-    Return a url() string.
-
-    """
-    return f'url({parse_string(string)})'
 
 
 def map_to_pixel_length(string):
@@ -242,7 +218,7 @@ def make_replaced_box(element, box, image):
 def handle_img(element, box, get_image_from_uri, base_url):
     """Handle ``<img>`` elements, return either an image or the alt-text."""
     # See: https://www.w3.org/TR/html5/embedded-content-1.html#the-img-element.
-    if src := get_url_attribute(element, 'src', base_url):
+    if src := parse_url(element.get('src'), base_url):
         orientation = box.style['image_orientation']
         if image := get_image_from_uri(url=src, orientation=orientation):
             return [make_replaced_box(element, box, image)]
@@ -258,7 +234,7 @@ def handle_img(element, box, get_image_from_uri, base_url):
 def handle_embed(element, box, get_image_from_uri, base_url):
     """Handle ``<embed>`` elements, return either an image or nothing."""
     # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element.
-    if src := get_url_attribute(element, 'src', base_url):
+    if src := parse_url(element.get('src'), base_url):
         mime_type = element.get('type', '').strip()
         orientation = box.style['image_orientation']
         image = get_image_from_uri(
@@ -273,7 +249,7 @@ def handle_embed(element, box, get_image_from_uri, base_url):
 def handle_object(element, box, get_image_from_uri, base_url):
     """Handle ``<object>`` elements, return either an image or the fallback."""
     # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element.
-    if data := get_url_attribute(element, 'data', base_url):
+    if data := parse_url(element.get('data'), base_url):
         mime_type = element.get('type', '').strip()
         orientation = box.style['image_orientation']
         image = get_image_from_uri(
@@ -372,7 +348,7 @@ def get_html_metadata(html):
                 custom[name] = content
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
-            url = get_url_attribute(element, 'href', html.base_url)
+            url = parse_url(element.get('href'), html.base_url)
             attachment_title = element.get('title', None)
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')
