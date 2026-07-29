@@ -133,7 +133,7 @@ def url_join(base_url, url, allow_relative, context):
     elif allow_relative:
         return iri_to_uri(url)
     else:
-        LOGGER.error(f'Relative URI reference without a base URI: {context}')
+        LOGGER.error('Relative URI reference without a base URI: %s', context)
         return None
 
 
@@ -221,8 +221,8 @@ def select_source(guess=None, filename=None, url=None, file_obj=None, string=Non
         with fetch(url_fetcher, url) as response:
             if check_css_mime_type and response.content_type != 'text/css':
                 LOGGER.error(
-                    f'Unsupported stylesheet type {response.content_type} '
-                    f'for {response.url}')
+                    'Unsupported stylesheet type %s for %s',
+                    response.content_type, response.url)
                 yield StringIO(''), base_url, None, None
             else:
                 if base_url is None:

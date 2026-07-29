@@ -1681,8 +1681,7 @@ def test_table_column_width_1():
     with capture_logs() as logs:
         page, = render_pages(source)
     assert len(logs) == 1
-    assert logs[0].startswith('WARNING: This table row has more columns than '
-                              'the table, ignored 1 cell')
+    assert logs[0].startswith('WARNING: This row has more columns')
     html, = page.children
     body, = html.children
     wrapper, = body.children
@@ -1692,7 +1691,7 @@ def test_table_column_width_1():
     cells = [first_row.children, second_row.children, third_row.children]
     assert len(first_row.children) == 2
     assert len(second_row.children) == 4
-    # Third cell here is completly removed.
+    # Third cell here is completely removed.
     assert len(third_row.children) == 2
 
     assert body.position_x == 0

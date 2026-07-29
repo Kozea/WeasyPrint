@@ -489,7 +489,7 @@ def _content_list(style, values):
                 'attr()', 'target-counter()', 'target-counters()', 'target-text()'):
             computed_values.append(value)
         else:
-            LOGGER.warning(f'Unable to compute content: {value}')
+            LOGGER.warning('Unable to compute content: %s', value)
     return tuple(computed_values)
 
 

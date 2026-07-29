@@ -119,14 +119,14 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 # if that would bring the cell beyond the grid width.
                 cell.colspan = len(spanned_widths)
                 if cell.colspan == 0:
-                    # The cell is entierly beyond the grid width, remove it
-                    # entierly. Subsequent cells in the same row have greater
+                    # The cell is entirely beyond the grid width, remove it
+                    # entirely. Subsequent cells in the same row have greater
                     # grid_x, so they are beyond too.
                     cell_index = row.children.index(cell)
                     ignored_cells = row.children[cell_index:]
                     LOGGER.warning(
-                        'This table row has more columns than the table, '
-                        f'ignored {len(ignored_cells)} cells: {ignored_cells}')
+                        'This row has more columns than the table, ignored %d cells',
+                        len(ignored_cells))
                     break
                 resolve_percentages(cell, containing_block=table)
                 if table.style['direction'] == 'ltr':

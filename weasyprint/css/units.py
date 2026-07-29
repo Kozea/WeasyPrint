@@ -95,7 +95,7 @@ def to_pixels(value, style, property_name, font_size=None):
     elif unit in VIEWPORT_UNITS:
         page_size = style.initial_page_sizes['box' if unit[0] == 'p' else 'area']
         if page_size is None:
-            LOGGER.warn(f'{unit} unit resolved before first page layout')
+            LOGGER.warning('%s unit resolved before first page layout', unit)
             from .computed_values import INITIAL_PAGE_SIZE
             page_width = to_pixels(INITIAL_PAGE_SIZE[0], None, None)
             page_height = to_pixels(INITIAL_PAGE_SIZE[1], None, None)

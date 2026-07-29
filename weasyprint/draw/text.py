@@ -190,7 +190,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 codepoint = glyph_id - pango.PANGO_GLYPH_UNKNOWN_FLAG
                 LOGGER.warning(
                     '.notdef glyph rendered for Unicode string unsupported by fonts: '
-                    f'"{chr(codepoint)}" (U+{codepoint:04X})')
+                    '"%s" (U+%04X)', chr(codepoint), codepoint)
                 glyph_id = font.get_unused_glyph_id(codepoint)
                 font.widths[glyph_id] = round(width * 1000 * FROM_UNITS / font_size)
                 if 0 not in font.widths:

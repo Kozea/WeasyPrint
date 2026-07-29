@@ -429,8 +429,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 add_text(parent_box.element.get(attr_name, ''))
             else:
                 LOGGER.warning(
-                    'Only strings are allowed for content attr() functions,'
-                    f' not {attr_type}')
+                    'Only strings are allowed for content attr() functions, not %s',
+                    attr_type)
         elif type_ == 'content()':
             added_text = extract_text(value, parent_box)
             add_text(added_text)

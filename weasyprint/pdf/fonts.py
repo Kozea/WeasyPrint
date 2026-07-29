@@ -118,8 +118,8 @@ class Font:
             next_unused_glyph_id = self.glyph_count + len(self.missing)
             if next_unused_glyph_id > 2 ** 16 - 1:
                 LOGGER.warning(
-                    f'Too many glyphs missing from "{self.family}", '
-                    'expect text selection problems')
+                    'Too many glyphs missing from "%s", '
+                    'expect text selection problems', self.family)
                 next_unused_glyph_id = 2 ** 16 - 1
             self.missing[codepoint] = next_unused_glyph_id
         return self.missing[codepoint]
@@ -154,7 +154,7 @@ class Font:
                 ttfont = instantiateVariableFont(ttfont, self.variations, static=True)
                 ttfont.save(partial_font)
             except Exception as exception:
-                LOGGER.warning(f'Unable to instantiate "{self.family}" variable font')
+                LOGGER.warning('Unable to instantiate "%s" variable font', self.family)
                 LOGGER.debug('Original exception:', exc_info=exception)
             else:
                 self.file_content = partial_font.getvalue()
@@ -182,7 +182,7 @@ class Font:
                 ttfont.save(output_font)
                 self.file_content = output_font.getvalue()
             except TTLibError as exception:
-                LOGGER.warning(f'Unable to save emoji font "{self.family}"')
+                LOGGER.warning('Unable to save emoji font "%s"', self.family)
                 LOGGER.debug('Original exception:', exc_info=exception)
 
     @property
@@ -262,7 +262,7 @@ class Font:
                 self.file_content = file_content
                 return
 
-        LOGGER.warning(f'Unable to subset "{self.family}" with HarfBuzz')
+        LOGGER.warning('Unable to subset "%s" with HarfBuzz', self.family)
 
     def _fonttools_subset(self, to_unicode, hinting):
         """Subset font using Fonttools."""
@@ -281,7 +281,7 @@ class Font:
             ttfont = TTFont(full_font, fontNumber=self.index)
             subsetter.subset(ttfont)
         except TTLibError as exception:
-            LOGGER.warning(f'Unable to subset "{self.family}" with fontTools')
+            LOGGER.warning('Unable to subset "%s" with fontTools', self.family)
             LOGGER.debug('Original exception:', exc_info=exception)
         else:
             optimized_font = io.BytesIO()
@@ -432,7 +432,8 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                     break
             else:
                 LOGGER.warning(
-                    f'Unknown bitmap metrics in "{font.family}" for glyph: {glyph_id}')
+                    'Unknown bitmap metrics in "%s" for glyph: %s',
+                    font.family, glyph_id)
                 continue
         else:
             data_start = 5 if glyph_format in (1, 2, 8) else 8
@@ -480,7 +481,8 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 subglyphs.append({'id': subglyph_id, 'x': x, 'y': y})
         else:  # pragma: no cover
             LOGGER.warning(
-                f'Unsupported bitmap glyph format in "{font.family}": {glyph_format}')
+                'Unsupported bitmap glyph format in "%s": %s',
+                font.family, glyph_format)
             glyph_info['bitmap'] = bytes(height * stride)
 
     for glyph_id, glyph_info in glyphs_info.items():
@@ -502,14 +504,14 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 sub_y = subglyph['y']
                 sub_id = subglyph['id']
                 if sub_id not in glyphs_info:
-                    LOGGER.warning(f'Unknown subglyph in "{font.family}": {sub_id}')
+                    LOGGER.warning('Unknown subglyph in "%s": %s', font.family, sub_id)
                     continue
                 subglyph = glyphs_info[sub_id]
                 if subglyph['bitmap'] is None:
                     # TODO: Support subglyph in subglyph.
                     LOGGER.warning(
-                        'Unsupported subglyph in subglyph in '
-                        f'"{font.family}": {sub_id}')
+                        'Unsupported subglyph in subglyph in "%s": %s',
+                        font.family, sub_id)
                     continue
                 for row_y in range(subglyph['height']):
                     row_slice = slice(

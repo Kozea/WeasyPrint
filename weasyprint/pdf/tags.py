@@ -207,7 +207,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             element['Alt'] = pydyf.String(alt)
         else:
             source = box.element.attrib.get('src', 'unknown')
-            LOGGER.error(f'Image "{source}" has no required alt description')
+            LOGGER.error('Image "%s" has no required alt description', source)
     elif tag == 'Table':
         # Use wrapped table as tagged box, and put captions in it.
         if box.is_table_wrapper:
