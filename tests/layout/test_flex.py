@@ -1773,7 +1773,7 @@ def test_flex_grow_in_flex_column():
     html, = page.children
     body, = html.children
     main, = body.children
-    _, div, _ = main.children
+    div, = main.children
     assert body.height == div.height == 5
     assert body.width == div.width == 10
     assert body.margin_width() == 14
@@ -2060,3 +2060,63 @@ def test_flex_break_float():
             <p>b
             <p>c
     ''')
+
+
+@assert_no_logs
+def test_flex_inline_table():
+    # Regression test for #2855.
+    render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px/1 weasyprint; display: flex }
+        div { display: inline-table }
+      </style>
+      <div><span>a</span></div>
+    ''')
+
+
+@assert_no_logs
+def test_flex_inline_flex():
+    # Regression test for #2855.
+    page, = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex }
+        div { display: inline-flex; padding: 1px; border: 1px solid }
+      </style>
+      <article><div><span>a</span></div></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.position_x == 0
+    assert div.position_y == 0
+    assert div.width == 2
+    span, = div.children
+    assert span.position_x == 2
+    assert span.position_y == 2
+
+
+def test_flex_inline_grid():
+    # Regression test for #2855.
+    page, = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex }
+        div { display: inline-grid; padding: 1px; border: 1px solid }
+      </style>
+      <article><div><span>a</span></div></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.position_x == 0
+    assert div.position_y == 0
+    assert div.width == 2
+    span, = div.children
+    assert span.position_x == 2
+    assert span.position_y == 2

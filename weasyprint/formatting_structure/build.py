@@ -991,12 +991,20 @@ def blockify(box, layout):
     # See https://drafts.csswg.org/css-display-4/#blockify.
     if isinstance(box, boxes.InlineBlockBox):
         anonymous = boxes.BlockBox.anonymous_from(box, box.children)
+        if box.is_table_wrapper:
+            anonymous.is_table_wrapper = True
     elif isinstance(box, boxes.InlineReplacedBox):
         replacement = box.replacement
         anonymous = boxes.BlockReplacedBox.anonymous_from(box, replacement)
-    elif isinstance(box, boxes.InlineLevelBox):
+    elif isinstance(box, boxes.TextBox):
         anonymous = boxes.BlockBox.anonymous_from(box, [box])
         setattr(box, f'is_{layout}_item', False)
+    elif isinstance(box, boxes.InlineFlexBox):
+        anonymous = boxes.FlexBox.anonymous_from(box, box.children)
+    elif isinstance(box, boxes.InlineGridBox):
+        anonymous = boxes.GridBox.anonymous_from(box, box.children)
+    elif isinstance(box, boxes.InlineLevelBox):
+        anonymous = boxes.BlockBox.anonymous_from(box, box.children)
     else:
         return box
     anonymous.style = box.style
