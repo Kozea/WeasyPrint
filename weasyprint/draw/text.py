@@ -175,10 +175,26 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             string = ''
             stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
+        # The codepoints of each cluster, found before drawing: the first shown
+        # glyph of a cluster carries them all in ToUnicode, the other glyphs of
+        # the cluster carry none — glyphs shared between clusters, like the
+        # dots of Arabic letters, must not carry any one letter’s codepoints.
+        cluster_texts = {}
+        start = 0
+        for i in range(1, number_of_glyphs + 1):
+            if i == number_of_glyphs or clusters[i] != clusters[start]:
+                utf8_slice = slice(*sorted(
+                    (utf8_positions[start], utf8_positions[i])))
+                cluster_texts[start] = (
+                    utf8_text[utf8_slice].decode(), i - start > 1)
+                start = i
+        text, in_cluster = '', False
         for i in range(number_of_glyphs):
             glyph_info = glyphs_info[i]
             glyph_id = glyph_info.glyph
             width = glyph_info.geometry.width
+            if i in cluster_texts:
+                text, in_cluster = cluster_texts[i]
 
             # Display zero-width empty glyph.
             if glyph_id == pango.PANGO_GLYPH_EMPTY:
@@ -199,10 +215,12 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     # want to keep Pango’s layout for next glyphs.
                     font.widths[0] = font.widths[glyph_id]
 
-            # Create mapping between glyphs and Unicode codepoints.
-            if glyph_id not in font.to_unicode:
-                utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
-                font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
+            # Give the glyph its ToUnicode identity, possibly through a
+            # substitute glyph id when this glyph already carries other
+            # codepoints (see Font.resolve_glyph).
+            outline_glyph_id = glyph_id
+            glyph_id = font.resolve_glyph(glyph_id, text, in_cluster)
+            text = ''
 
             # Set horizontal and vertical offsets.
             offset = glyph_info.geometry.x_offset / font_size
@@ -232,7 +250,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 logical_width = font.widths[glyph_id]
             else:
                 pango.pango_font_get_glyph_extents(
-                    pango_font, glyph_id, stream.ink_rect, stream.logical_rect)
+                    pango_font, outline_glyph_id, stream.ink_rect,
+                    stream.logical_rect)
                 logical_width = font.widths[glyph_id] = round(
                     stream.logical_rect.width * 1000 * FROM_UNITS / font_size)
 
