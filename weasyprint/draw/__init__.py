@@ -1,11 +1,12 @@
 """Take an "after layout" box tree and draw it onto a pydyf stream."""
 
 import operator
-from math import floor
+from math import floor, pi
 from xml.etree import ElementTree
 
+from ..css.properties import Dimension
 from ..formatting_structure import boxes
-from ..images import SVGImage
+from ..images import LinearGradient, RadialGradient, SVGImage
 from ..layout import replaced
 from ..layout.background import BackgroundLayer
 from ..matrix import Matrix
@@ -136,28 +137,144 @@ def draw_stacking_context(stream, stacking_context):
                 stream.draw_x_object(group_id)
 
 
-def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
+def _spread_box(box, spread, tx, ty):
+    if not any((spread, tx, ty)):
+        return box
+
+    # Update coordinates.
+    x = box[0] + tx - spread
+    y = box[1] + ty - spread
+    width = max(0, box[2] + 2 * spread)
+    height = max(0, box[3] + 2 * spread)
+
+    # Update radii.
+    radii = [
+        [r[0] + spread, r[1] + spread] if r[0] >= -spread and r[1] >= -spread and all(r)
+        else [0, 0] for r in box[4:]]
+
+    return x, y, width, height, *radii
+
+
+def _draw_box_shadow(stream, box, style, tx, ty, blur, spread, color, inset):
+    stream.set_color(color)
+
+    # Original rounded box values.
+    shadow_box = _spread_box(box, spread, tx, ty)
+    inner_box = _spread_box(box, spread - blur, tx, ty)
+    outer_box = _spread_box(box, spread + blur, tx, ty)
+
+    # Mask original box.
+    if not inset:
+        rounded_box(stream, outer_box)
+    rounded_box(stream, box)
+    stream.clip(even_odd=True)
+    stream.end()
+
+    # No blur: we render the rounded box with spread applied.
+    if not blur:
+        if inset:
+            rounded_box(stream, box)
+        rounded_box(stream, shadow_box)
+        stream.fill(even_odd=True)
+        return
+
+    # Fill the outer rectangle if inset, the plain rectangle if outset.
+    if inset:
+        rounded_box(stream, box)
+        rounded_box(stream, outer_box)
+        stream.fill(even_odd=True)
+    else:
+        rounded_box(stream, inner_box)
+        stream.fill()
+
+    # Variables for blur: linear gradient sides and corners.
+    transparent = color.to(color.space)
+    transparent.alpha = 0
+    repeat = False
+    shape = 'ellipse'
+    x, y, w, h = inner_box[:4]
+    (tlcx, tlcy), (trcx, trcy), (brcx, brcy), (blcx, blcy) = inner_box[4:]
+    sides = (
+        (0, x + tlcx, y - 2 * blur, w - tlcx - trcx, 2 * blur),
+        (pi / 2, x + w, y + trcy, 2 * blur, h - trcy - brcy),
+        (pi, x + blcx, y + h, w - blcx - brcx, 2 * blur),
+        (3 * pi / 2, x - 2 * blur, y + tlcy, 2 * blur, h - tlcy - blcy))
+    corners = (
+        (100, 100, x - 2 * blur, y - 2 * blur, tlcx, tlcy),
+        (0, 100, x + w - trcx, y - 2 * blur, trcx, trcy),
+        (0, 0, x + w - brcx, y + h - brcy, brcx, brcy),
+        (100, 0, x - 2 * blur, y + h - blcy, blcx, blcy))
+    in_color, out_color = (transparent, color) if inset else (color, transparent)
+
+    # Draw sides.
+    stops = [(in_color, None), (out_color, None)]
+    hints = [Dimension(blur * 1.25, 'px')]
+    for angle, e, f, width, height in sides:
+        gradient = LinearGradient(stops, ('angle', angle), repeat, hints)
+        with stream.stacked():
+            stream.transform(e=e, f=f)
+            gradient.draw(stream, width, height, style)
+
+    # Draw corners.
+    with stream.stacked():
+        rounded_box(stream, inner_box)
+        rounded_box(stream, outer_box)
+        stream.clip(even_odd=True)
+        stream.end()
+        for left, top, e, f, cx, cy in corners:
+            width, height = 2 * blur + cx, 2 * blur + cy
+            size = ('explicit', (Dimension(width, 'px'), Dimension(height, 'px')))
+            stops = [(in_color, Dimension(cx, 'px')), (out_color, None)]
+            hints = [Dimension(cx + blur * 1.25, 'px')]
+            center = ('left', Dimension(left, '%'), 'top', Dimension(top, '%'))
+            gradient = RadialGradient(stops, shape, size, center, repeat, hints)
+            with stream.stacked():
+                stream.transform(e=e, f=f)
+                gradient.draw(stream, width, height, style)
+
+
+def draw_box_shadows(stream, boxes, style, inset):
+    """Draw box shadows."""
+    for x, y, blur, spread, color, shadow_inset in reversed(style['box_shadow']):
+        # Only draw inset or outset shadows.
+        if inset != shadow_inset:
+            continue
+
+        tx, ty, blur = x.value, y.value, blur.value
+        spread = -spread.value if inset else spread.value
+        color = style['color'] if color == 'currentcolor' else color
+
+        for box in boxes:
+            with stream.stacked():
+                _draw_box_shadow(stream, box, style, tx, ty, blur, spread, color, inset)
+
+
+def draw_background(stream, background, clip_box=True, bleed=None, marks=()):
     """Draw the background color and image to a ``pdf.stream.Stream``.
 
     If ``clip_box`` is set to ``False``, the background is not clipped to the
     border box of the background, but only to the painting area.
 
     """
-    if bg is None:
+    if background is None or not background.layers:
         return
+
+    clipped_boxes = background.layers[-1].clipped_boxes
+    painting_area = background.layers[-1].painting_area
+
+    draw_box_shadows(stream, clipped_boxes, background.style, inset=False)
 
     with stream.stacked():
         if clip_box:
-            for box in bg.layers[-1].clipped_boxes:
+            for box in clipped_boxes:
                 rounded_box(stream, box)
             stream.clip()
             stream.end()
 
         # Draw background color.
-        if bg.color.alpha > 0:
+        if background.color.alpha > 0:
             with stream.artifact(), stream.stacked():
-                stream.set_color(bg.color)
-                painting_area = bg.layers[-1].painting_area
+                stream.set_color(background.color)
                 stream.rectangle(*painting_area)
                 stream.clip()
                 stream.end()
@@ -166,7 +283,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
 
         # Draw crop marks and crosses.
         if bleed and marks:
-            x, y, width, height = bg.layers[-1].painting_area
+            x, y, width, height = painting_area
             half_bleed = {key: value * 0.5 for key, value in bleed.items()}
             svg = f'''
               <svg height="{height}" width="{width}"
@@ -229,10 +346,12 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             layer = BackgroundLayer(
                 image, size, position, repeat, unbounded, painting_area,
                 positioning_area, clipped_boxes)
-            bg.layers.insert(0, layer)
+            background.layers.insert(0, layer)
         # Paint in reversed order: first layer is "closest" to the viewer.
-        for layer in reversed(bg.layers):
-            draw_background_image(stream, layer, bg.style)
+        for layer in reversed(background.layers):
+            draw_background_image(stream, layer, background.style)
+
+    draw_box_shadows(stream, clipped_boxes, background.style, inset=True)
 
 
 def draw_background_image(stream, layer, style):

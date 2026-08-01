@@ -77,6 +77,7 @@ INITIAL_VALUES = {
         Dimension(0, None), Dimension(0, None),
         Dimension(0, None), Dimension(0, None)),
     'border_image_repeat': ('stretch', 'stretch'),
+    'box_shadow': (),
     'mask_border_source': ('none', None),
     'mask_border_slice': (
         Dimension(100, '%'), Dimension(100, '%'),
