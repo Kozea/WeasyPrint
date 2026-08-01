@@ -42,14 +42,17 @@ and one of the following "inside" behavior:
 * Inline content (InlineBox and :class:`TextBox`)
 * Replaced content (inherits from :class:`ReplacedBox`)
 
-… with various combinasions of both.
+… with various combinations of both.
 
 See respective docstrings for details.
 
 """
 
 import itertools
+import re
 import sys
+
+from .text import LINE_FEED_RE, SPACE_RE, TAB_RE, get_first_letter, transform
 
 
 class Box:
@@ -83,7 +86,7 @@ class Box:
     link_annotation = None
     force_fragmentation = False
 
-    # Default, overriden on some subclasses
+    # Default, overridden on some subclasses
     def all_children(self):
         return self.children
 
@@ -358,6 +361,48 @@ class Box:
             return False
         return self.element.tag == 'form'
 
+    # Text
+
+    @property
+    def content_text(self):
+        return ''
+
+    def process_whitespace(self, following_collapsible_space=False):
+        """First part of "The 'white-space' processing model".
+
+        See https://www.w3.org/TR/CSS21/text.html#white-space-model
+        https://drafts.csswg.org/css-text-3/#white-space-rules
+
+        """
+        for child in self.children:
+            child_collapsible_space = child.process_whitespace(
+                following_collapsible_space)
+            if isinstance(child, (TextBox, InlineBox)):
+                following_collapsible_space = child_collapsible_space
+            elif child.is_in_normal_flow():
+                following_collapsible_space = False
+        return following_collapsible_space
+
+    def process_text_transform(self):
+        if not self.is_running():
+            for child in self.children:
+                child.process_text_transform()
+
+    def is_whitespace(self):
+        """Return True if ``box`` is a TextBox with only whitespace."""
+        return False
+
+    def extract_text(self, text_part):
+        if text_part in ('text', 'content'):
+            return self.content_text
+        elif text_part in ('before', 'after'):
+            return ''.join(
+                child.content_text for child in self.descendants()
+                if child.element_tag.endswith(f'::{text_part}') and
+                not isinstance(child, ParentBox))
+        elif text_part == 'first-letter':
+            return get_first_letter(self.content_text)
+
 
 class ParentBox(Box):
     """A box that has children."""
@@ -437,6 +482,17 @@ class ParentBox(Box):
             self.establishes_formatting_context() or
             self.is_table_wrapper or
             self.is_for_root_element)
+
+    @property
+    def content_text(self):
+        box = self.deepcopy()
+        box.process_whitespace()
+        return ''.join(
+            child.text for child in box.descendants()
+            if not child.element_tag.endswith('::before') and
+            not child.element_tag.endswith('::after') and
+            not child.element_tag.endswith('::marker') and
+            isinstance(child, TextBox)).strip()
 
 
 class BlockLevelBox(Box):
@@ -549,6 +605,67 @@ class TextBox(InlineLevelBox):
         new_box = self.copy()
         new_box.text = text
         return new_box
+
+    def process_whitespace(self, following_collapsible_space=False):
+        """First part of "The 'white-space' processing model".
+
+        See https://www.w3.org/TR/CSS21/text.html#white-space-model
+        https://drafts.csswg.org/css-text-3/#white-space-rules
+
+        """
+        text = self.text
+        if not text:
+            return following_collapsible_space
+
+        # Normalize line feeds
+        text = LINE_FEED_RE.sub('\n', text)
+
+        new_line_collapse = self.style['white_space'] in ('normal', 'nowrap')
+        space_collapse = self.style['white_space'] in ('normal', 'nowrap', 'pre-line')
+
+        if space_collapse:
+            # \r characters were removed/converted earlier.
+            text = TAB_RE.sub('\n', text)
+
+        if new_line_collapse:
+            # TODO: this should be language-specific.
+            # Could also replace with a zero width space character (U+200B),
+            # or no character.
+            # CSS3: https://www.w3.org/TR/css-text-3/#overflow-wrap
+            text = text.replace('\n', ' ')
+
+        if space_collapse:
+            previous_text = text = SPACE_RE.sub(' ', text)
+            if following_collapsible_space and text.startswith(' '):
+                text = text[1:]
+                self.leading_collapsible_space = True
+            following_collapsible_space = previous_text.endswith(' ')
+        else:
+            following_collapsible_space = False
+
+        self.text = text
+        return following_collapsible_space
+
+    def is_whitespace(self):
+        """Return True if ``box`` is a TextBox with only whitespace."""
+        return not re.compile('\\S').search(self.text)
+
+    def process_text_transform(self):
+        text_transform = self.style['text_transform']
+        lang_code = (self.style['lang'] or '').split('-')[0].lower()
+        if text_transform != 'none':
+            self.text = transform(text_transform, self.text, lang_code)
+        if self.style['hyphens'] == 'none':
+            self.text = self.text.replace('\u00AD', '')  # U+00AD is soft hyphen
+
+    @property
+    def content_text(self):
+        # Stripping may not be the "right" way, but it seems to be what users usually
+        # want in this case. The specification asks for the "text content", probably as
+        # defined in DOM.
+        box = self.deepcopy()
+        box.process_whitespace()
+        return box.text.strip()
 
 
 class AtomicInlineLevelBox(InlineLevelBox):
