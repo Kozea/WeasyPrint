@@ -91,7 +91,7 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
     is_input = box.is_input()
 
     if box.is_form():
-        parent_form = box.element
+        parent_form = box
         if parent_form not in forms:
             forms[parent_form] = []
 
@@ -112,7 +112,7 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
                 link_type = 'attachment'
             links.append((link_type, target, rectangle, box))
         if is_input:
-            forms[parent_form].append((box.element, box.style, rectangle))
+            forms[parent_form].append((box, rectangle))
         if has_bookmark:
             if matrix:
                 pos_x, pos_y = matrix.transform_point(pos_x, pos_y)

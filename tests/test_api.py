@@ -781,6 +781,13 @@ def test_redirect_loop():
      '<option value="b" selected>B</option>'
      '<option value="c" selected>C</option>'
      '</select>', ['/Ch', '/Opt', '[(b) (c)]']),
+    ('<form><input name=name>', ['/TU (name)']),
+    ('<form><input name=name id=input>', ['/TU (name)']),
+    ('<form><input name=name placeholder=placeholder>', ['/TU (placeholder)']),
+    ('<form><input placeholder=placeholder title=title>', ['/TU (title)']),
+    ('<form><label for=input>\nLabel\n</label><input id=input>', ['/TU (Label)']),
+    ('<form><label>\nLabel\n<input name=name id=input>', ['/TU (Label)']),
+    ('<form><label><input name=name> Label </label>', ['/TU (Label)']),
 ])
 def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())

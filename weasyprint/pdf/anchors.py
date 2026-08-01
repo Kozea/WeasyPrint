@@ -94,6 +94,38 @@ def add_outlines(pdf, bookmarks, parent=None):
     return outlines, count
 
 
+def _get_human_name(form, element, input_name):
+    """Return human-readable alternate name for PDF form fields.
+
+    The chosen name is the first between:
+
+    - the label text
+    - the title attribute
+    - the placeholder attribute
+    - the name attribute
+
+    """
+    if form:
+        input_id = element.get('id')
+        for label in form.element.findall('.//label'):
+            for_match = input_id and input_id == label.get('for')
+            is_child = element in label.findall('.//input')
+            if for_match or is_child:
+                # Label is found, find its box to get its whitespace-processed text.
+                for box in form.descendants():
+                    if box.element == label:
+                        return box.content_text
+                # No label box found, use the element text as fallback.
+                text = label.text or ''
+                text += ''.join((child.tail or '') for child in label)
+                return text.strip()
+    if title := element.get('title'):
+        return title
+    elif placeholder := element.get('placeholder'):
+        return placeholder
+    return element.get('name', '')
+
+
 def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
     """Include form inputs in PDF."""
     if not forms or not any(forms.values()):
@@ -112,13 +144,14 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
         pango.pango_font_map_create_context(font_map),
         gobject.g_object_unref)
     inputs_with_forms = [
-        (form, element, style, rectangle)
+        (form, box, rectangle)
         for form, inputs in forms.items()
-        for element, style, rectangle in inputs
-    ]
+        for box, rectangle in inputs]
     radio_groups = collections.defaultdict(dict)
     forms = collections.defaultdict(dict)
-    for i, (form, element, style, rectangle) in enumerate(inputs_with_forms):
+    for i, (form, box, rectangle) in enumerate(inputs_with_forms):
+        element = box.element
+        style = box.style
         rectangle = (
             *matrix.transform_point(*rectangle[:2]),
             *matrix.transform_point(*rectangle[2:]))
@@ -127,6 +160,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
         input_value = element.attrib.get('value', 'Yes')
         default_name = f'unknown-{page_reference.decode()}-{i}'
         input_name = element.attrib.get('name', default_name)
+        input_human_name = _get_human_name(form, element, input_name)
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
         field_stream = stream.clone()
@@ -138,6 +172,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             'P': page.reference,
             'F': 1 << (3 - 1),  # Print flag
             'T': pydyf.String(input_name),
+            'TU': pydyf.String(input_human_name),
         })
         if input_type in ('radio', 'checkbox'):
             if input_type == 'radio':
@@ -146,6 +181,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
                         'FT': '/Btn',
                         'Ff': (1 << (15 - 1)) + (1 << (16 - 1)),  # NoToggle & Radio
                         'T': pydyf.String(input_name),
+                        'TU': pydyf.String(input_human_name),
                         'V': '/Off',
                         'Kids': pydyf.Array(),
                         'Opt': pydyf.Array(),
@@ -199,6 +235,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
                 group['Opt'].append(pydyf.String(input_value))
             else:
                 field['T'] = pydyf.String(input_name)
+                field['TU'] = pydyf.String(input_human_name)
                 field['V'] = field['AS']
 
         elif element.tag == 'select':
@@ -233,17 +270,17 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
 
         elif input_type == 'submit' or element.tag == 'button':
             flags = 1 << (3 - 1)  # HTML form format
-            if form.attrib.get('method', '').lower() != 'post':
+            if form.element.get('method', '').lower() != 'post':
                 flags += 1 << (4 - 1)  # GET method
             fields = pydyf.Array(field.reference for field in forms[form].values())
             field['FT'] = '/Btn'
             field['DA'] = pydyf.String(b' '.join(field_stream.stream))
-            field['V'] = pydyf.String(form.attrib.get('value', ''))
+            field['V'] = pydyf.String(form.element.get('value', ''))
             field['Ff'] = 1 << (17 - 1)  # Push-button
             field['A'] = pydyf.Dictionary({
                 'Type': '/Action',
                 'S': '/SubmitForm',
-                'F': pydyf.String(form.attrib.get('action')),
+                'F': pydyf.String(form.element.get('action')),
                 'Fields': fields,
                 'Flags': flags,
             })
