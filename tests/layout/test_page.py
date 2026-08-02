@@ -1793,3 +1793,32 @@ def test_running_float():
         Hello!
       </footer>
     ''')
+
+
+@assert_no_logs
+def test_running_absolute_overflow():
+    # Regression test for #2857.
+    paragraphs = '\n'.join(f'<p>Paragraph {i}.</p>' for i in range(30))
+    render_pages(f'''
+      <style>
+        header {{
+          position: running(header);
+        }}
+        div {{
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+        }}
+        @page {{
+          size: 100px;
+          margin: 60px 10px 10px;
+          @top-center {{
+            content: element(header);
+            width: 100%;
+          }}
+        }}
+      </style>
+      <header><div>{paragraphs}</div></header>
+      <p>Text</p>
+    ''')

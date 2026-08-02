@@ -289,8 +289,14 @@ class LayoutContext:
         self.finish_block_formatting_context(root_box)
 
     def add_broken_out_of_flow(self, new_box, box, containing_block, resume_at):
+        # Margin boxes are laid out outside of any block formatting context, so
+        # the stack of root boxes may be empty. ``None`` is already handled as
+        # "no formatting context" when the broken box is laid out again.
+        root_box = (
+            self._excluded_shapes_root_boxes[-1]
+            if self._excluded_shapes_root_boxes else None)
         self.broken_out_of_flow[new_box] = (
-            box, containing_block, self._excluded_shapes_root_boxes[-1], resume_at)
+            box, containing_block, root_box, resume_at)
 
     def get_string_set_for(self, page, name, keyword='first'):
         """Resolve value of string function."""
