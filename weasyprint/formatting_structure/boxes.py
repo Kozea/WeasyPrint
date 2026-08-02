@@ -85,6 +85,8 @@ class Box:
     missing_link = None
     link_annotation = None
     force_fragmentation = False
+    colspan = 1
+    rowspan = 1
 
     # Default, overridden on some subclasses
     def all_children(self):

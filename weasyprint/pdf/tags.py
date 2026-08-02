@@ -217,11 +217,13 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                 box = table.copy_with_children([])
                 for child in wrapper.children:
                     box.children.extend(child.children if child is table else [child])
-    elif tag == 'TH':
-        # Set identifier for table headers to reference them in cells.
-        element['ID'] = pydyf.String(id(box))
-    elif tag == 'TD':
-        # Store table cell element to map it to headers later.
+    elif tag in ('TH', 'TD'):
+        element['A'] = pydyf.Dictionary({'O': '/Table'})
+        if box.colspan != 1:
+            element['A']['ColSpan'] = box.colspan
+        if box.rowspan != 1:
+            element['A']['RowSpan'] = box.rowspan
+        # Store table cell element to map headers to cells later.
         # TODO: don’t use the box to store this.
         box.mark = element
 
@@ -237,50 +239,48 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
         links.append((element.reference, annotation))
         element['K'].append(object_reference.reference)
 
-    if isinstance(box, boxes.ParentBox):
-        # Build tree for box children.
-        for child in box.children:
-            children = child.children if isinstance(child, boxes.LineBox) else [child]
-            for child in children:
-                if isinstance(child, boxes.TextBox):
-                    # Add marked element from the stream.
-                    kid = tags.pop(child)
-                    assert kid['mcid'] not in nums
-                    if tag == 'Link':
-                        # Associate MCID directly with link reference.
-                        element['K'].append(kid['mcid'])
-                        nums[kid['mcid']] = element.reference
-                    else:
-                        kid_element = pydyf.Dictionary({
-                            'Type': '/StructElem',
-                            'S': f'/{kid["tag"]}',
-                            'K': pydyf.Array([kid['mcid']]),
-                            'Pg': pdf.page_references[page_number],
-                            'P': element.reference,
-                        })
-                        pdf.add_object(kid_element)
-                        element['K'].append(kid_element.reference)
-                        nums[kid['mcid']] = kid_element.reference
+    # Build tree for box children.
+    for child in box.children:
+        children = child.children if isinstance(child, boxes.LineBox) else [child]
+        for child in children:
+            if isinstance(child, boxes.TextBox):
+                # Add marked element from the stream.
+                kid = tags.pop(child)
+                assert kid['mcid'] not in nums
+                if tag == 'Link':
+                    # Associate MCID directly with link reference.
+                    element['K'].append(kid['mcid'])
+                    nums[kid['mcid']] = element.reference
                 else:
-                    # Recursively build tree for child.
-                    if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
-                        # In PDFs, nested lists are linked to the parent list, but in
-                        # HTML, nested lists are linked to a parent’s list item.
-                        child_parent = parent
-                    else:
-                        child_parent = element
-                    # Keep the current number of parent children, so that we can add the
-                    # new children before the possible grandchildren, for example for
-                    # lists.
-                    child_index = len(child_parent['K'])
-                    child_elements = _build_box_tree(
-                        child, child_parent, pdf, page_number, nums, links, tags)
-                    child_parent['K'][child_index:child_index] = [
-                        element.reference for element in child_elements]
+                    kid_element = pydyf.Dictionary({
+                        'Type': '/StructElem',
+                        'S': f'/{kid["tag"]}',
+                        'K': pydyf.Array([kid['mcid']]),
+                        'Pg': pdf.page_references[page_number],
+                        'P': element.reference,
+                    })
+                    pdf.add_object(kid_element)
+                    element['K'].append(kid_element.reference)
+                    nums[kid['mcid']] = kid_element.reference
+            else:
+                # Recursively build tree for child.
+                if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
+                    # In PDFs, nested lists are linked to the parent list, but in
+                    # HTML, nested lists are linked to a parent’s list item.
+                    child_parent = parent
+                else:
+                    child_parent = element
+                # Keep the current number of parent children, so that we can add the
+                # new children before the possible grandchildren, for example for
+                # lists.
+                child_index = len(child_parent['K'])
+                child_elements = _build_box_tree(
+                    child, child_parent, pdf, page_number, nums, links, tags)
+                child_parent['K'][child_index:child_index] = [
+                    element.reference for element in child_elements]
 
-    else:
+    if isinstance(box, boxes.ReplacedBox):
         # Add replaced box.
-        assert isinstance(box, boxes.ReplacedBox)
         kid = tags.pop(box)
         element['K'].append(kid['mcid'])
         assert kid['mcid'] not in nums
@@ -290,10 +290,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     if tag == 'Table':
         def _get_rows(table_box):
             for child in table_box.children:
-                if child.element_tag == 'tr':
-                    yield child
-                else:
-                    yield from _get_rows(child)
+                yield from [child] if child.element_tag == 'tr' else _get_rows(child)
 
         # Get headers and rows.
         column_headers = defaultdict(list)
@@ -301,27 +298,42 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
         rows = tuple(_get_rows(box))
 
         # Find column and row headers.
-        # TODO: handle rowspan and colspan values.
+        colspans = defaultdict(int)
         for i, row in enumerate(rows):
-            for j, cell in enumerate(row.children):
-                if cell.element is None:
-                    continue
-                if cell.element_tag == 'th':
-                    # TODO: handle rowgroup and colgroup values.
+            j = 0
+            for cell in row.children:
+                if cell.element is not None and cell.element_tag == 'th':
+                    key = pydyf.String(f'{element.number}-{i}-{j}')
+                    cell.mark['ID'] = key
                     if cell.element.attrib.get('scope') == 'row':
-                        row_headers[i].append(pydyf.String(id(cell)))
+                        row_headers[i].append(key)
                     else:
-                        column_headers[j].append(pydyf.String(id(cell)))
+                        column_headers[j].append(key)
+                for _ in range(cell.colspan):
+                    colspans[j] = cell.rowspan - 1
+                    j += 1
+                if colspans[j]:
+                    j += 1
+                    colspans[j] -= 1
 
         # Map headers to cells.
+        colspans = defaultdict(int)
         for i, row in enumerate(rows):
-            for j, cell in enumerate(row.children):
-                if cell.element is None:
-                    continue
-                if cell.element_tag == 'td':
-                    cell.mark['A'] = pydyf.Dictionary({
-                        'O': '/Table',
-                        'Headers': pydyf.Array(row_headers[i] + column_headers[j]),
-                    })
+            j = 0
+            for cell in row.children:
+                if cell.element is not None and cell.element_tag == 'td':
+                    headers = [
+                        header for span in range(cell.rowspan)
+                        for header in row_headers[i+span]]
+                    headers += [
+                        header for span in range(cell.colspan)
+                        for header in column_headers[j+span]]
+                    cell.mark['A']['Headers'] = pydyf.Array(headers)
+                for _ in range(cell.colspan):
+                    colspans[j] = cell.rowspan - 1
+                    j += 1
+                if colspans[j]:
+                    j += 1
+                    colspans[j] -= 1
 
     yield element

@@ -832,6 +832,73 @@ def test_pdf_tags_nested_lists_order():
         assert sorted(numbers) == numbers
 
 
+def test_pdf_tags_table_headers():
+    pdf = FakeHTML(string='''
+      <html lang="fr">
+        <table>
+          <thead>
+            <th></th><th>1</th><th>2</th><th>3</th>
+          </thead>
+          <tr>
+            <th scope="row">1</th><td>1-1</td><td>1-2</td>
+          </tr>
+          <tr>
+            <th scope="row">2</th><td>2-1</td><td rowspan="2">2/3-2</td><td>2-3</td>
+          </tr>
+          <tr>
+            <th scope="row">3</th><td>3-1</td><td>3-3</td>
+          </tr>
+          <tr>
+            <th scope="row">4</th><td colspan="3">4-1/2/3</td>
+          </tr>
+        </table>
+      </html>
+    ''').write_pdf(pdf_tags=True, uncompressed_pdf=True)
+    assert pdf.count(b'/RowSpan 2') == 1
+    assert pdf.count(b'/ColSpan 3') == 1
+    id = re.findall(b'(.+) 0 obj\n.*/S /Table', pdf)[0].decode()
+    assert f'[({id}-1-0) ({id}-0-1)]'.encode() in pdf
+    assert f'[({id}-2-0) ({id}-3-0) ({id}-0-2)]'.encode() in pdf
+    assert f'[({id}-4-0) ({id}-0-1) ({id}-0-2) ({id}-0-3)]'.encode() in pdf
+
+
+@pytest.mark.parametrize(('html', 'fields'), [
+    ('<input>', ['/Tx', '/V ()']),
+    ('<input value="">', ['/Tx', '/V ()']),
+    ('<input type="checkbox">', ['/Btn']),
+    ('<input type="radio">',
+     ['/Btn', '/V /Off', '/AS /Off', '/Ff 49152']),
+    ('<input checked type="radio" name="foo" value="value">',
+     ['/Btn', '/T (foo)', '/V /0', '/AS /0']),
+    ('<form><input type="radio" name="foo" value="v0"></form>'
+     '<form><input checked type="radio" name="foo" value="v1"></form>',
+     ['/Btn', '/AS /0', '/V /0', '/AS /Off', '/V /Off']),
+    ('<textarea></textarea>', ['/Tx', '/V ()']),
+    ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
+    ('<select>'
+     '<option value="a">A</option>'
+     '<option value="b" selected>B</option>'
+     '</select>', ['/Ch', '/Opt', '/V (b)']),
+    ('<select multiple>'
+     '<option value="a">A</option>'
+     '<option value="b" selected>B</option>'
+     '<option value="c" selected>C</option>'
+     '</select>', ['/Ch', '/Opt', '[(b) (c)]']),
+    ('<form><input name=name>', ['/TU (name)']),
+    ('<form><input name=name id=input>', ['/TU (name)']),
+    ('<form><input name=name placeholder=placeholder>', ['/TU (placeholder)']),
+    ('<form><input placeholder=placeholder title=title>', ['/TU (title)']),
+    ('<form><label for=input>\nLabel\n</label><input id=input>', ['/TU (Label)']),
+    ('<form><label>\nLabel\n<input name=name id=input>', ['/TU (Label)']),
+    ('<form><label><input name=name> Label </label>', ['/TU (Label)']),
+])
+def test_pdf_forms(html, fields):
+    pdf = FakeHTML(string=html).write_pdf(pdf_forms=True, uncompressed_pdf=True)
+    assert b'AcroForm' in pdf
+    for field in fields:
+        assert field.encode() in pdf
+
+
 @assert_no_logs
 def test_pdf_ua_2_namespace_type():
     # Regression test for #2786.
