@@ -205,7 +205,7 @@ class Stream(pydyf.Stream):
                 'Type': '/Group',
                 'S': '/Transparency',
                 'I': 'true',
-                'CS': f'/{self._default_color_space}',
+                'CS': self._default_color_space,
             }),
         })
         group = self.clone(resources=resources, extra=extra)
@@ -258,7 +258,8 @@ class Stream(pydyf.Stream):
                     color_space=None):
         shading = pydyf.Dictionary({
             'ShadingType': shading_type,
-            'ColorSpace': f'/{color_space or self._default_color_space}',
+            'ColorSpace': (
+                f'/{color_space}' if color_space else self._default_color_space),
             'Domain': pydyf.Array(domain),
             'Coords': pydyf.Array(coords),
             'Function': function,
@@ -326,12 +327,13 @@ class Stream(pydyf.Stream):
     @property
     def _default_color_space(self):
         if self._output_intent in self._color_profiles:
-            return self._output_intent
+            profile = self._color_profiles[self._output_intent]
         elif self._output_intent == 'device-cmyk':
-            return 'DeviceCMYK'
+            return '/DeviceCMYK'
         elif 'device-cmyk' in self._color_profiles:
-            return 'DeviceCMYK'
+            return '/DeviceCMYK'
         elif self._color_profiles:
-            return next(iter(self._color_profiles))
+            profile = next(iter(self._color_profiles.values()))
         else:
-            return 'DeviceRGB'
+            return '/DeviceRGB'
+        return pydyf.Array(('/ICCBased', profile.pdf_reference))
