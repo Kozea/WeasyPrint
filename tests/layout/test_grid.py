@@ -2080,3 +2080,22 @@ def test_grid_auto_fill_rows(height, y):
     body, = html.children
     article, = body.children
     assert tuple(div.position_y for div in article.children) == y
+
+
+@assert_no_logs
+def test_grid_display_none():
+    # Text around a display:none element is one contiguous run, so it forms a
+    # single anonymous grid item.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: grid; grid-template-columns: 40px }
+      </style>
+      <article>A<span style="display: none"></span>B</article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    assert item.children[0].children[0].text == 'AB'
