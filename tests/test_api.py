@@ -1585,3 +1585,12 @@ def test_unknown_document_write_pdf_option():
     assert len(logs) == 1
     assert logs[0].startswith('ERROR')
     assert 'bogus_option' in logs[0]
+
+
+@pytest.mark.parametrize('html', [
+    b'<input style="display: contents">',
+    b'<textarea style="display: contents">x</textarea>',
+    b'<select style="display: contents"><option>x</option></select>',
+])
+def test_pdf_forms_display_contents(html):
+    assert b'AcroForm' not in _run('--pdf-forms --uncompressed-pdf - -', html)

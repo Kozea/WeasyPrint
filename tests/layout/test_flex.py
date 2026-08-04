@@ -2123,6 +2123,36 @@ def test_flex_inline_grid():
 
 
 @assert_no_logs
+def test_flex_order_display_contents():
+    # Regression test for #2210.
+    # Element children of a display:contents wrapper become flex items,
+    # interleaved with a direct (non-wrapped) sibling and ordered by `order`.
+    page, = render_pages('''
+      <style>
+        @page { size: 50px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex }
+        span { width: 10px }
+      </style>
+      <article>
+        <div style="display: contents"><span style="order: 2">A</span
+          ><span style="order: 4">B</span></div><span style="order: 0">E</span
+          ><div style="display: contents"><span style="order: 1">C</span
+          ><span style="order: 3">D</span></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    items = article.children
+    position = {
+        item.children[0].children[0].text: item.position_x for item in items}
+    assert set(position) == {'A', 'B', 'C', 'D', 'E'}
+    assert (position['E'] < position['C'] < position['A']
+            < position['D'] < position['B'])
+
+
+@assert_no_logs
 def test_flex_display_none():
     # Text around a display:none element is one contiguous run, so it forms a
     # single anonymous flex item.
@@ -2139,3 +2169,79 @@ def test_flex_display_none():
     article, = body.children
     item, = article.children
     assert item.children[0].children[0].text == 'AB'
+
+
+@assert_no_logs
+def test_flex_display_contents_text():
+    # Bare text from adjacent display:contents elements is one contiguous run,
+    # so it forms a single anonymous flex item, each keeping its own style. A's
+    # red is inline (overriding the matching span rule) and B's blue comes from
+    # the selector, so both inline and selector styling survive unboxing.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex }
+        span { color: blue }
+      </style>
+      <article><span style="display: contents; color: red">A</span
+        ><span style="display: contents">B</span></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    line, = item.children
+    a, b = line.children
+    assert a.text == 'A'
+    assert a.style['color'] == (1, 0, 0, 1)
+    assert b.text == 'B'
+    assert b.style['color'] == (0, 0, 1, 1)
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('fragment', 'items'), [
+    # Whitespace inside a contiguous run is kept.
+    ('<span style="display: contents">A </span>'
+     '<span style="display: contents">B</span>', ['A B']),
+    # Whitespace-only boxes at a run's edges are trimmed.
+    ('<span style="display: contents"> </span>'
+     '<span style="display: contents">A</span>'
+     '<span style="display: contents">B</span>'
+     '<span style="display: contents"> </span>', ['AB']),
+    # A whitespace-only run between two items generates no item of its own.
+    ('<span>X</span><span style="display: contents"> </span>'
+     '<span>Y</span>', ['X', 'Y']),
+])
+def test_flex_display_contents_whitespace(fragment, items):
+    page, = render_pages(
+        '<style>@page{size:40px 10px}body{font:2px/1 weasyprint}'
+        'article{display:flex}</style>'
+        f'<article>{fragment}</article>')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    texts = [
+        ''.join(box.text for line in item.children for box in line.children)
+        for item in article.children]
+    assert texts == items
+
+
+@assert_no_logs
+def test_flex_display_contents_item_style():
+    # The anonymous item wrapping a run of unboxed text inherits from the flex
+    # container, not from the display:contents element the text came from.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex; text-align: right }
+      </style>
+      <article><span style="display: contents; text-align: left">A</span
+        ><span style="display: contents">B</span></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    assert item.style['text_align_all'] == 'right'

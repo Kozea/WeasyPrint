@@ -753,9 +753,9 @@ def display(tokens):
     if len(tokens) == 1:
         value = tokens[0].value
         if value in (
-                'none', 'table-caption', 'table-row-group', 'table-cell',
-                'table-header-group', 'table-footer-group', 'table-row',
-                'table-column-group', 'table-column'):
+                'none', 'contents', 'table-caption', 'table-row-group',
+                'table-cell', 'table-header-group', 'table-footer-group',
+                'table-row', 'table-column-group', 'table-column'):
             return (value,)
         elif value in ('inline-table', 'inline-flex', 'inline-grid'):
             return tuple(value.split('-'))

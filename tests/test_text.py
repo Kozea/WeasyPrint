@@ -1556,6 +1556,30 @@ def test_first_letter_nested():
 
 
 @assert_no_logs
+def test_first_letter_display_contents():
+    # ::first-letter styles a block container's own box. A display:contents
+    # element generates none, so its own ::first-letter has no effect, while an
+    # ancestor's still reaches the content (CSS Display 3, Pseudo-4).
+    page, = render_pages('''
+      <style>
+        p::first-letter { font-weight: 700 }
+        span::first-letter { font-style: italic }
+      </style>
+      <p><span style="display: contents">abc</span></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line, = p.children
+    first_letter, next_text = line.children
+    first_letter_text, = first_letter.children
+    # The paragraph's ::first-letter reaches the content...
+    assert first_letter_text.style['font_weight'] == 700
+    # ...but the display:contents span's own ::first-letter does not apply.
+    assert first_letter_text.style['font_style'] == 'normal'
+
+
+@assert_no_logs
 def test_first_line_line_height():
     page, = render_pages('''
       <style>
