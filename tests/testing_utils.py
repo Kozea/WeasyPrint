@@ -225,6 +225,10 @@ def _sanity_checks(box):
     - Line boxes and inline boxes can only contain inline-level boxes.
 
     """
+    # A display:contents element generates no box, so build.py must unbox it:
+    # no box may reach the tree still claiming that display.
+    assert box.style['display'] != ('contents',), box
+
     if not isinstance(box, boxes.ParentBox):
         return
 
