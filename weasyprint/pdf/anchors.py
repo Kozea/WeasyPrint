@@ -307,6 +307,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
                 field['MaxLen'] = max_length
             pdf.add_object(field)
 
+        box.widget_annotation = field
         page['Annots'].append(field.reference)
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
         if input_name not in forms:

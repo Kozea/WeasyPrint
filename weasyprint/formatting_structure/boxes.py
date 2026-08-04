@@ -84,6 +84,7 @@ class Box:
     cached_counter_values = None
     missing_link = None
     link_annotation = None
+    widget_annotation = None
     force_fragmentation = False
     colspan = 1
     rowspan = 1

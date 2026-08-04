@@ -42,7 +42,7 @@ def add_tags(pdf, document, pdf_version, page_streams):
 
     # Map content.
     content_mapping['Nums'] = pydyf.Array()
-    links = []
+    annotations = []
     for page_number, (page, stream) in enumerate(zip(document.pages, page_streams)):
         tags = stream._tags
         page_box = page._page_box
@@ -54,7 +54,8 @@ def add_tags(pdf, document, pdf_version, page_streams):
 
         # Map page box content.
         elements = _build_box_tree(
-            page_box, structure_document, pdf, page_number, page_nums, links, tags)
+            page_box, structure_document, pdf, page_number, page_nums, annotations,
+            tags)
         for element in elements:
             structure_document['K'].append(element.reference)
         assert not tags
@@ -63,10 +64,11 @@ def add_tags(pdf, document, pdf_version, page_streams):
         sorted_refs = [ref for _, ref in sorted(page_nums.items())]
         content_mapping['Nums'][-1].extend(sorted_refs)
 
-    # Add annotations for links.
-    for i, (link_reference, annotation) in enumerate(links, start=len(document.pages)):
+    # Add annotations for links and widgets.
+    start = len(document.pages)
+    for i, (reference, annotation) in enumerate(annotations, start=start):
         content_mapping['Nums'].append(i)
-        content_mapping['Nums'].append(link_reference)
+        content_mapping['Nums'].append(reference)
         annotation['StructParent'] = i
 
     # Add required metadata.
@@ -121,7 +123,7 @@ def _get_pdf_tag(tag):
         return 'NonStruct'
 
 
-def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
+def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
     """Recursively build tag tree for given box and yield children."""
 
     # Special case for absolute elements.
@@ -137,15 +139,17 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
         if isinstance(box, boxes.ParentBox) and not isinstance(box, boxes.LineBox):
             for child in box.children:
                 yield from _build_box_tree(
-                    child, parent, pdf, page_number, nums, links, tags)
+                    child, parent, pdf, page_number, nums, annotations, tags)
             return
     elif isinstance(box, boxes.MarginBox):
         # Build tree for margin boxes but don’t link it to main tree. It ensures that
         # marked content is mapped in document and removed from list. It could be
         # included in tree as Artifact, but that’s only allowed in PDF 2.0.
         for child in box.children:
-            tuple(_build_box_tree(child, parent, pdf, page_number, nums, links, tags))
+            tuple(_build_box_tree(
+                child, parent, pdf, page_number, nums, annotations, tags))
         return
+
 
     # Create box element.
     if tag == 'LI':
@@ -172,7 +176,8 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                 'P': parent.reference,
             })
             pdf.add_object(parent)
-            children = _build_box_tree(box, parent, pdf, page_number, nums, links, tags)
+            children = _build_box_tree(
+                box, parent, pdf, page_number, nums, annotations, tags)
             for child in children:
                 parent['K'].append(child.reference)
             yield parent
@@ -236,8 +241,28 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             'Pg': pdf.page_references[page_number],
         })
         pdf.add_object(object_reference)
-        links.append((element.reference, annotation))
+        annotations.append((element.reference, annotation))
         element['K'].append(object_reference.reference)
+
+    # Include widget annotations.
+    if box.widget_annotation:
+        annotation = box.widget_annotation
+        object_reference = pydyf.Dictionary({
+            'Type': '/OBJR',
+            'Obj': annotation.reference,
+            'Pg': pdf.page_references[page_number],
+        })
+        pdf.add_object(object_reference)
+        form_element = pydyf.Dictionary({
+            'Type': '/StructElem',
+            'S': '/Form',
+            'K': pydyf.Array([object_reference.reference]),
+            'Pg': pdf.page_references[page_number],
+            'P': element.reference,
+        })
+        pdf.add_object(form_element)
+        annotations.append((form_element.reference, annotation))
+        element['K'].append(form_element.reference)
 
     # Build tree for box children.
     for child in box.children:
@@ -275,7 +300,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                 # lists.
                 child_index = len(child_parent['K'])
                 child_elements = _build_box_tree(
-                    child, child_parent, pdf, page_number, nums, links, tags)
+                    child, child_parent, pdf, page_number, nums, annotations, tags)
                 child_parent['K'][child_index:child_index] = [
                     element.reference for element in child_elements]
 
