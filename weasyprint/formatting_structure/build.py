@@ -318,10 +318,10 @@ def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_s
 
     children = []
 
-    box = make_box(f'{element.tag}::marker', style, children, element)
-
     if style['display'] == ('none',):
         return
+
+    box = make_box(f'{element.tag}::marker', style, children, element)
 
     image_type, image = style['list_style_image']
 
