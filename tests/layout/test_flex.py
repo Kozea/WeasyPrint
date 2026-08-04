@@ -2120,3 +2120,22 @@ def test_flex_inline_grid():
     span, = div.children
     assert span.position_x == 2
     assert span.position_y == 2
+
+
+@assert_no_logs
+def test_flex_display_none():
+    # Text around a display:none element is one contiguous run, so it forms a
+    # single anonymous flex item.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: flex }
+      </style>
+      <article>A<span style="display: none"></span>B</article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    assert item.children[0].children[0].text == 'AB'
