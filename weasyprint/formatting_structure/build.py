@@ -322,10 +322,10 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     quote_depth, counter_values, _counter_scopes, _page_groups = state
 
-    box = make_box(f'{element.tag}::marker', style, children, element)
-
     if style['display'] == ('none',):
         return
+
+    box = make_box(f'{element.tag}::marker', style, children, element)
 
     image_type, image = style['list_style_image']
 
