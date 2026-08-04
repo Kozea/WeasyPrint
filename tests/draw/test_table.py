@@ -1649,3 +1649,50 @@ def test_tables_column_background(assert_pixels):
           <td>a a</td>
         </tr>
       </table>''')
+
+
+@assert_no_logs
+def test_tables_border_tfoot(assert_pixels):
+    # Regression test for #2873.
+    assert_pixels('''
+      KK__________
+      RR__________
+      RR__________
+      KK__________
+      RR__________
+      RR__________
+      KK__________
+      RR__________
+      RR__________
+      BB__________
+      BB__________
+      ____________
+
+      RR__________
+      RR__________
+      BB__________
+      BB__________
+      ____________
+      ____________
+      ____________
+      ____________
+      ____________
+      ____________
+      ____________
+      ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        body { font: 2px/1 weasyprint }
+        table { border-collapse: collapse; color: red }
+        td { border-top: 1px solid black }
+        tfoot { color: blue }
+      </style>
+      <table>
+        <tr> <td>A</td> </tr>
+        <tr> <td>B</td> </tr>
+        <tr> <td>C</td> </tr>
+        <tr> <td style="border: none">D</td> </tr>
+        <tfoot> <tr> <td style="border: none">E</td> </tr>
+      </table>
+    ''')
