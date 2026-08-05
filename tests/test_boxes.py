@@ -961,6 +961,24 @@ def test_margin_box_string_set_1():
     assert text_box.text == 'first assignment'
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_margin_box_string_set_display_contents():
+    # TODO: string-set on a display:contents element is dropped
+    # (set_content_lists is skipped on the unbox path), so string() is empty.
+    page, = render_pages('''
+      <style>
+        @page { @top-center { content: string(header) } }
+        div { string-set: header content() }
+      </style>
+      <div style="display: contents">Title</div>
+    ''')
+    html, top_center = page.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'Title'
+
+
 @assert_no_logs
 def test_margin_box_string_set_2():
     def simple_string_set_test(content_val, extra_style=''):
