@@ -799,6 +799,16 @@ def test_pdf_tags_inline_table():
 
 
 @assert_no_logs
+def test_pdf_tags_anonymous_table_cells():
+    # Regression test for #2726.
+    pdf = FakeHTML(string='''
+      <html lang="en"><table><tr><th>a<div>b</th><td>a<p>b</p>
+    ''').write_pdf(pdf_tags=True)
+    assert pdf.count(b'/TH') == 1
+    assert pdf.count(b'/TD') == 1
+
+
+@assert_no_logs
 def test_pdf_tags_split_table_with_caption():
     # Regression test for #2761.
     FakeHTML(string='''

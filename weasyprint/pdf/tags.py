@@ -133,7 +133,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
     element_tag = None if box.element is None else box.element_tag
     tag = _get_pdf_tag(element_tag)
 
-    # Special case for html, body, page boxes and margin boxes.
+    # Handle special cases.
     if element_tag in ('html', 'body') or isinstance(box, boxes.PageBox):
         # Avoid generate page, html and body boxes as a semantic node, yield children.
         if isinstance(box, boxes.ParentBox) and not isinstance(box, boxes.LineBox):
@@ -149,10 +149,12 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
             tuple(_build_box_tree(
                 child, parent, pdf, page_number, nums, annotations, tags))
         return
-
-
-    # Create box element.
-    if tag == 'LI':
+    elif tag in ('TD', 'TH'):
+        # Ignore anonymous blocks created for table cells.
+        if parent['S'] in ('/TD', '/TH'):
+            tag = 'NonStruct'
+    elif tag == 'LI':
+        # Ignore anonymous blocks created for lists and bullets.
         anonymous_list_element = parent['S'] == '/LI'
         anonymous_li_child = parent['S'] == '/LBody'
         dl_item = box.element_tag in ('dt', 'dd')
@@ -183,6 +185,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
             yield parent
             return
 
+    # Create box element.
     element = pydyf.Dictionary({
         'Type': '/StructElem',
         'S': f'/{tag}',
