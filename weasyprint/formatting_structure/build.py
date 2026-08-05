@@ -265,7 +265,18 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     box.children = children
 
     if unboxed:
-        # display:contents generates no box; its children take its place.
+        # No box to carry the anchor, so donate it to the first durable
+        # (non-whitespace) descendant via a box-level list, which lets that
+        # descendant keep its own anchor too. Enough for #id links to resolve;
+        # target-*() and string-set/bookmark stay unsupported (no stand-in box).
+        if style['anchor']:
+            target = next(
+                (child for child in children if not (
+                    isinstance(child, boxes.TextBox)
+                    and not child.text.strip())),
+                None)
+            if target is not None:
+                target.anchors = [*target.anchors, style['anchor']]
         return children
 
     set_content_lists(
