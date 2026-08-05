@@ -512,11 +512,11 @@ def draw_collapsed_borders(stream, table):
         if header_rows and y < header_rows + int(horizontal):
             # Row in header: y < 2 for vertical, y < 3 for horizontal.
             return y
-        elif footer_rows and y >= grid_height - footer_rows - int(horizontal):
-            # Row in footer: y >= 7 for vertical, y >= 6 for horizontal.
+        elif footer_rows and y >= grid_height - footer_rows:
+            # Row in footer: y >= 7 for vertical and horizontal.
             return y + footer_rows_offset
         else:
-            # Row in body: 2 >= y > 7 for vertical, 3 >= y > 6 for horizontal.
+            # Row in body: 2 >= y > 7 for vertical, 3 >= y > 7 for horizontal.
             return y + body_rows_offset
 
     segments = []
