@@ -47,6 +47,17 @@ def test_bookmarks_1():
         b'a', b'b', b'c', b'd', b'e']
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_bookmark_display_contents():
+    # TODO: bookmark-label/level on a display:contents element are dropped
+    # (set_content_lists is skipped on the unbox path), so no outline entry.
+    pdf = FakeHTML(string=(
+        '<style>div { bookmark-level: 1; bookmark-label: content() }</style>'
+        '<div style="display: contents">a</div><p>b</p>')).write_pdf()
+    assert b'/Title (a)' in pdf
+
+
 @assert_no_logs
 def test_bookmarks_2():
     pdf = FakeHTML(string='<body>').write_pdf()
