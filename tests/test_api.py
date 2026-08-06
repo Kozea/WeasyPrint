@@ -674,6 +674,59 @@ def test_to_unicode_rtl():
 
 
 @assert_no_logs
+def test_to_unicode_cluster_glyphs(tmp_path):
+    # Regression test for #2841.
+    # A font whose GSUB draws one character as two glyphs, shared between
+    # characters — the shape of Noto Sans Arabic, where a dotted letter is a
+    # skeleton glyph plus a dots glyph. 'b' and 'c' share their dots glyph;
+    # 'q' and 'r' share their skeleton glyph. Each character must keep exactly
+    # one ToUnicode entry of its own, whether its private glyph is real
+    # ('b', 'c', 'q') or a substitute id had to be made ('r').
+    from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
+    from fontTools.fontBuilder import FontBuilder
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+
+    from weasyprint.text.fonts import FontConfiguration
+
+    pen = TTGlyphPen(None)
+    pen.moveTo((50, 0))
+    pen.lineTo((50, 700))
+    pen.lineTo((550, 700))
+    pen.lineTo((550, 0))
+    pen.closePath()
+    box = pen.glyph()
+    builder = FontBuilder(1000, isTTF=True)
+    names = [
+        '.notdef', 'b', 'c', 'q', 'r', 'b.skel', 'c.skel', 'qr.skel', 'dots']
+    builder.setupGlyphOrder(names)
+    builder.setupCharacterMap({ord(letter): letter for letter in 'bcqr'})
+    builder.setupGlyf({name: box for name in names})
+    builder.setupHorizontalMetrics({name: (600, 50) for name in names})
+    builder.setupHorizontalHeader(ascent=800, descent=-200)
+    builder.setupNameTable({'familyName': 'cluster', 'styleName': 'Regular'})
+    builder.setupOS2()
+    builder.setupPost()
+    addOpenTypeFeaturesFromString(builder.font, '''
+        feature ccmp {
+            sub b by b.skel dots;
+            sub c by c.skel dots;
+            sub q by qr.skel dots;
+            sub r by qr.skel dots;
+        } ccmp;''')
+    builder.save(str(tmp_path / 'cluster.ttf'))
+
+    font_config = FontConfiguration()
+    pdf = FakeHTML(string='''
+      <style>
+        @font-face { font-family: cluster; src: url(cluster.ttf) }
+        body { font-family: cluster }
+      </style>bcqr''', base_url=str(tmp_path / 'index.html')).write_pdf(
+        uncompressed_pdf=True, font_config=font_config)
+    for letter in 'bcqr':
+        assert pdf.count(b' <%04x>' % ord(letter)) == 1, letter
+
+
+@assert_no_logs
 def test_no_redirect():
     with http_server() as root_url:
         _run(f'--no-http-redirect {root_url}/gzip -')

@@ -17,7 +17,7 @@ from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
 
 
 class Font:
-    def __init__(self, pango_font, description, font_size):
+    def __init__(self, pango_font, description, font_size, fonts=None):
         self.hb_font = pango.pango_font_get_hb_font(pango_font)
         self.hb_face = get_pango_font_hb_face(pango_font)
         self.file_content = get_hb_object_data(self.hb_face)
@@ -102,7 +102,19 @@ class Font:
         self.stemh = 80
         self.widths = {}
         self.to_unicode = {}
-        self.missing = {}
+        # Substitute and missing glyph ids extend the FILE's glyph space, and
+        # one file can back several Font instances (used at several sizes, or
+        # in forms — synthesized small caps draw one file at two sizes), so
+        # instances sharing a file share one id registry: ids allocated by any
+        # instance stay unique, and the one embedded file gets them all.
+        for other in (fonts or {}).values():
+            if other.hash == self.hash:
+                self.aliases = other.aliases
+                self.missing = other.missing
+                break
+        else:
+            self.aliases = {}
+            self.missing = {}
         self.used_in_forms = False
 
         # Set font flags.
@@ -112,10 +124,103 @@ class Font:
         if b'Serif' in name.split(b' '):
             self.flags += 2 ** (2 - 1)  # Serif
 
+    def resolve_glyph(self, glyph, text, in_cluster):
+        """The glyph id to show for this text — a substitute id if needed.
+
+        Text extraction concatenates the ToUnicode values of the glyphs that
+        were shown, so it is only right when each shown glyph id carries
+        exactly the codepoints it was drawn for — including none: the extra
+        glyphs of a multi-glyph cluster, like the shared dots of a decomposed
+        Arabic letter, get ``text == ''``. A glyph id can only carry ONE value,
+        and complex fonts reuse glyphs across clusters (Noto Sans Arabic draws
+        ق and ة as different skeletons plus the same two-dots glyph, and ب and
+        ت as the same skeleton plus different dots), so the first text a glyph
+        is drawn with keeps the real id and any other text gets a substitute
+        id, drawn as a component of the real glyph (see _embed_aliases).
+
+        A single-glyph cluster never steals a glyph that already reads back
+        as other text: deliberate double mappings (U+00A0 reading back as the
+        space it shares a glyph with, synthesized small caps reading back as
+        the capital they scale) keep reading back as they always have, and
+        renderers may rasterize the same outline differently under another id
+        at very small sizes, so identity only changes where extraction is
+        otherwise wrong. A glyph that reads back as NOTHING does get a
+        substitute even alone — it was claimed as the silent extra of an
+        earlier cluster, and bare س would otherwise vanish from every document
+        where ش came first. No substitute can be made for bitmap or CFF
+        fonts, emoji fonts whose color tables are looked up by id, or a full
+        16-bit glyph space: the cluster then reads back as the text its
+        glyphs already carry, never as an invented longer string.
+        """
+        current = self.to_unicode.get(glyph)
+        if current is None or current == text:
+            self.to_unicode[glyph] = text
+            return glyph
+        if not (in_cluster or current == ''):
+            return glyph
+        if self.bitmap or self.png or self.svg or self.type == 'otf':
+            return glyph
+        key = (glyph, text)
+        if key not in self.aliases:
+            alias = self.glyph_count + len(self.missing) + len(self.aliases)
+            if alias > 2 ** 16 - 1:
+                return glyph
+            self.aliases[key] = alias
+            self.to_unicode[alias] = text
+            if glyph in self.widths:
+                self.widths[alias] = self.widths[glyph]
+        return self.aliases[key]
+
+    def _embed_aliases(self):
+        """Copy each substitute glyph's outline into the font file.
+
+        Substitute ids (see resolve_glyph) are shown by the page's content
+        streams and mapped by ToUnicode, so the embedded font must draw them:
+        each gets a copy of its real glyph. Ids reserved for missing glyphs
+        (see get_unused_glyph_id) share the id space above glyph_count and get
+        a copy of .notdef, so every id up to the highest substitute exists.
+        """
+        from fontTools.ttLib.tables._g_l_y_f import (
+            Glyph,
+            GlyphComponent,
+            GlyphCoordinates,
+        )
+
+        sources = {alias: glyph for (glyph, _), alias in self.aliases.items()}
+        full_font = io.BytesIO(self.file_content)
+        ttfont = TTFont(full_font, fontNumber=self.index)
+        glyph_order = ttfont.getGlyphOrder()
+        glyf, hmtx = ttfont['glyf'], ttfont['hmtx']
+        for alias in range(len(glyph_order), max(sources) + 1):
+            source = glyph_order[sources.get(alias, 0)]
+            name = f'alias{alias}'
+            # A composite pointing at the real glyph, not a copy of its
+            # outline: renderers rasterize it through the component, so the
+            # substitute paints pixel-identically to the glyph it stands for.
+            component = GlyphComponent()
+            component.glyphName = source
+            component.x = component.y = 0
+            component.flags = 0x0204    # ARGS_ARE_XY_VALUES | USE_MY_METRICS
+            composite = Glyph()
+            composite.numberOfContours = -1
+            composite.components = [component]
+            composite.coordinates = GlyphCoordinates()
+            glyf.glyphs[name] = composite
+            hmtx.metrics[name] = hmtx.metrics[source]
+            glyph_order.append(name)
+        ttfont.setGlyphOrder(glyph_order)
+        glyf.glyphOrder = glyph_order
+        ttfont['maxp'].numGlyphs = len(glyph_order)
+        ttfont['post'].formatType = 3.0    # no glyph names to keep consistent
+        optimized_font = io.BytesIO()
+        ttfont.save(optimized_font)
+        self.file_content = optimized_font.getvalue()
+
     def get_unused_glyph_id(self, codepoint):
         """Get a glyph id that’s not used in the font, for given Unicode codepoint."""
         if codepoint not in self.missing:
-            next_unused_glyph_id = self.glyph_count + len(self.missing)
+            next_unused_glyph_id = (
+                self.glyph_count + len(self.missing) + len(self.aliases))
             if next_unused_glyph_id > 2 ** 16 - 1:
                 LOGGER.warning(
                     'Too many glyphs missing from "%s", '
@@ -126,6 +231,11 @@ class Font:
 
     def clean(self, to_unicode, hinting):
         """Remove useless data from font."""
+
+        # Draw the substitute glyphs the content streams show, whether the
+        # font is then subset or embedded whole.
+        if self.aliases:
+            self._embed_aliases()
 
         # Subset font.
         self.subset(to_unicode, hinting)
@@ -194,8 +304,12 @@ class Font:
         if not to_unicode:
             return
 
-        if harfbuzz_subset and harfbuzz.hb_version_atleast(4, 1, 0):
-            # 4.1.0 is required for hb_set_add_sorted_array.
+        if (not self.aliases and harfbuzz_subset and
+                harfbuzz.hb_version_atleast(4, 1, 0)):
+            # 4.1.0 is required for hb_set_add_sorted_array. HarfBuzz subsets
+            # hb_face, read from the original file: it cannot see the
+            # substitute glyphs _embed_aliases added, so Fonttools — which
+            # reads the updated file content — subsets those fonts.
             self._harfbuzz_subset(to_unicode, hinting)
         else:
             self._fonttools_subset(to_unicode, hinting)
@@ -350,6 +464,11 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
             b'<0000> <ffff>',
             b'endcodespacerange'], compress=compress)
         to_unicode_stream = to_unicode_object.stream
+        # Glyphs with no text of their own (the extra glyphs of a multi-glyph
+        # cluster, see Font.resolve_glyph) map to the empty string on purpose:
+        # an absent entry makes extractors fall back to garbage — pypdf emits
+        # chr(glyph_id), pdfminer emits (cid:N) — while <gid> <> reads back as
+        # exactly nothing in both.
         to_unicode_length = len(to_unicode)
         to_unicode_items = tuple(to_unicode.items())
         for i in range(ceil(to_unicode_length / 100)):
