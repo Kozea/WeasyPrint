@@ -245,7 +245,7 @@ def draw_box_shadows(stream, boxes, style, inset):
         color = style['color'] if color == 'currentcolor' else color
 
         for box in boxes:
-            with stream.stacked():
+            with stream.artifact(), stream.stacked():
                 _draw_box_shadow(stream, box, style, tx, ty, blur, spread, color, inset)
 
 
