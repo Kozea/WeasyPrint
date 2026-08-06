@@ -494,9 +494,7 @@ def test_grid_relative_positioning():
 
 
 @assert_no_logs
-@pytest.mark.xfail
 def test_flex_absolute_positioning():
-    """TODO: Order is not kept when out-of-flow and in-flow children are mixed."""
     page, = render_pages('''
       <style>
         @page { size: 100px 100px }
@@ -512,9 +510,9 @@ def test_flex_absolute_positioning():
     html, = page.children
     body, = html.children
     article, = body.children
-    # That’s currently div2, div1
     div1, div2 = article.children
 
+    assert (div1.position_x, div1.position_y) == (0, 0)
     assert (div2.position_x, div2.position_y) == (10, 10)
 
 

@@ -796,6 +796,21 @@ def test_pdf_tags_split_table_with_caption():
 
 
 @assert_no_logs
+def test_pdf_tags_absolute_in_flex():
+    # The structure tree is built from the box tree, so an absolutely
+    # positioned flex child listed first would be read out first too.
+    pdf = FakeHTML(string='''
+      <html lang="en">
+        <div style="display: flex; position: relative">
+          <h1>heading</h1>
+          <ul style="position: absolute"><li>item</li></ul>
+        </div>
+    ''').write_pdf(pdf_tags=True, uncompressed_pdf=True)
+    tags = re.findall(rb'/S (/\w+)', pdf)
+    assert tags.index(b'/H1') < tags.index(b'/L')
+
+
+@assert_no_logs
 def test_pdf_ua_2_namespace_type():
     # Regression test for #2786.
     pdf = FakeHTML(string='<html lang="en"><body>abc').write_pdf(

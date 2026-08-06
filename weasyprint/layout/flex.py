@@ -900,8 +900,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 cross_translate += extra_cross_size / (len(flex_lines) + 1)
 
     # Now we are no longer in the flex algorithm.
-    box = box.copy_with_children(
-        [child for child in children if child.is_absolutely_positioned()])
+    # Absolutely positioned children are put back below, once the flex items
+    # are laid out, at the index they have in the document. The children list
+    # is what the PDF structure tree is built from, so listing them first
+    # would give assistive technologies a wrong reading order.
+    absolute_children = [
+        child for child in children if child.is_absolutely_positioned()]
+    box = box.copy_with_children([])
     child_skip_stack = skip_stack
     for line in flex_lines:
         for index, child in line:
@@ -936,6 +941,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             child_skip_stack = None
         if resume_at:
             break
+
+    # Absolutely positioned children back into document order. They are sorted
+    # among themselves already, and only the flex items that fit on this page
+    # are in the list, hence the clamp.
+    for child in absolute_children:
+        box.children.insert(min(child.index, len(box.children)), child)
 
     if original_box_height != 'auto':
         # Don’t resume if flex items overflow flex container bottom.
