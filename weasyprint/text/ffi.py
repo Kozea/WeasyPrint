@@ -32,6 +32,8 @@ ffi.cdef('''
     hb_blob_t * hb_ot_color_glyph_reference_png (hb_font_t *font, hb_codepoint_t glyph);
     bool hb_ot_color_has_svg (hb_face_t *face);
     hb_blob_t * hb_ot_color_glyph_reference_svg (hb_face_t *face, hb_codepoint_t glyph);
+    bool hb_ot_color_has_layers (hb_face_t *face);
+    bool hb_ot_color_has_paint (hb_face_t *face);
     void hb_blob_destroy (hb_blob_t *blob);
     unsigned int hb_face_get_table_tags (
         const hb_face_t *face, unsigned int start_offset, unsigned int *table_count,
@@ -79,6 +81,27 @@ ffi.cdef('''
     void hb_subset_input_set_flags (hb_subset_input_t *input, unsigned  value);
     hb_set_t * hb_subset_input_set (
         hb_subset_input_t *input, hb_subset_sets_t set_type);
+
+    // Harfbuzz Vector
+
+    typedef enum {
+        HB_VECTOR_FORMAT_INVALID = 0,
+        HB_VECTOR_FORMAT_SVG = 1937139488, /* hb_tag('svg ') */
+        HB_VECTOR_FORMAT_PDF = 1885627936, /* hb_tag('pdf ') */
+    } hb_vector_format_t;
+
+    typedef enum {
+        HB_VECTOR_EXTENTS_MODE_NONE,
+        HB_VECTOR_EXTENTS_MODE_EXPAND,
+    } hb_vector_extents_mode_t;
+
+    typedef ... hb_vector_paint_t;
+
+    hb_vector_paint_t * hb_vector_paint_create_or_fail (hb_vector_format_t format);
+    void hb_vector_paint_glyph(
+        hb_vector_paint_t *paint, hb_font_t *font, hb_codepoint_t glyph,
+        hb_vector_extents_mode_t extents_mode);
+    hb_blob_t * hb_vector_paint_render (hb_vector_paint_t *paint);
 
     // Pango
 
@@ -488,6 +511,10 @@ harfbuzz = _dlopen(
 harfbuzz_subset = _dlopen(
     ffi, 'libharfbuzz-subset-0', 'harfbuzz-subset', 'harfbuzz-subset-0.0',
     'libharfbuzz-subset.so.0', 'libharfbuzz-subset.0.dylib', 'libharfbuzz-subset-0.dll',
+    allow_fail=True)
+harfbuzz_vector = _dlopen(
+    ffi, 'libharfbuzz-vector-0', 'harfbuzz-vector', 'harfbuzz-vector-0.0',
+    'libharfbuzz-vector.so.0', 'libharfbuzz-vector.0.dylib', 'libharfbuzz-vector-0.dll',
     allow_fail=True)
 fontconfig = _dlopen(
     ffi, 'libfontconfig-1', 'fontconfig-1', 'fontconfig',
