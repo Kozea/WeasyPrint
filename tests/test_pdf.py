@@ -796,6 +796,29 @@ def test_pdf_tags_split_table_with_caption():
 
 
 @assert_no_logs
+def test_pdf_tags_nested_lists_order():
+    # Regression test for #2874.
+    pdf = FakeHTML(string='''
+      <html lang=fr><ul>
+        <li>a</li>
+        <li>
+          ba
+          <ul>
+            <li>b1</li>
+            <li>b2</li>
+          </ul>
+          bb
+        </li>
+        <li>c</li>
+      </ul>
+    ''').write_pdf(pdf_tags=True)
+    list_children = re.findall(b'/S ?/L ?/K.*\\[(.*)\\]', pdf)
+    for children in list_children:
+        numbers = [int(number) for number in re.findall(b'[1-9][0-9]*', children)]
+        assert sorted(numbers) == numbers
+
+
+@assert_no_logs
 def test_pdf_ua_2_namespace_type():
     # Regression test for #2786.
     pdf = FakeHTML(string='<html lang="en"><body>abc').write_pdf(

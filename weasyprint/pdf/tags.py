@@ -269,12 +269,14 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                         child_parent = parent
                     else:
                         child_parent = element
+                    # Keep the current number of parent children, so that we can add the
+                    # new children before the possible grandchildren, for example for
+                    # lists.
+                    child_index = len(child_parent['K'])
                     child_elements = _build_box_tree(
                         child, child_parent, pdf, page_number, nums, links, tags)
-
-                    # Check if it is already been referenced before.
-                    for child_element in child_elements:
-                        child_parent['K'].append(child_element.reference)
+                    child_parent['K'][child_index:child_index] = [
+                        element.reference for element in child_elements]
 
     else:
         # Add replaced box.
