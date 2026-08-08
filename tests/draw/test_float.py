@@ -872,6 +872,44 @@ def test_float_split_clear(assert_pixels):
 
 
 @assert_no_logs
+def test_float_split_clear_float(assert_pixels):
+    assert_pixels('''
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        rrrr
+        rrrr
+    ''', '''
+        <style>
+            @page {
+                size: 4px;
+            }
+            body {
+                color: red;
+                font: 2px / 1 weasyprint;
+            }
+            div {
+                color: blue;
+                float: left;
+            }
+            article {
+                clear: left;
+                float: left;
+                text-decoration: underline;
+            }
+        </style>
+        <div>bb bb bb bb bb</div>
+        <article>aa</article>''')
+
+
+@assert_no_logs
 def test_float_split_clear_empty(assert_pixels):
     assert_pixels('''
         BBBB
