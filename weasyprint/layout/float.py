@@ -1,6 +1,6 @@
 """Layout for floating boxes."""
 
-from math import inf
+from sys import maxsize
 
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
@@ -135,7 +135,7 @@ def get_clearance(context, box, direction, collapsed_margin=0):
     for broken_shape in context.broken_out_of_flow:
         if broken_shape.is_floated():
             if clear(box.style['clear'], broken_shape.style['float']):
-                return inf
+                return maxsize
     # Hypothetical position is the position of the top border edge
     clearance = None
     hypothetical_position = box.position_y + collapsed_margin
@@ -155,7 +155,7 @@ def avoid_collisions(context, box, containing_block, outer=True):
     box_height = box.margin_height() if outer else box.border_height()
 
     if box.border_height() == 0 and box.is_floated():
-        return 0, 0, containing_block.width
+        return 0, position_y, containing_block.width
 
     left_keywords = ['left']
     right_keywords = ['right']
