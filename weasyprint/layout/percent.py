@@ -79,7 +79,14 @@ def resolve_percentages(box, containing_block):
         # depends on its content.
         height = box.style['height']
         if height == 'auto' or check_math(height) or height.unit == '%':
-            box.height = 'auto'
+            computed_height = getattr(box, 'height', 'auto')
+            # Keep the height computed by replaced box layout when a block
+            # replaced box is laid out again.
+            if not (
+                    isinstance(box, boxes.BlockReplacedBox) and
+                    computed_height != 'auto' and
+                    not isinstance(computed_height, str)):
+                box.height = 'auto'
         else:
             assert height.unit.lower() == 'px'
             box.height = height.value

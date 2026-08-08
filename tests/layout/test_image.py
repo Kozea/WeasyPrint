@@ -3,6 +3,7 @@
 import pytest
 
 from weasyprint.formatting_structure import boxes
+from weasyprint.layout.percent import resolve_percentages
 
 from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
@@ -289,6 +290,25 @@ def test_images_16():
     assert img.element_tag == 'img'
     assert img.width == 300
     assert img.height == 200
+
+
+@assert_no_logs
+def test_images_auto_height_block_replaced_relayout():
+    page, = render_pages('''
+        <style>
+            @page { size: 100px }
+            img { display: block; width: 40px }
+        </style>
+        <body>
+            <img src="pattern.png">
+    ''')
+    html, = page.children
+    body, = html.children
+    img, = body.children
+    assert isinstance(img, boxes.BlockReplacedBox)
+    assert img.height == 40
+    resolve_percentages(img, (100, 'auto'))
+    assert img.margin_height() == 40
 
 
 @assert_no_logs
