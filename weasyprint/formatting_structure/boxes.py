@@ -82,6 +82,9 @@ class Box:
     missing_link = None
     link_annotation = None
     force_fragmentation = False
+    # Anchor names a display:contents element donates to this box (its own
+    # -weasy-anchor is separate); see element_to_box. Empty tuple by default.
+    anchors = ()
 
     # Default, overriden on some subclasses
     def all_children(self):

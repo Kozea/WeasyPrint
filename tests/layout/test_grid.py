@@ -1939,3 +1939,104 @@ def test_grid_in_columns_with_break():
     section2, section3 = grid.children
     assert section2.position_y == 0
     assert section3.position_y == 4
+
+
+@assert_no_logs
+def test_grid_order_display_contents():
+    # Regression test for #2210.
+    # Element children of a display:contents wrapper become grid items,
+    # interleaved with a direct (non-wrapped) sibling and ordered by `order`.
+    page, = render_pages('''
+      <style>
+        @page { size: 50px 10px }
+        body { font: 2px/1 weasyprint }
+        article {
+          display: grid; grid-template-columns: 10px 10px 10px 10px 10px }
+      </style>
+      <article>
+        <div style="display: contents"><span style="order: 2">A</span
+          ><span style="order: 4">B</span></div><span style="order: 0">E</span
+          ><div style="display: contents"><span style="order: 1">C</span
+          ><span style="order: 3">D</span></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    items = article.children
+    position = {
+        item.children[0].children[0].text: item.position_x for item in items}
+    assert set(position) == {'A', 'B', 'C', 'D', 'E'}
+    assert (position['E'] < position['C'] < position['A']
+            < position['D'] < position['B'])
+
+
+@assert_no_logs
+def test_grid_display_none():
+    # Text around a display:none element is one contiguous run, so it forms a
+    # single anonymous grid item.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: grid; grid-template-columns: 40px }
+      </style>
+      <article>A<span style="display: none"></span>B</article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    assert item.children[0].children[0].text == 'AB'
+
+
+@assert_no_logs
+def test_grid_display_contents_text():
+    # Bare text from adjacent display:contents elements is one contiguous run,
+    # so it forms a single anonymous grid item, each keeping its own style. A's
+    # red is inline (overriding the matching span rule) and B's blue comes from
+    # the selector, so both inline and selector styling survive unboxing.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article { display: grid; grid-template-columns: 40px }
+        span { color: blue }
+      </style>
+      <article><span style="display: contents; color: red">A</span
+        ><span style="display: contents">B</span></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    line, = item.children
+    a, b = line.children
+    assert a.text == 'A'
+    assert a.style['color'] == (1, 0, 0, 1)
+    assert b.text == 'B'
+    assert b.style['color'] == (0, 0, 1, 1)
+
+
+@assert_no_logs
+def test_grid_display_contents_item_style():
+    # The anonymous item wrapping a run of unboxed text inherits from the grid
+    # container, not from the display:contents element the text came from.
+    page, = render_pages('''
+      <style>
+        @page { size: 40px 10px }
+        body { font: 2px/1 weasyprint }
+        article {
+          display: grid;
+          grid-template-columns: 40px;
+          text-align: right;
+        }
+      </style>
+      <article><span style="display: contents; text-align: left">A</span
+        ><span style="display: contents">B</span></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    item, = article.children
+    assert item.style['text_align_all'] == 'right'

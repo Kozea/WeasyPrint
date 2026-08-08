@@ -41,6 +41,17 @@ BOX_TYPE_FROM_DISPLAY = {
     ('table-caption',): boxes.TableCaptionBox,
 }
 
+# Elements on which display:contents computes to none.
+# https://drafts.csswg.org/css-display-3/#unbox-html
+DISPLAY_CONTENTS_NONE = frozenset((
+    'audio', 'br', 'canvas', 'embed', 'frame', 'frameset', 'iframe', 'img',
+    'input', 'meter', 'object', 'progress', 'select', 'textarea', 'video',
+    'wbr',
+    # Not in the Appendix B list, but boxless here: <svg> is re-parsed by its
+    # handler, and a void <col> unboxes to nothing (like display:none, matching
+    # browsers). <colgroup> is absent: it unboxes and its columns survive.
+    'col', '{http://www.w3.org/2000/svg}svg'))
+
 # https://stackoverflow.com/questions/16317534/
 ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
 ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
@@ -95,6 +106,11 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, element):
+    if style['display'] == ('contents',):
+        # No principal box: return a throwaway inline box carrying the style so
+        # the caller can build children against it and then unbox it, returning
+        # the children in its place. The box itself is always discarded.
+        return boxes.InlineBox(element_tag, style, element, content)
     return BOX_TYPE_FROM_DISPLAY[style['display'][:2]](
         element_tag, style, element, content)
 
@@ -133,19 +149,30 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
     display = style['display']
-    if display == ('none',):
+    if display == ('none',) or (
+            display == ('contents',) and element.tag in DISPLAY_CONTENTS_NONE):
+        # display:contents computes to none on replaced elements, form controls
+        # and other unusual elements (CSS Display 3 Appendix B).
         return []
 
     if style['float'] == 'footnote':
+        # A footnote is a box moved to the footnote area, so display:contents
+        # (which would generate no box) cannot apply: the footnote wins.
         if style['footnote_display'] == 'block':
             style['display'] = ('block', 'flow')
         else:
             # TODO: handle compact footnotes
             style['display'] = ('inline', 'flow')
 
+    unboxed = style['display'] == ('contents',)
     box = make_box(element.tag, style, [], element)
-    box.first_letter_style = style_for(element, 'first-letter')
-    box.first_line_style = style_for(element, 'first-line')
+    if not unboxed:
+        # ::first-letter and ::first-line style a block container's own box. A
+        # display:contents element generates none, so per spec its own have no
+        # effect (an ancestor's still reach the content). Skip the lookup: this
+        # box is discarded anyway.
+        box.first_letter_style = style_for(element, 'first-letter')
+        box.first_line_style = style_for(element, 'first-line')
 
     if state is None:
         # use a list to have a shared mutable object
@@ -181,7 +208,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     # collect anchor's counter_values, maybe it's a target.
     # to get the spec-conform counter_values we must do it here,
     # after the ::before is parsed and before the ::after is
-    if style['anchor']:
+    if style['anchor'] and not unboxed:
         target_collector.store_target(style['anchor'], counter_values, box)
 
     text = element.text
@@ -199,6 +226,11 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
             call_style = style_for(footnote.element, 'footnote-call')
+            if call_style['display'] == ('contents',):
+                # The call anchors the footnote and must generate a box, so
+                # display:contents falls back to inline rather than unboxing.
+                call_style = call_style.copy()
+                call_style['display'] = ('inline', 'flow')
             footnote_call = make_box(
                 f'{footnote.element.tag}::footnote-call', call_style, [],
                 footnote.element)
@@ -212,7 +244,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
-            if children and isinstance(children[-1], boxes.TextBox):
+            if (children and isinstance(children[-1], boxes.TextBox) and
+                    children[-1].style is text_box.style):
+                # Only merge into this element's own anonymous text, not into
+                # text unboxed from a display:contents child (different style).
                 children[-1].text += text_box.text
             else:
                 children.append(text_box)
@@ -228,6 +263,22 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
+
+    if unboxed:
+        # No box to carry the anchor, so donate it to the first durable
+        # (non-whitespace) descendant via a box-level list, which lets that
+        # descendant keep its own anchor too. Enough for #id links to resolve;
+        # target-*() and string-set/bookmark stay unsupported (no stand-in box).
+        if style['anchor']:
+            target = next(
+                (child for child in children if not (
+                    isinstance(child, boxes.TextBox)
+                    and not child.text.strip())),
+                None)
+            if target is not None:
+                target.anchors = [*target.anchors, style['anchor']]
+        return children
+
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
 
@@ -249,6 +300,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     if style['float'] == 'footnote':
         counter_values['footnote'][-1] += 1
         marker_style = style_for(element, 'footnote-marker')
+        if marker_style['display'] == ('contents',):
+            # Like the call, the marker must generate a box.
+            marker_style = marker_style.copy()
+            marker_style['display'] = ('inline', 'flow')
         marker = make_box(
             f'{element.tag}::footnote-marker', marker_style, [], element)
         marker.children = content_to_boxes(
@@ -297,6 +352,10 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     box.children = children
 
+    if display == ('contents',):
+        # Unbox the pseudo, returning its generated content and no box.
+        return children
+
     # calculate the bookmark-label
     if style['bookmark_level'] != 'none':
         _quote_depth, counter_values, _counter_scopes, _page_groups = state
@@ -322,10 +381,10 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     quote_depth, counter_values, _counter_scopes, _page_groups = state
 
-    box = make_box(f'{element.tag}::marker', style, children, element)
-
     if style['display'] == ('none',):
         return
+
+    box = make_box(f'{element.tag}::marker', style, children, element)
 
     image_type, image = style['list_style_image']
 
@@ -352,6 +411,11 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
                 children.append(box)
 
     if not children:
+        return
+
+    if style['display'] == ('contents',):
+        # display:contents: unbox the marker, yielding its content and no box.
+        yield from children
         return
 
     if parent_style['list_style_position'] == 'outside':
@@ -782,6 +846,18 @@ def table_boxes_children(box, children):
             children = [boxes.TableColumnBox.anonymous_from(box, [])
                         for _ in range(span)]
 
+    # Unboxing a table-internal element (a colgroup, tbody, tr...) can leave its
+    # insignificant whitespace beside the container's own. Rules 1.3 and 1.4
+    # below each strip only a single whitespace box, so collapse each run to one
+    # first (a no-op for normal, non-unboxed tables).
+    if box.tabular_container:
+        deduped = []
+        for child in children:
+            if is_whitespace(child) and deduped and is_whitespace(deduped[-1]):
+                continue
+            deduped.append(child)
+        children = deduped
+
     # rule 1.3
     if box.tabular_container and len(children) >= 2:
         # TODO: Maybe only remove text if internal is also
@@ -1012,6 +1088,49 @@ def blockify(box, layout):
     return anonymous
 
 
+def wrap_text_run(container, text_run):
+    """Wrap a contiguous run of text boxes in a single anonymous block.
+
+    The block is anonymous from ``container`` so it inherits from the flex or
+    grid container, not from a display:contents element the text came from.
+    Leading and trailing whitespace-only boxes are dropped; a whitespace-only
+    run generates no box (returns None).
+
+    """
+    start, end = 0, len(text_run)
+    while start < end and not text_run[start].text.strip(' '):
+        start += 1
+    while end > start and not text_run[end - 1].text.strip(' '):
+        end -= 1
+    text_run = text_run[start:end]
+    if not text_run:
+        return None
+    return boxes.BlockBox.anonymous_from(container, text_run)
+
+
+def coalesce_text(container, children):
+    """Wrap each contiguous run of text in a single anonymous block.
+
+    A flex or grid container turns each contiguous run of text directly inside
+    it into one item; a run of only whitespace generates none.
+    https://www.w3.org/TR/css-flexbox-1/#flex-items
+
+    """
+    coalesced = []
+    text_run = []
+    for child in children:
+        if isinstance(child, boxes.TextBox):
+            text_run.append(child)
+            continue
+        if box := wrap_text_run(container, text_run):
+            coalesced.append(box)
+        text_run = []
+        coalesced.append(child)
+    if box := wrap_text_run(container, text_run):
+        coalesced.append(box)
+    return coalesced
+
+
 def flex_boxes(box):
     """Remove and add boxes according to the flex model.
 
@@ -1032,15 +1151,10 @@ def flex_boxes(box):
 def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
         flex_children = []
-        for child in children:
+        for child in coalesce_text(box, children):
             child.is_floated = lambda: False
             if child.is_in_normal_flow():
                 child.is_flex_item = True
-            if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
-                # TODO: ignore texts only containing "characters that can be
-                # affected by the white-space property"
-                # https://www.w3.org/TR/css-flexbox-1/#flex-items
-                continue
             flex_children.append(blockify(child, 'flex'))
         return flex_children
     else:
@@ -1067,14 +1181,9 @@ def grid_boxes(box):
 def grid_children(box, children):
     if isinstance(box, boxes.GridContainerBox):
         grid_children = []
-        for child in children:
+        for child in coalesce_text(box, children):
             if child.is_in_normal_flow():
                 child.is_grid_item = True
-            if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
-                # TODO: ignore texts only containing "characters that can be
-                # affected by the white-space property"
-                # https://drafts.csswg.org/css-grid-2/#grid-item
-                continue
             grid_children.append(blockify(child, 'grid'))
         return grid_children
     else:

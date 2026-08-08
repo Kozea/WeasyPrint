@@ -47,6 +47,17 @@ def test_bookmarks_1():
         b'a', b'b', b'c', b'd', b'e']
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_bookmark_display_contents():
+    # TODO: bookmark-label/level on a display:contents element are dropped
+    # (set_content_lists is skipped on the unbox path), so no outline entry.
+    pdf = FakeHTML(string=(
+        '<style>div { bookmark-level: 1; bookmark-label: content() }</style>'
+        '<div style="display: contents">a</div><p>b</p>')).write_pdf()
+    assert b'/Title (a)' in pdf
+
+
 @assert_no_logs
 def test_bookmarks_2():
     pdf = FakeHTML(string='<body>').write_pdf()
@@ -304,6 +315,62 @@ def test_bookmarks_15():
 def test_links_none():
     pdf = FakeHTML(string='<body>').write_pdf()
     assert b'Annots' not in pdf
+
+
+@assert_no_logs
+def test_links_display_contents():
+    # A display:contents link keeps its link: a wrapped child box inherits it.
+    pdf = FakeHTML(string=(
+        '<a href="https://weasyprint.org" style="display: contents">'
+        '<span>link</span></a>')).write_pdf()
+    assert b'/URI (https://weasyprint.org)' in pdf
+
+
+@assert_no_logs
+def test_links_display_contents_text():
+    # display:contents keeps document-tree semantics (CSS Display 3), so a link
+    # survives even with bare-text content: the unboxed text carries the link,
+    # and gather_anchors honors it when no ancestor box registered it.
+    pdf = FakeHTML(string=(
+        '<a href="https://weasyprint.org" style="display: contents">'
+        'link</a>')).write_pdf()
+    assert b'/URI (https://weasyprint.org)' in pdf
+
+
+@assert_no_logs
+def test_links_display_contents_target():
+    # An id on a display:contents element stays a live link target, because the
+    # element is still rendered: the anchor moves to the first box it unboxes
+    # to (unlike display:none, which would drop it and dangle the reference).
+    pdf = FakeHTML(string=(
+        '<a href="#tgt">ref</a>'
+        '<h1 id="tgt" style="display: contents">Target</h1>')).write_pdf()
+    assert b'/Dest (tgt)' in pdf
+
+
+@assert_no_logs
+def test_links_display_contents_nested_id():
+    # The contents element and its first child both carry an id; the box-level
+    # anchors list lets that box hold both, so both #ids resolve.
+    pdf = FakeHTML(string=(
+        '<a href="#outer">a</a><a href="#inner">b</a>'
+        '<div id="outer" style="display: contents">'
+        '<h1 id="inner">T</h1></div>')).write_pdf()
+    assert b'/Dest (outer)' in pdf
+    assert b'/Dest (inner)' in pdf
+
+
+def test_links_display_contents_empty():
+    # An empty display:contents element renders nothing, so there is no box for
+    # its id to point at: the link is dropped, as for display:none, and the
+    # 'No anchor' warning is expected.
+    with capture_logs() as logs:
+        pdf = FakeHTML(string=(
+            '<a href="#tgt">ref</a>'
+            '<div id="tgt" style="display: contents"></div>')).write_pdf()
+    assert b'/Dest (tgt)' not in pdf
+    assert len(logs) == 1
+    assert 'No anchor #tgt for internal URI reference' in logs[0]
 
 
 @assert_no_logs
