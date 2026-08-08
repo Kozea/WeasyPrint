@@ -875,19 +875,8 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     new_box.remove_decoration(
         start=not is_start, end=box_is_fragmented and not discard)
 
-    # TODO: See corner cases in
-    # https://www.w3.org/TR/CSS21/visudet.html#normal-block
-    # TODO: See float.float_layout
     if new_box.height == 'auto':
-        if context.excluded_shapes and new_box.style['overflow'] != 'visible':
-            max_float_position_y = max(
-                float_box.position_y + float_box.margin_height()
-                for float_box in context.excluded_shapes)
-            position_y = max(max_float_position_y, position_y)
-        if position_y == new_box.content_box_y() == inf:
-            new_box.height = 0
-        else:
-            new_box.height = position_y - new_box.content_box_y()
+        new_box.height = max(0, position_y - new_box.content_box_y())
 
     if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
