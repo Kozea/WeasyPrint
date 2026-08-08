@@ -3,7 +3,7 @@
 import pytest
 
 from weasyprint.css import InitialStyle
-from weasyprint.formatting_structure.build import capitalize
+from weasyprint.formatting_structure.text import capitalize
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.text.line_break import split_first_line
 

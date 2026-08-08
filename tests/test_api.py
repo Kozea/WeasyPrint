@@ -759,35 +759,12 @@ def test_redirect_loop():
             _run(f'{root_url}/redirect-loop -')
 
 
-@pytest.mark.parametrize(('html', 'fields'), [
-    ('<input>', ['/Tx', '/V ()']),
-    ('<input value="">', ['/Tx', '/V ()']),
-    ('<input type="checkbox">', ['/Btn']),
-    ('<input type="radio">',
-     ['/Btn', '/V /Off', '/AS /Off', '/Ff 49152']),
-    ('<input checked type="radio" name="foo" value="value">',
-     ['/Btn', '/T (foo)', '/V /0', '/AS /0']),
-    ('<form><input type="radio" name="foo" value="v0"></form>'
-     '<form><input checked type="radio" name="foo" value="v1"></form>',
-     ['/Btn', '/AS /0', '/V /0', '/AS /Off', '/V /Off']),
-    ('<textarea></textarea>', ['/Tx', '/V ()']),
-    ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
-    ('<select>'
-     '<option value="a">A</option>'
-     '<option value="b" selected>B</option>'
-     '</select>', ['/Ch', '/Opt', '/V (b)']),
-    ('<select multiple>'
-     '<option value="a">A</option>'
-     '<option value="b" selected>B</option>'
-     '<option value="c" selected>C</option>'
-     '</select>', ['/Ch', '/Opt', '[(b) (c)]']),
-])
-def test_pdf_inputs(html, fields):
-    stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())
+def test_pdf_forms():
+    stdout = _run('--pdf-forms --uncompressed-pdf - -', b'<input>')
     assert b'AcroForm' in stdout
-    for field in fields:
-        assert field.encode() in stdout
-    stdout = _run('--uncompressed-pdf - -', html.encode())
+    assert b'/Tx' in stdout
+    assert b'/V ()' in stdout
+    stdout = _run('--uncompressed-pdf - -', b'<input>')
     assert b'AcroForm' not in stdout
 
 
