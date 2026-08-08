@@ -268,7 +268,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
 
         # Check that child doesn’t overflow page.
         page_overflow = context.overflows_page(
-            bottom_space, new_child.position_y + new_child.height)
+            bottom_space, new_child.position_y + new_child.margin_height())
         add_child = (
             (page_is_empty and not new_children) or
             not page_overflow or
