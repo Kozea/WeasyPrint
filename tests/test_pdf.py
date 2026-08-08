@@ -768,6 +768,20 @@ def test_custom_rdf_metadata():
 
 
 @assert_no_logs
+def test_color_spaces_with_icc_output_intent():
+    shading_pdf = FakeHTML(string='''
+      <style>html { background: linear-gradient(red, blue) }</style>
+    ''').write_pdf(output_intent='srgb')
+    group_pdf = FakeHTML(string='''
+      <div style="width: 1px; height: 1px; background: red; opacity: .5"></div>
+    ''').write_pdf(output_intent='srgb')
+
+    profile = rb'\[/ICCBased \d+ 0 R\]'
+    assert re.search(rb'/ShadingType 2/ColorSpace ' + profile, shading_pdf)
+    assert re.search(rb'/Group <<[^>]+/CS ' + profile, group_pdf)
+
+
+@assert_no_logs
 def test_font_descent_ascent():
     pdf = FakeHTML(string='''
       <html style="font-family: weasyprint">abc
