@@ -15,7 +15,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
     """Layout for a table box."""
     from .block import (  # isort:skip
         avoid_page_break, block_container_layout, block_level_page_break,
-        find_earlier_page_break, force_page_break, remove_placeholders)
+        force_page_break, remove_placeholders)
 
     # Remove top and bottom decorations for split tables.
     has_header = table.children and table.children[0].is_header
@@ -219,9 +219,13 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         avoid_page_break(cell.style['break_inside'], context)
                         for cell in row.children))
                 if avoid_break:
-                    resume_at = {index_row: {}}
                     remove_placeholders(
                         context, new_row_children, absolute_boxes, fixed_boxes)
+                    new_group_children, resume_at = _find_earlier_page_break(
+                        context, row, index_row, new_group_children,
+                        original_page_is_empty, absolute_boxes, fixed_boxes)
+                    if resume_at is None:
+                        return None, None, next_page
                     break
 
             if resume_at:
@@ -319,21 +323,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             overflow = context.overflows_page(bottom_space, next_position_y)
             if not page_is_empty and overflow:
                 remove_placeholders(context, row.children, absolute_boxes, fixed_boxes)
-                if new_group_children:
-                    previous_row = new_group_children[-1]
-                    page_break = block_level_page_break(previous_row, row)
-                    if avoid_page_break(page_break, context):
-                        earlier_page_break = find_earlier_page_break(
-                            context, new_group_children, absolute_boxes, fixed_boxes)
-                        if earlier_page_break:
-                            new_group_children, resume_at = earlier_page_break
-                            break
-                    else:
-                        resume_at = {index_row: None}
-                        break
-                if original_page_is_empty:
-                    resume_at = {index_row: None}
-                else:
+                new_group_children, resume_at = _find_earlier_page_break(
+                    context, row, index_row, new_group_children,
+                    original_page_is_empty, absolute_boxes, fixed_boxes)
+                if resume_at is None:
                     return None, None, next_page
                 break
 
@@ -410,21 +403,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             skip_stack = None
 
             if new_group is None:
-                if new_table_children:
-                    previous_group = new_table_children[-1]
-                    page_break = block_level_page_break(previous_group, group)
-                    if avoid_page_break(page_break, context):
-                        earlier_page_break = find_earlier_page_break(
-                            context, new_table_children, absolute_boxes, fixed_boxes)
-                        if earlier_page_break is None:
-                            remove_placeholders(
-                                context, new_table_children, absolute_boxes,
-                                fixed_boxes)
-                            return None, None, next_page, position_y
-                        new_table_children, resume_at = earlier_page_break
-                        break
-                    resume_at = {index_group: None}
-                else:
+                new_table_children, resume_at = _find_earlier_page_break(
+                    context, group, index_group, new_table_children, page_is_empty,
+                    absolute_boxes, fixed_boxes)
+                if resume_at is None:
                     return None, None, next_page, position_y
                 break
 
@@ -1116,3 +1098,21 @@ def collapse_table_borders(table, grid_width, grid_height):
     set_border_used_width(table, 'right', max_vertical_width(grid_width, 0, 1))
 
     return vertical_borders, horizontal_borders
+
+
+def _find_earlier_page_break(context, element, index, previous_list, page_is_empty,
+                             absolute_boxes, fixed_boxes):
+    from .block import (  # isort:skip
+        avoid_page_break, block_level_page_break, find_earlier_page_break)
+
+    if previous_list:
+        page_break = block_level_page_break(previous_list[-1], element)
+        if avoid_page_break(page_break, context):
+            earlier_page_break = find_earlier_page_break(
+                context, previous_list, absolute_boxes, fixed_boxes)
+            if earlier_page_break:
+                return earlier_page_break
+        else:
+            return previous_list, {index: None}
+
+    return (previous_list, {index: None}) if page_is_empty else (None, None)

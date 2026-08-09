@@ -2912,6 +2912,39 @@ def test_table_page_break_avoid_before_tbody():
 
 
 @assert_no_logs
+def test_table_page_break_avoid_after():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 7px }
+        table { font: 2px/1 weasyprint; border-collapse: collapse }
+        tr { break-inside: avoid }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>1</td></tr>
+          <tr><td>2</td></tr>
+          <tr style="break-after: avoid"><td>3</td></tr>
+          <tr><td>4</td></tr>
+          <tr><td>5</td></tr>
+        </tbody>
+      </table>
+     ''')
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 2
+
+    html, = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 3
+
+
+@assert_no_logs
 @pytest.mark.parametrize(('vertical_align', 'table_position_y'), [
     ('top', 8),
     ('bottom', 8),
