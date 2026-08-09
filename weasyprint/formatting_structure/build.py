@@ -527,14 +527,13 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 continue
             new_box = new_box.deepcopy()
             new_box.style['position'] = 'static'
-            if isinstance(new_box, boxes.ParentBox):
-                for child in new_box.descendants():
-                    if child.style['content'] in ('normal', 'none'):
-                        continue
-                    child.children = content_to_boxes(
-                        child.style, child, quote_depth, counter_values,
-                        get_image_from_uri, target_collector, counter_style,
-                        context=context, page=page)
+            for child in new_box.descendants():
+                if child.style['content'] in ('normal', 'none'):
+                    continue
+                child.children = content_to_boxes(
+                    child.style, child, quote_depth, counter_values,
+                    get_image_from_uri, target_collector, counter_style,
+                    context=context, page=page)
             content_boxes.append(new_box)
         elif type_ == 'leader()':
             if not value[1]:
