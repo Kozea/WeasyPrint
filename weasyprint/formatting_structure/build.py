@@ -526,7 +526,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if new_box is None:
                 continue
             new_box = new_box.deepcopy()
-            new_box.style['position'] = 'static'
+            new_box.style['position'] = 'relative'
             for child in new_box.descendants():
                 if child.style['content'] in ('normal', 'none'):
                     continue
