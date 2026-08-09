@@ -296,6 +296,21 @@ def test_images_not_found(assert_pixels):
 
 
 @assert_no_logs
+def test_images_refused(assert_pixels):
+    with capture_logs() as logs:
+        assert_pixels(no_image, '''
+          <style>
+            @page { size: 8px }
+            body { margin: 0; font-size: 0 }
+            img { display: block; margin: 2px auto 0 }
+          </style>
+          <div><img src="dangerous.eps" alt=""></div>''')
+    assert len(logs) == 1
+    assert 'ERROR: Failed to load image' in logs[0]
+    assert 'dangerous.eps' in logs[0]
+
+
+@assert_no_logs
 def test_images_no_src(assert_pixels):
     assert_pixels(no_image, '''
       <style>

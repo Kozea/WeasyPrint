@@ -10,7 +10,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 import pydyf
-from PIL import Image, ImageFile, ImageOps
+from PIL import EpsImagePlugin, Image, ImageFile, ImageOps
 from tinycss2.color5 import parse_color
 
 from . import DEFAULT_OPTIONS
@@ -21,6 +21,9 @@ from .urls import URLFetchingError, fetch
 
 # Don’t crash when converting truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+# Don’t use Ghostscript to render possibly dangerous EPS files.
+EpsImagePlugin.gs_binary = False
 
 
 class ImageLoadingError(ValueError):
@@ -322,9 +325,12 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode(), usedforsecurity=False).hexdigest()
-                image = RasterImage(
-                    pillow_image, image_id, bytestring, response.path, cache,
-                    orientation, options)
+                try:
+                    image = RasterImage(
+                        pillow_image, image_id, bytestring, response.path, cache,
+                        orientation, options)
+                except Exception as raster_exception:
+                    raise ImageLoadingError from raster_exception
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
