@@ -1754,6 +1754,45 @@ def test_running_absolute():
 
 
 @assert_no_logs
+def test_running_absolute_overflow():
+    # Regression test for #2857.
+    render_pages('''
+      <style>
+        header {
+          position: running(header);
+        }
+        p {
+          font: 2px/1 weasyprint;
+          position: absolute;
+        }
+        div {
+          break-before: page;
+        }
+        @page {
+          size: 10px;
+          margin: 2px;
+          @top-center {
+            content: element(header);
+          }
+        }
+      </style>
+      <header>
+        <p>
+          abc<br>
+          abc<br>
+          abc<br>
+          abc<br>
+          abc<br>
+        </p>
+      </header>
+      <div>a</div>
+      <div>a</div>
+      <div>a</div>
+      <div>a</div>
+    ''')
+
+
+@assert_no_logs
 def test_running_flex():
     # Regression test.
     render_pages('''
