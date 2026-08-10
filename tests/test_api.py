@@ -1125,8 +1125,7 @@ def test_links_3():
     assert_links(
         '''
             <body style="width: 200px">
-            <div style="display: block; margin: 10px 5px;
-                        -weasy-link: url(../lipsum/é_%E9)">
+            <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
         ''', [[('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
                 (5, 10, 195, 10))]],
         [{}], [([('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
@@ -1144,19 +1143,6 @@ def test_links_4():
         ''', [[('external', '../lipsum', (5, 10, 195, 10))]], [{}],
         [([('external', '../lipsum', (5, 10, 195, 10))], [])],
         base_url=None)
-
-
-@assert_no_logs
-def test_links_5():
-    # Relative URI reference without a base URI: not supported for -weasy-link
-    assert_links(
-        '''
-            <body style="width: 200px">
-            <div style="-weasy-link: url(../lipsum);
-                        display: block; margin: 10px 5px">
-        ''', [[]], [{}], [([], [])], base_url=None, warnings=[
-            'WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, '
-            'Relative URI reference without a base URI'])
 
 
 @assert_no_logs
@@ -1183,8 +1169,7 @@ def test_links_7():
     assert_links(
         '''
             <body style="width: 200px">
-            <div style="-weasy-link: url(#lipsum);
-                        margin: 10px 5px" id="lipsum">
+            <a href="#lipsum" style="display: block; margin: 10px 5px" id="lipsum">
         ''',
         [[('internal', 'lipsum', (5, 10, 195, 10))]],
         [{'lipsum': (5, 10, 195, 10)}],

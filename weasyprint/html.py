@@ -18,7 +18,7 @@ from .css.counters import CounterStyle
 from .formatting_structure import boxes
 from .images import SVGImage
 from .logger import LOGGER
-from .urls import url_join
+from .urls import get_link, url_join
 
 UA_COUNTER_STYLE = CounterStyle()
 UA = (files(css) / 'html5_ua.css').read_text('utf-8')
@@ -228,6 +228,14 @@ def handle_img(element, box, get_image_from_uri, base_url):
         return [box]
     # TODO: find some indicator that an image is missing.
     return []
+
+
+@handler('a')
+def handle_a(element, box, get_image_from_uri, base_url):
+    """Handle ``<a>`` elements, set the link attribute on the box."""
+    if href := parse_url(element.get('href'), base_url, allow_relative=True):
+        box.link = get_link(href, base_url)
+    return [box]
 
 
 @handler('embed')

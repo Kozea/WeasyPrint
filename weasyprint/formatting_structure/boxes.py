@@ -82,6 +82,7 @@ class Box:
     string_set = None
     footnote = None
     cached_counter_values = None
+    link = None
     missing_link = None
     link_annotation = None
     widget_annotation = None

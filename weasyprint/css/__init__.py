@@ -377,10 +377,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             yield parse_declaration(f'-weasy-anchor:"{id_}"')
 
         if element.tag == 'a':
-            href = html.parse_url(
-                element.get('href'), base_url, allow_relative=True)
-            if href:
-                yield parse_declaration(f'-weasy-link:"{href}"')
             if name := element.get('name'):
                 yield parse_declaration(f'-weasy-anchor:"{name}"')
 
