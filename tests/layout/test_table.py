@@ -3370,6 +3370,25 @@ def test_table_int_with_trailing_text_col_span():
 
 
 @assert_no_logs
+def test_table_colspan_rounding_error():
+    # Regression test for #2842.
+    page, = render_pages('''
+      <table style="width:136.66666666666487px">
+        <tr>
+          <th style="width:40%"></th>
+          <th colspan="2"><div style="width:82px"></span></th>
+        </tr>
+        <tr>
+          <th style="width:40%"></th>
+          <th><div style="width:12px"></div></th>
+          <th><span style="display:inline-block;width:8px"></span><span
+                    style="display:inline-block;width:8px"></span></th>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
 def test_table_different_display():
     # Test display attribute set on different table elements.
     render_pages('''
