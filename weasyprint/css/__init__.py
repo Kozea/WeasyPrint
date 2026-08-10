@@ -198,7 +198,12 @@ class StyleFor:
         computed = computed_styles[element, pseudo_type] = ComputedStyle(
             parent_style, cascaded, pseudo_type, root_style, base_url,
             self.font_config, self.initial_page_sizes)
-        if target_collector and computed['anchor']:
+        if target_collector and computed['anchor'] and (
+                computed['display'] != ('contents',)):
+            # A display:contents element generates no box, so it cannot be a
+            # target-*() anchor: leave it uncollected so target-*() hits the
+            # undefined-anchor error. Its #id still resolves for links, via
+            # gather_anchors.
             target_collector.collect_anchor(computed['anchor'])
 
     def add_page_declarations(self, page_type):

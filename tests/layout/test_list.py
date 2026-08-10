@@ -129,3 +129,19 @@ def test_lists_page_break_margin():
             assert (
                 li.children[0].position_y ==
                 li.children[1].children[0].position_y)
+
+
+@assert_no_logs
+def test_list_marker_display_none():
+    # Regression test: display:none on a marker used to raise a KeyError in
+    # make_box, which has no ('none',) entry in BOX_TYPE_FROM_DISPLAY.
+    page, = render_pages('''
+      <style>li::marker { display: none }</style>
+      <ul><li>a</li></ul>
+    ''')
+    html, = page.children
+    body, = html.children
+    ul, = body.children
+    li, = ul.children
+    line, = li.children
+    assert line.children[0].text == 'a'

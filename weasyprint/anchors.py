@@ -28,7 +28,7 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
 
 
 def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
-                   parent_form=None):
+                   parent_form=None, parent_link=None):
     """Gather anchors and other data related to specific positions in PDF.
 
     Currently finds anchors, links, bookmarks and forms.
@@ -82,12 +82,19 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
         bookmark_level = box.style['bookmark_level']
     state = box.style['bookmark_state']
     link = box.style['link']
-    anchor_name = box.style['anchor']
+    # A display:contents element donates its anchor to a descendant through a
+    # box-level list, so register those alongside the box's own style anchor.
+    anchor_names = [box.style['anchor']] if box.style['anchor'] else []
+    anchor_names += box.anchors
     has_bookmark = bookmark_label and bookmark_level
-    # 'link' is inherited but redundant on text boxes
-    has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
+    # 'link' is inherited, so it's redundant on a text box whose link an
+    # ancestor box already registered (normally the <a>). An unboxed
+    # display:contents link leaves no such ancestor, so keep it on the text.
+    has_link = link and (
+        not isinstance(box, (boxes.TextBox, boxes.LineBox))
+        or link != parent_link)
     # In case of duplicate IDs, only the first is an anchor.
-    has_anchor = anchor_name and anchor_name not in anchors
+    has_anchor = any(name not in anchors for name in anchor_names)
     is_input = box.is_input()
 
     if box.is_form():
@@ -104,9 +111,9 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
         if has_link or is_input:
             rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
         if has_link:
-            token_type, link = link
+            token_type, url = link
             assert token_type == 'url'
-            link_type, target = link
+            link_type, target = url
             assert isinstance(target, str)
             if link_type == 'external' and box.is_attachment():
                 link_type = 'attachment'
@@ -123,10 +130,14 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
             if matrix:
                 pos_x1, pos_y1 = matrix.transform_point(pos_x1, pos_y1)
                 pos_x2, pos_y2 = matrix.transform_point(pos_x2, pos_y2)
-            anchors[anchor_name] = (pos_x1, pos_y1, pos_x2, pos_y2)
+            for name in anchor_names:
+                if name not in anchors:
+                    anchors[name] = (pos_x1, pos_y1, pos_x2, pos_y2)
 
+    child_link = link if has_link else parent_link
     for child in box.all_children():
-        gather_anchors(child, anchors, links, bookmarks, forms, matrix, parent_form)
+        gather_anchors(child, anchors, links, bookmarks, forms, matrix,
+                       parent_form, child_link)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

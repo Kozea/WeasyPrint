@@ -961,6 +961,24 @@ def test_margin_box_string_set_1():
     assert text_box.text == 'first assignment'
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_margin_box_string_set_display_contents():
+    # TODO: string-set on a display:contents element is dropped
+    # (set_content_lists is skipped on the unbox path), so string() is empty.
+    page, = render_pages('''
+      <style>
+        @page { @top-center { content: string(header) } }
+        div { string-set: header content() }
+      </style>
+      <div style="display: contents">Title</div>
+    ''')
+    html, top_center = page.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'Title'
+
+
 @assert_no_logs
 def test_margin_box_string_set_2():
     def simple_string_set_test(content_val, extra_style=''):
@@ -1256,3 +1274,288 @@ def test_display_none_root(html):
     box = parse_all(html)
     assert box.style['display'] == ('block', 'flow')
     assert not box.children
+
+
+@assert_no_logs
+def test_display_contents_inline():
+    assert_tree(parse_all(
+        '<p><span style="display: contents">x<em>b</em></span></p>'), [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('span', 'Text', 'x'),
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'b')])])])])
+
+
+@assert_no_logs
+def test_display_contents_block_children():
+    assert_tree(parse_all(
+        '<div><section style="display: contents">'
+        '<p>a</p><p>b</p></section></div>'), [
+            ('div', 'Block', [
+                ('p', 'Block', [('p', 'Line', [('p', 'Text', 'a')])]),
+                ('p', 'Block', [('p', 'Line', [('p', 'Text', 'b')])])])])
+
+
+@assert_no_logs
+def test_display_contents_siblings():
+    # A contents element's children become siblings of its own siblings, not
+    # children nested inside a box standing in for the element.
+    assert_tree(parse_all(
+        '<div><section style="display: contents"><h1>a</h1></section>'
+        '<p>b</p></div>'), [
+            ('div', 'Block', [
+                ('h1', 'Block', [('h1', 'Line', [('h1', 'Text', 'a')])]),
+                ('p', 'Block', [('p', 'Line', [('p', 'Text', 'b')])])])])
+
+
+@assert_no_logs
+def test_display_contents_before_after():
+    assert_tree(parse_all(
+        '<style>span::before { content: "B" }'
+        ' span::after { content: "A" }</style>'
+        '<div><span style="display: contents">x</span></div>'), [
+            ('div', 'Block', [
+                ('div', 'Line', [
+                    ('span::before', 'Inline', [
+                        ('span::before', 'Text', 'B')]),
+                    ('span', 'Text', 'x'),
+                    ('span::after', 'Inline', [
+                        ('span::after', 'Text', 'A')])])])])
+
+
+@assert_no_logs
+def test_display_contents_inheritance():
+    box = parse_all(
+        '<div><span style="display: contents; color: red">'
+        '<em>b</em></span></div>')
+    body, = box.children
+    div, = body.children
+    line, = div.children
+    em, = line.children
+    assert em.style['color'] == (1, 0, 0, 1)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('css', ['float: left', 'position: absolute'])
+def test_display_contents_out_of_flow(css):
+    assert_tree(parse_all(
+        f'<div><span style="display: contents; {css}">'
+        f'<em>b</em></span>x</div>'), [
+            ('div', 'Block', [
+                ('div', 'Line', [
+                    ('em', 'Inline', [('em', 'Text', 'b')]),
+                    ('div', 'Text', 'x')])])])
+
+
+@assert_no_logs
+def test_display_contents_nested():
+    assert_tree(parse_all(
+        '<div><span style="display: contents">'
+        '<i style="display: contents"><em>b</em></i></span></div>'), [
+            ('div', 'Block', [
+                ('div', 'Line', [
+                    ('em', 'Inline', [
+                        ('em', 'Text', 'b')])])])])
+
+
+@assert_no_logs
+@pytest.mark.parametrize('html', [
+    '<html style="display: contents">',
+    '<html style="display: contents"><p>abc',
+])
+def test_display_contents_root(html):
+    box = parse_all(html)
+    assert box.element_tag == 'html'
+    assert box.style['display'] == ('block', 'flow')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('child', [
+    '<img src="pattern.png" style="display: contents">',
+    '<svg style="display: contents"><rect/></svg>',
+    '<textarea style="display: contents">x</textarea>',
+    '<select style="display: contents"><option>x</option></select>',
+    '<br style="display: contents">',
+    '<canvas style="display: contents">x</canvas>',
+    '<iframe style="display: contents">x</iframe>',
+    '<video style="display: contents">x</video>',
+    '<audio style="display: contents">x</audio>',
+    '<meter style="display: contents">x</meter>',
+    '<progress style="display: contents">x</progress>',
+])
+def test_display_contents_none(child):
+    assert_tree(parse_all(f'<div>{child}</div>'), [('div', 'Block', [])])
+
+
+@assert_no_logs
+def test_display_contents_table():
+    # A display:contents table unboxes: its rows move into the parent and a
+    # whole anonymous table regenerates around them. Indented markup must not
+    # leak the table's whitespace as spurious rows.
+    assert_tree(parse_all(
+        '<div>\n'
+        '  <table style="display: contents">\n'
+        '    <tr><td>a</td></tr>\n'
+        '  </table>\n'
+        '</div>'), [
+            ('div', 'Block', [
+                ('div', 'Block', [
+                    ('div', 'Table', [
+                        ('tbody', 'TableRowGroup', [
+                            ('tr', 'TableRow', [
+                                ('td', 'TableCell', [
+                                    ('td', 'Line', [
+                                        ('td', 'Text', 'a')])])])])])])])])
+
+
+@assert_no_logs
+def test_display_contents_row_group():
+    # A display:contents row group (thead/tbody/tfoot) unboxes: its rows are
+    # re-wrapped in a single anonymous row group. Indented markup must not leak
+    # whitespace as spurious rows.
+    assert_tree(parse_all(
+        '<table>\n'
+        '  <thead style="display: contents">\n'
+        '    <tr><th>h</th></tr>\n'
+        '  </thead>\n'
+        '  <tbody style="display: contents">\n'
+        '    <tr><td>a</td></tr>\n'
+        '  </tbody>\n'
+        '  <tfoot style="display: contents">\n'
+        '    <tr><td>f</td></tr>\n'
+        '  </tfoot>\n'
+        '</table>'), [
+            ('table', 'Block', [
+                ('table', 'Table', [
+                    ('table', 'TableRowGroup', [
+                        ('tr', 'TableRow', [
+                            ('th', 'TableCell', [
+                                ('th', 'Line', [('th', 'Text', 'h')])])]),
+                        ('tr', 'TableRow', [
+                            ('td', 'TableCell', [
+                                ('td', 'Line', [('td', 'Text', 'a')])])]),
+                        ('tr', 'TableRow', [
+                            ('td', 'TableCell', [
+                                ('td', 'Line', [
+                                    ('td', 'Text', 'f')])])])])])])])
+
+
+@assert_no_logs
+def test_display_contents_row():
+    # A display:contents table row unboxes: its cells are re-wrapped in a
+    # single anonymous row. Indented markup must not leak whitespace as spurious
+    # cells.
+    assert_tree(parse_all(
+        '<table><tbody>\n'
+        '  <tr style="display: contents">\n'
+        '    <td>a</td><td>b</td>\n'
+        '  </tr>\n'
+        '</tbody></table>'), [
+            ('table', 'Block', [
+                ('table', 'Table', [
+                    ('tbody', 'TableRowGroup', [
+                        ('tbody', 'TableRow', [
+                            ('td', 'TableCell', [
+                                ('td', 'Line', [('td', 'Text', 'a')])]),
+                            ('td', 'TableCell', [
+                                ('td', 'Line', [
+                                    ('td', 'Text', 'b')])])])])])])])
+
+
+@assert_no_logs
+def test_display_contents_cell():
+    # display:contents table cells (td/th) unbox: their content is re-wrapped
+    # in one anonymous cell, the inter-cell whitespace surviving as inline text
+    # rather than a spurious cell.
+    assert_tree(parse_all(
+        '<table><tbody><tr>\n'
+        '  <th style="display: contents">h</th>\n'
+        '  <td style="display: contents">a</td>\n'
+        '</tr></tbody></table>'), [
+            ('table', 'Block', [
+                ('table', 'Table', [
+                    ('tbody', 'TableRowGroup', [
+                        ('tr', 'TableRow', [
+                            ('tr', 'TableCell', [
+                                ('tr', 'Line', [
+                                    ('th', 'Text', 'h'),
+                                    ('tr', 'Text', ' '),
+                                    ('td', 'Text', 'a'),
+                                    ('tr', 'Text', ' ')])])])])])])])
+
+
+@assert_no_logs
+def test_display_contents_button():
+    assert_tree(parse_all(
+        '<div><button style="display: contents">x</button></div>'), [
+            ('div', 'Block', [
+                ('div', 'Line', [
+                    ('button', 'Text', 'x')])])])
+
+
+@assert_no_logs
+def test_display_contents_tail():
+    assert_tree(parse_all(
+        '<div><span style="display: contents">a</span>bc</div>'), [
+            ('div', 'Block', [
+                ('div', 'Line', [
+                    ('span', 'Text', 'a'),
+                    ('div', 'Text', 'bc')])])])
+
+
+@assert_no_logs
+def test_display_contents_pseudo():
+    assert_tree(parse_all(
+        '<style>p::before { content: "X"; display: contents }</style>'
+        '<p>y</p>'), [
+            ('p', 'Block', [
+                ('p', 'Line', [
+                    ('p::before', 'Text', 'X'),
+                    ('p', 'Text', 'y')])])])
+
+
+@assert_no_logs
+def test_display_contents_marker():
+    assert_tree(parse_all(
+        '<style>li::marker { content: "M"; display: contents }</style>'
+        '<ul><li>x</li></ul>'), [
+            ('ul', 'Block', [
+                ('li', 'Block', [
+                    ('li', 'Line', [
+                        ('li::marker', 'Text', 'M'),
+                        ('li', 'Text', 'x')])])])])
+
+
+@assert_no_logs
+def test_display_contents_colgroup():
+    # A colgroup is not in Appendix B's display:contents none-list, so it unboxes
+    # like any other element: the group disappears while its columns survive
+    # (matching browsers). Indented markup must not leak its whitespace as
+    # spurious anonymous rows.
+    box = parse_all(
+        '<table>\n  <colgroup style="display: contents">\n'
+        '    <col><col>\n  </colgroup>\n'
+        '  <tr><td>a</td><td>b</td></tr>\n</table>')
+    table, = (child for child in box.descendants()
+              if isinstance(child, boxes.TableBox))
+    columns = [col for group in table.column_groups for col in group.children]
+    assert len(columns) == 2
+    rows = [row for group in table.children
+            if isinstance(group, boxes.TableRowGroupBox)
+            for row in group.children]
+    assert len(rows) == 1
+
+
+@assert_no_logs
+def test_display_contents_col():
+    # A <col> is void, so display:contents unboxes it to nothing: the column it
+    # would define disappears, the same effect as display:none (matching
+    # browsers). The sibling col still defines its own column.
+    box = parse_all(
+        '<table><colgroup><col style="display: contents"><col></colgroup>'
+        '<tr><td>a</td></tr></table>')
+    table, = (child for child in box.descendants()
+              if isinstance(child, boxes.TableBox))
+    columns = [col for group in table.column_groups for col in group.children]
+    assert len(columns) == 1
