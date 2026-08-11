@@ -184,14 +184,14 @@ class HTML:
 
     def _ua_stylesheets(self, forms=False):
         if forms:
-            return [HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET]
-        return [HTML5_UA_STYLESHEET]
+            return [UA_STYLESHEET, UA_FORM_STYLESHEET]
+        return [UA_STYLESHEET]
 
     def _ua_counter_style(self):
-        return [HTML5_UA_COUNTER_STYLE.copy()]
+        return [UA_COUNTER_STYLE.copy()]
 
     def _ph_stylesheets(self):
-        return [HTML5_PH_STYLESHEET]
+        return [PH_STYLESHEET]
 
     def render(self, font_config=None, counter_style=None, color_profiles=None,
                **options):
@@ -375,6 +375,5 @@ class Attachment:
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa: I001, E402
 from .html import (  # noqa: E402
-    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET,
-    HTML5_PH_STYLESHEET)
+    UA_COUNTER_STYLE, UA_STYLESHEET, UA_FORM_STYLESHEET, PH_STYLESHEET)
 from .document import Document, Page  # noqa: E402

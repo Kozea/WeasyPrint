@@ -11,7 +11,7 @@ from weasyprint.css import get_all_computed_styles
 from weasyprint.css.counters import CounterStyle
 from weasyprint.css.targets import TargetCollector
 from weasyprint.formatting_structure import boxes, build
-from weasyprint.html import HTML5_UA_STYLESHEET
+from weasyprint.html import UA_STYLESHEET
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
@@ -48,7 +48,7 @@ class FakeHTML(HTML):
 
     def _ua_stylesheets(self, forms=False):
         return [
-            TEST_UA_STYLESHEET if stylesheet == HTML5_UA_STYLESHEET
+            TEST_UA_STYLESHEET if stylesheet == UA_STYLESHEET
             else stylesheet for stylesheet in super()._ua_stylesheets(forms)]
 
     def render(self, font_config=None, *args, **kwargs):

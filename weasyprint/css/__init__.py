@@ -423,12 +423,12 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 face = html.parse_string(face)
                 yield parse_declaration(f'font-family:{face}')
             if size := element.get('size'):
-                size_attr = html.strip_whitespace(size)
-                relative_plus = size_attr.startswith('+')
-                relative_minus = size_attr.startswith('-')
+                size = size.strip(html.WHITESPACE)
+                relative_plus = size.startswith('+')
+                relative_minus = size.startswith('-')
                 if relative_plus or relative_minus:
-                    size_attr = size_attr[1:]
-                size = html.parse_integer(size_attr)
+                    size = size[1:]
+                size = html.parse_integer(size)
                 if size is not None:
                     font_sizes = {
                         1: 'x-small',

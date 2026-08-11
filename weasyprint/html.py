@@ -20,15 +20,13 @@ from .images import SVGImage
 from .logger import LOGGER
 from .urls import get_url_attribute
 
-HTML5_UA_COUNTER_STYLE = CounterStyle()
-HTML5_UA = (files(css) / 'html5_ua.css').read_text('utf-8')
-HTML5_UA_FORM = (files(css) / 'html5_ua_form.css').read_text('utf-8')
-HTML5_PH = (files(css) / 'html5_ph.css').read_text('utf-8')
-HTML5_UA_STYLESHEET = CSS(
-    string=HTML5_UA, counter_style=HTML5_UA_COUNTER_STYLE)
-HTML5_UA_FORM_STYLESHEET = CSS(
-    string=HTML5_UA_FORM, counter_style=HTML5_UA_COUNTER_STYLE)
-HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
+UA_COUNTER_STYLE = CounterStyle()
+UA = (files(css) / 'html5_ua.css').read_text('utf-8')
+UA_FORM = (files(css) / 'html5_ua_form.css').read_text('utf-8')
+PH = (files(css) / 'html5_ph.css').read_text('utf-8')
+UA_STYLESHEET = CSS(string=UA, counter_style=UA_COUNTER_STYLE)
+UA_FORM_STYLESHEET = CSS(string=UA_FORM, counter_style=UA_COUNTER_STYLE)
+PH_STYLESHEET = CSS(string=PH)
 
 # https://html.spec.whatwg.org/multipage/#space-character
 WHITESPACE = ' \t\n\f\r'
@@ -144,15 +142,14 @@ def map_to_dimension_property_ignoring_zero(string):
     Return a string with the value and the dimension, or ``None`` on error.
 
     """
-    dimension = parse_dimension_value(string)
-    if dimension is not None:
+    if dimension := parse_dimension_value(string):
         value, unit = dimension
         if value != 0:
             return f'{value}{unit}'
 
 
 def ascii_lower(string):
-    r"""Transform (only) ASCII letters to lower case: A-Z is mapped to a-z.
+    """Transform (only) ASCII letters to lower case: A-Z is mapped to a-z.
 
     This is used for `ASCII case-insensitive
     <https://whatwg.org/C#ascii-case-insensitive>`_ matching.
@@ -161,10 +158,10 @@ def ascii_lower(string):
     which also affect non-ASCII characters,
     sometimes mapping them into the ASCII range:
 
-    >>> keyword = 'Bac\N{KELVIN SIGN}ground'
+    >>> keyword = 'Bac\\N{KELVIN SIGN}ground'
     >>> assert keyword.lower() == 'background'
     >>> assert ascii_lower(keyword) != keyword.lower()
-    >>> assert ascii_lower(keyword) == 'bac\N{KELVIN SIGN}ground'
+    >>> assert ascii_lower(keyword) == 'bac\\N{KELVIN SIGN}ground'
 
     """
     # This turns out to be faster than unicode.translate()
@@ -187,10 +184,8 @@ def handle_element(element, box, get_image_from_uri, base_url):
     :returns: a (possibly empty) list of boxes.
     """
     if box.element_tag in HTML_HANDLERS:
-        return HTML_HANDLERS[element.tag](
-            element, box, get_image_from_uri, base_url)
-    else:
-        return [box]
+        return HTML_HANDLERS[element.tag](element, box, get_image_from_uri, base_url)
+    return [box]
 
 
 def handler(tag):
@@ -222,55 +217,30 @@ def make_replaced_box(element, box, image):
 
 @handler('img')
 def handle_img(element, box, get_image_from_uri, base_url):
-    """Handle ``<img>`` elements.
-
-    Return either an image or the alt-text.
-
-    See: https://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
-
-    """
-    src = get_url_attribute(element, 'src', base_url)
-    alt = element.get('alt')
-    if src:
-        image = get_image_from_uri(
-            url=src, orientation=box.style['image_orientation'])
-        if image is not None:
+    """Handle ``<img>`` elements, return either an image or the alt-text."""
+    # See: https://www.w3.org/TR/html5/embedded-content-1.html#the-img-element.
+    if src := get_url_attribute(element, 'src', base_url):
+        orientation = box.style['image_orientation']
+        if image := get_image_from_uri(url=src, orientation=orientation):
             return [make_replaced_box(element, box, image)]
-        else:
-            # Invalid image, use the alt-text.
-            if alt:
-                box.children = [boxes.TextBox.anonymous_from(box, alt)]
-                return [box]
-            elif alt == '':
-                # The element represents nothing
-                return []
-            else:
-                assert alt is None
-                # TODO: find some indicator that an image is missing.
-                # For now, just remove the image.
-                return []
-    else:
-        if alt:
-            box.children = [boxes.TextBox.anonymous_from(box, alt)]
-            return [box]
-        else:
-            return []
+    # Invalid image, use the alt-text.
+    if alt := element.get('alt'):
+        box.children = [boxes.TextBox.anonymous_from(box, alt)]
+        return [box]
+    # TODO: find some indicator that an image is missing.
+    return []
 
 
 @handler('embed')
 def handle_embed(element, box, get_image_from_uri, base_url):
-    """Handle ``<embed>`` elements, return either an image or nothing.
-
-    See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element
-
-    """
-    src = get_url_attribute(element, 'src', base_url)
-    type_ = element.get('type', '').strip()
-    if src:
+    """Handle ``<embed>`` elements, return either an image or nothing."""
+    # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element.
+    if src := get_url_attribute(element, 'src', base_url):
+        mime_type = element.get('type', '').strip()
+        orientation = box.style['image_orientation']
         image = get_image_from_uri(
-            url=src, forced_mime_type=type_,
-            orientation=box.style['image_orientation'])
-        if image is not None:
+            url=src, forced_mime_type=mime_type, orientation=orientation)
+        if image:
             return [make_replaced_box(element, box, image)]
     # No fallback.
     return []
@@ -278,18 +248,14 @@ def handle_embed(element, box, get_image_from_uri, base_url):
 
 @handler('object')
 def handle_object(element, box, get_image_from_uri, base_url):
-    """Handle ``<object>`` elements, return either an image or the fallback.
-
-    See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element
-
-    """
-    data = get_url_attribute(element, 'data', base_url)
-    type_ = element.get('type', '').strip()
-    if data:
+    """Handle ``<object>`` elements, return either an image or the fallback."""
+    # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element.
+    if data := get_url_attribute(element, 'data', base_url):
+        mime_type = element.get('type', '').strip()
+        orientation = box.style['image_orientation']
         image = get_image_from_uri(
-            url=data, forced_mime_type=type_,
-            orientation=box.style['image_orientation'])
-        if image is not None:
+            url=data, forced_mime_type=mime_type, orientation=orientation)
+        if image:
             return [make_replaced_box(element, box, image)]
     # The element’s children are the fallback.
     return [box]
@@ -310,7 +276,7 @@ def handle_colgroup(element, box, _get_image_from_uri, _base_url):
 def handle_col(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox) and box.span > 1:
-        # Generate multiple boxes
+        # Generate multiple boxes.
         # https://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
         return [box.copy() for _i in range(box.span)]
     return [box]
@@ -323,12 +289,12 @@ def handle_svg(element, box, get_image_from_uri, base_url):
     Return either an image or the fallback content.
 
     """
-    # TODO: handle href base for inline svg tags
+    # TODO: handle href base for inline svg tags.
     url_fetcher = get_image_from_uri.keywords['url_fetcher']
     context = get_image_from_uri.keywords['context']
     try:
         image = SVGImage(element, base_url, url_fetcher, context)
-    except Exception as exception:  # pragma: no cover
+    except Exception as exception:
         LOGGER.error('Failed to load inline SVG: %s', exception)
         LOGGER.debug('Error while loading inline SVG:', exc_info=exception)
         return []
@@ -337,16 +303,12 @@ def handle_svg(element, box, get_image_from_uri, base_url):
 
 
 def get_html_metadata(html):
-    """Get metadata dictionary out of HTML object.
-
-    Relevant specs:
-
-    https://www.whatwg.org/html#the-title-element
-    https://www.whatwg.org/html#standard-metadata-names
-    https://wiki.whatwg.org/wiki/MetaExtensions
-    https://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
-
-    """
+    """Get metadata dictionary out of HTML object."""
+    # Relevant specifications:
+    # https://www.whatwg.org/html#the-title-element
+    # https://www.whatwg.org/html#standard-metadata-names
+    # https://wiki.whatwg.org/wiki/MetaExtensions
+    # https://microformats.org/wiki/existing-rel-values#link_type_extensions
     title = None
     description = None
     generator = None
@@ -365,7 +327,8 @@ def get_html_metadata(html):
             name = ascii_lower(element.get('name', ''))
             content = element.get('content', '')
             if name == 'keywords':
-                for keyword in map(strip_whitespace, content.split(',')):
+                for keyword in content.split(','):
+                    keyword = keyword.strip(WHITESPACE)
                     if keyword not in keywords:
                         keywords.append(keyword)
             elif name == 'author':
@@ -409,24 +372,12 @@ def get_html_metadata(html):
     }
 
 
-def strip_whitespace(string):
-    """Use the HTML definition of "space character",
-    not all Unicode Whitespace.
-
-    https://www.whatwg.org/html#strip-leading-and-trailing-whitespace
-    https://www.whatwg.org/html#space-character
-
-    """
-    return string.strip(WHITESPACE)
-
-
 # YYYY (eg 1997)
 # YYYY-MM (eg 1997-07)
 # YYYY-MM-DD (eg 1997-07-16)
 # YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
 # YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
 # YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
-
 W3C_DATE_RE = re.compile('''
     ^
     [ \t\n\f\r]*
@@ -453,7 +404,6 @@ W3C_DATE_RE = re.compile('''
     [ \t\n\f\r]*
     $
 ''', re.VERBOSE)
-
 
 def parse_w3c_date(meta_name, string):
     """Parse datetimes as defined by the W3C.
