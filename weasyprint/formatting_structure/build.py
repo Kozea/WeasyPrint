@@ -4,9 +4,6 @@ This includes creating anonymous boxes and processing whitespace as necessary.
 
 """
 
-import re
-import unicodedata
-
 from .. import html
 from ..css import properties, targets
 from ..layout.table import collapse_table_borders
@@ -40,14 +37,6 @@ BOX_TYPE_FROM_DISPLAY = {
     ('table-cell',): boxes.TableCellBox,
     ('table-caption',): boxes.TableCaptionBox,
 }
-
-# https://stackoverflow.com/questions/16317534/
-ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
-ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
-
-LINE_FEED_RE = re.compile('\r\n?')
-TAB_RE = re.compile('[\t ]*\n[\t ]*')
-SPACE_RE = re.compile('[\t ]+')
 
 
 def create_anonymous_boxes(box):
@@ -84,8 +73,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             target_collector, counter_style, footnotes)
 
     target_collector.check_pending_targets()
-    process_whitespace(box)
-    process_text_transform(box)
+    box.process_whitespace()
+    box.process_text_transform()
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
@@ -432,8 +421,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     'Only strings are allowed for content attr() functions, not %s',
                     attr_type)
         elif type_ == 'content()':
-            added_text = extract_text(value, parent_box)
-            add_text(added_text)
+            add_text(parent_box.extract_text(value))
         elif type_ == 'string()':
             if not in_page_context:
                 # string() is currently only valid in @page context.
@@ -498,8 +486,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 target_box = lookup_target.target_box
                 # TODO: 'before'- and 'after'- content referring missing
                 # counters are not properly set.
-                text = extract_text(text_style, target_box)
-                add_text(text)
+                add_text(target_box.extract_text(text_style))
             else:
                 break
         elif type_ == 'quote' and None not in (quote_depth, quote_style):
@@ -651,7 +638,7 @@ def compute_bookmark_label(element, box, content_list, counter_values,
         content_list, box, counter_values, css_token, parse_again,
         target_collector, counter_style, element=element)
     if box_list:
-        box.bookmark_label = ''.join(box_text(box) for box in box_list)
+        box.bookmark_label = ''.join(box.content_text for box in box_list)
 
 
 def set_content_lists(element, box, style, counter_values, target_collector,
@@ -711,11 +698,6 @@ def update_counters(state, style):
             sibling_scopes.add(name)
             values.append(0)
         values[-1] += value
-
-
-def is_whitespace(box, _has_non_whitespace=re.compile('\\S').search):
-    """Return True if ``box`` is a TextBox with only whitespace."""
-    return isinstance(box, boxes.TextBox) and not _has_non_whitespace(box.text)
 
 
 def wrap_improper(box, children, wrapper_type, test=None):
@@ -790,13 +772,13 @@ def table_boxes_children(box, children):
 
         # Last child
         internal, text = children[-2:]
-        if (internal.internal_table_or_caption and is_whitespace(text)):
+        if (internal.internal_table_or_caption and text.is_whitespace()):
             children.pop()
 
         # First child
         if len(children) >= 2:
             text, internal = children[:2]
-            if (internal.internal_table_or_caption and is_whitespace(text)):
+            if (internal.internal_table_or_caption and text.is_whitespace()):
                 children.pop(0)
 
         # Children other than first and last that would be removed by
@@ -813,7 +795,7 @@ def table_boxes_children(box, children):
             # Ignore some whitespace: rule 1.4
             prev_child and prev_child.internal_table_or_caption and
             next_child and next_child.internal_table_or_caption and
-            is_whitespace(child)
+            child.is_whitespace()
         )
     ]
 
@@ -1078,169 +1060,6 @@ def grid_children(box, children):
         return grid_children
     else:
         return children
-
-
-def process_whitespace(box, following_collapsible_space=False):
-    """First part of "The 'white-space' processing model".
-
-    See https://www.w3.org/TR/CSS21/text.html#white-space-model
-    https://drafts.csswg.org/css-text-3/#white-space-rules
-
-    """
-    if isinstance(box, boxes.TextBox):
-        text = box.text
-        if not text:
-            return following_collapsible_space
-
-        # Normalize line feeds
-        text = LINE_FEED_RE.sub('\n', text)
-
-        new_line_collapse = box.style['white_space'] in ('normal', 'nowrap')
-        space_collapse = box.style['white_space'] in (
-            'normal', 'nowrap', 'pre-line')
-
-        if space_collapse:
-            # \r characters were removed/converted earlier
-            text = TAB_RE.sub('\n', text)
-
-        if new_line_collapse:
-            # TODO: this should be language-specific
-            # Could also replace with a zero width space character (U+200B),
-            # or no character
-            # CSS3: https://www.w3.org/TR/css-text-3/#overflow-wrap
-            text = text.replace('\n', ' ')
-
-        if space_collapse:
-            previous_text = text = SPACE_RE.sub(' ', text)
-            if following_collapsible_space and text.startswith(' '):
-                text = text[1:]
-                box.leading_collapsible_space = True
-            following_collapsible_space = previous_text.endswith(' ')
-        else:
-            following_collapsible_space = False
-
-        box.text = text
-
-    else:
-        for child in box.children:
-            child_collapsible_space = process_whitespace(
-                child, following_collapsible_space)
-            if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
-                following_collapsible_space = child_collapsible_space
-            elif child.is_in_normal_flow():
-                following_collapsible_space = False
-
-    return following_collapsible_space
-
-
-def process_text_transform(box):
-    # Rules defined in
-    # https://www.unicode.org/versions/latest/core-spec/chapter-3/#G33992
-    # https://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
-    # https://w3c.github.io/i18n-tests/results/text-transform
-    # Common transformations should be handled by common algorithm in Python, special
-    # casing and tailoring shoud be done here when it depends on the language and not on
-    # only on the glyphs.
-    if isinstance(box, boxes.TextBox):
-        text_transform = box.style['text_transform']
-        lang_code = (box.style['lang'] or '').split('-')[0].lower()
-        if text_transform != 'none':
-            box.text = {
-                'uppercase': uppercase,
-                'lowercase': lowercase,
-                'capitalize': capitalize,
-                'full-width': lambda text, lang_code: text.translate(ASCII_TO_WIDE),
-            }[text_transform](box.text, lang_code)
-        if box.style['hyphens'] == 'none':
-            box.text = box.text.replace('\u00AD', '')  # U+00AD is soft hyphen
-
-    elif not box.is_running():
-        for child in box.children:
-            process_text_transform(child)
-
-def uppercase(text, lang_code):
-    mapper = {}
-
-    if lang_code == 'el':
-        # https://w3c.github.io/i18n-tests/css-text/text-transform/
-        #   text-transform-tailoring-003.html
-        # https://en.wikiversity.org/wiki/Greek_Language/Diphthongs
-        mapper = {
-            'άι': 'ΑΪ',
-            'άυ': 'ΑΫ',
-            'όι': 'ΟΪ',
-            'όυ': 'ΟΫ',
-            'έυ': 'ΗΫ',
-        }
-    elif lang_code in ('tr', 'az'):
-        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Upper.xml
-        mapper = {
-            'i': 'İ',
-        }
-
-    for key, value in mapper.items():
-        text = text.replace(key, value)
-
-    if lang_code == 'el':
-        # Remove diacritics in Greek.
-        # https://github.com/unicode-org/cldr/blob/main/common/transforms/el-Upper.xml
-        # TODO: we should keep tonos on disjunctive eta.
-        # https://w3c.github.io/i18n-tests/css-text/text-transform/
-        #   text-transform-tailoring-005.html
-        text = unicodedata.normalize('NFD', text)
-        for char in '\u0313\u0314\u0301\u0300\u0306\u0342\u0304\u0345':
-            text = text.replace(char, '')
-        text = unicodedata.normalize('NFC', text)
-
-    return text.upper()
-
-
-def lowercase(text, lang_code):
-    mapper = {}
-
-    if lang_code in ('tr', 'az'):
-        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Lower.xml
-        mapper = {
-            'I': 'ı',
-            'İ': 'i',
-        }
-    elif lang_code == 'lt':
-        # https://github.com/unicode-org/cldr/blob/main/common/transforms/lt-Lower.xml
-        mapper = {
-            'Ì': 'i̇̀',
-            'Í': 'i̇́',
-            'Ĩ': 'i̇̃',
-        }
-
-    for key, value in mapper.items():
-        text = text.replace(key, value)
-
-    return text.lower()
-
-
-def capitalize(text, lang_code):
-    """Capitalize words according to CSS’s "text-transform: capitalize"."""
-    letter_found = False
-    skip_next_letter = False
-    output = ''
-    for i, letter in enumerate(text):
-        if skip_next_letter:
-            skip_next_letter = False
-            continue
-        category = unicodedata.category(letter)[0]
-        if not letter_found and category in ('L', 'N'):
-            letter_found = True
-            if lang_code == 'nl' and text[i:i+2] == 'ij':
-                skip_next_letter = True
-                letter = 'IJ'
-            elif lang_code in ('tr', 'az'):
-                letter = uppercase(letter, lang_code)
-            else:
-                letter = letter.upper()
-        elif category == 'Z':
-            letter_found = False
-        output += letter
-    return output
 
 
 def inline_in_block(box):
@@ -1530,46 +1349,3 @@ def set_viewport_overflow(root_box):
     root_box.viewport_overflow = chosen_box.style['overflow']
     chosen_box.style['overflow'] = 'visible'
     return root_box
-
-
-def box_text(box):
-    # Stripping may not be the "right" way, but it seems to be what users usually want
-    # in this case. The specification asks for the "text content", probably as defined
-    # in DOM.
-    box = box.deepcopy()
-    process_whitespace(box)
-    if isinstance(box, boxes.TextBox):
-        return box.text.strip()
-    elif isinstance(box, boxes.ParentBox):
-        return ''.join(
-            child.text for child in box.descendants()
-            if not child.element_tag.endswith('::before') and
-            not child.element_tag.endswith('::after') and
-            not child.element_tag.endswith('::marker') and
-            isinstance(child, boxes.TextBox)).strip()
-    return ''
-
-
-def extract_text(text_part, box):
-    if text_part in ('text', 'content'):
-        return box_text(box)
-    elif text_part in ('before', 'after'):
-        if isinstance(box, boxes.ParentBox):
-            return ''.join(
-                box_text(child) for child in box.descendants()
-                if child.element_tag.endswith(f'::{text_part}') and
-                not isinstance(child, boxes.ParentBox))
-        return ''
-    elif text_part == 'first-letter':
-        # TODO: use the same code as in inlines.first_letter_to_box
-        character_found = False
-        first_letter = ''
-        text = box_text(box)
-        for letter in text:
-            category = unicodedata.category(letter)
-            if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
-                if character_found:
-                    break
-                character_found = True
-            first_letter += letter
-        return first_letter

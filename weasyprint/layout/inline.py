@@ -1,11 +1,11 @@
 """Layout for inline-level boxes."""
 
-import unicodedata
 from math import inf
 
 from ..css import Pending, check_math
 from ..css.properties import INHERITED
-from ..formatting_structure import boxes, build
+from ..formatting_structure import boxes
+from ..formatting_structure.text import get_first_letter
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
@@ -311,22 +311,14 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     box.element, [child])
                 box.children = ((letter_box, *box.children[1:]))
             elif child.text:
-                character_found = False
                 if skip_stack:
                     child_skip_stack, = skip_stack.values()
                     if child_skip_stack:
                         index, = child_skip_stack
                         child.text = child.text[index:]
                         skip_stack = None
-                while child.text:
-                    next_letter = child.text[0]
-                    category = unicodedata.category(next_letter)
-                    if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
-                        if character_found:
-                            break
-                        character_found = True
-                    first_letter += next_letter
-                    child.text = child.text[1:]
+                if first_letter := get_first_letter(child.text):
+                    child.text = child.text[len(first_letter):]
                 if first_letter.lstrip('\n'):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
@@ -354,7 +346,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box, *box.children)
-                    build.process_text_transform(text_box)
+                    text_box.process_text_transform()
                     if skip_stack and child_skip_stack:
                         index, = skip_stack
                         (child_index, grandchild_skip_stack), = child_skip_stack.items()
@@ -475,7 +467,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
         for key, value in first_line_style.items():
             if key in INHERITED:
                 box.style[key] = value
-        build.process_text_transform(box)
+        box.process_text_transform()
     resolve_percentages(box, containing_block)
     float_widths = {'left': 0, 'right': 0}
     if isinstance(box, boxes.TextBox):

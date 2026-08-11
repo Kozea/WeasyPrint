@@ -396,8 +396,8 @@ def make_margin_boxes(context, page, state):
                 box.style, box, quote_depth, counter_values,
                 context.get_image_from_uri, context.target_collector,
                 context.counter_style, context, page)
-            build.process_whitespace(box)
-            build.process_text_transform(box)
+            box.process_whitespace()
+            box.process_text_transform()
             box = build.create_anonymous_boxes(box)
         resolve_percentages(box, containing_block)
         if not box.is_generated:
