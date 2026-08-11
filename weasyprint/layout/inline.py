@@ -627,10 +627,8 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
                 if float_align:
                     old_child.translate(dx=dx)
 
-    elif child.is_running():
-        running_name = child.style['position'][1]
-        page = context.current_page
-        context.running_elements[running_name][page].append(child)
+    elif child.is_running() or child.is_note():
+        context.add_running_element(child)
 
 
 def _break_waiting_children(context, box, max_x, bottom_space, initial_skip_stack,

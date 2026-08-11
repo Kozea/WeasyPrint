@@ -296,10 +296,8 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                     new_child = None
 
     # Running element layout.
-    elif child.is_running():
-        running_name = child.style['position'][1]
-        page = context.current_page
-        context.running_elements[running_name][page].append(child)
+    elif child.is_running() or child.is_note():
+        context.add_running_element(child)
 
     return stop, resume_at, new_child, out_of_flow_resume_at
 

@@ -16,6 +16,7 @@ from math import inf
 
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
+from ..urls import get_link
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
 from .block import block_level_layout
@@ -199,7 +200,7 @@ def layout_document(html, root_box, context, max_loops=8):
     # Add margin boxes
     for i, page in enumerate(pages):
         root_children = []
-        root, footnote_area = page.children
+        root, footnote_area, note_area = page.children
         root_children.extend(layout_fixed_boxes(context, pages[:i], page))
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
@@ -208,10 +209,14 @@ def layout_document(html, root_box, context, max_loops=8):
 
         # page_maker's page_state is ready for the MarginBoxes
         state = context.page_maker[context.current_page][3]
-        page.children = (root,)
+        children = []
+        children.append(root)
         if footnote_area.children:
-            page.children += (footnote_area,)
-        page.children += tuple(make_margin_boxes(context, page, state))
+            children.append(footnote_area)
+        if note_area.children:
+            children.append(note_area)
+        children.extend(make_margin_boxes(context, page, state))
+        page.children = tuple(children)
         layout_backgrounds(page, context.get_image_from_uri)
         yield page
 
@@ -329,30 +334,48 @@ class LayoutContext:
 
         """
         if self.current_page in store[name]:
-            # A value was assigned on this page
-            first_string = store[name][self.current_page][0]
-            last_string = store[name][self.current_page][-1]
+            # A value was assigned on this page.
+            current = store[name][self.current_page]
             if keyword == 'first':
-                return first_string
+                return (current[0],)
             elif keyword == 'start':
                 element = page
                 while element:
                     if element.style['string_set'] != 'none':
                         for (string_name, _) in element.style['string_set']:
                             if string_name == name:
-                                return first_string
+                                return (current[0],)
                     if element.children:
                         element = element.children[0]
                         continue
                     break
             elif keyword == 'last':
-                return last_string
+                return (current[-1],)
             elif keyword == 'first-except':
-                return
-        # Search backwards through previous pages
-        for previous_page in range(self.current_page - 1, 0, -1):
-            if previous_page in store[name]:
-                return store[name][previous_page][-1]
+                return ()
+            elif keyword == 'all-once':
+                return tuple(current)
+        # Search backwards through previous pages.
+        if keyword != 'all-once':
+            for previous_page in range(self.current_page - 1, 0, -1):
+                if previous_page in store[name]:
+                    return (store[name][previous_page][-1],)
+        return ()
+
+    def add_running_element(self, box):
+        """Add a running element to the list of running elements."""
+        running_name = box.style['position'][1]
+        if box.is_note():
+            assert box.note_call
+            assert box.note_callback
+            index = len(self.running_elements)
+            box.style['anchor'] = f'note-{index}'
+            box.note_call.style['anchor'] = f'call-{index}'
+            box.note_call.style['link'] = get_link(
+                f'#note-{index}', box.style.base_url)
+            box.note_callback.style['link'] = get_link(
+                f'#call-{index}', box.style.base_url)
+        self.running_elements[running_name][self.current_page].append(box)
 
     def layout_footnote(self, footnote):
         """Add a footnote to the layout for this page."""

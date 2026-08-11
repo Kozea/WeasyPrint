@@ -149,7 +149,8 @@ def check_string_or_element(string_or_element, token):
             ident = arguments.pop(0)
             if ident.type != 'ident':
                 return
-            if ident.lower_value not in ('first', 'start', 'last', 'first-except'):
+            values = ('first', 'start', 'last', 'first-except', 'all-once')
+            if ident.lower_value not in values:
                 return
             ident = ident.lower_value
         else:

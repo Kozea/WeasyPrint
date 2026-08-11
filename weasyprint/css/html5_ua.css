@@ -134,10 +134,13 @@ img, svg { overflow: hidden }
 video { object-fit: contain }
 table { box-sizing: border-box }
 
-/* Footnotes */
+/* Notes */
 
 ::footnote-call { content: counter(footnote); vertical-align: super; font-size: smaller; line-height: inherit }
 ::footnote-marker { content: counter(footnote) ". " }
+::note-call { content: counter(note); vertical-align: super; font-size: smaller; line-height: inherit }
+::note-marker { content: counter(note) ". " }
+::note-callback { content: " ↩" }
 
 /* Counters and bookmarks */
 
@@ -181,7 +184,8 @@ fieldset { border: groove 2px; margin-left: 2px; margin-right: 2px; padding: .35
 
 @page {
   margin: 75px;
-  @footnote { margin-top: 1em }
+  @footnote            { margin-top: 1em }
+  @note-area           { content: element(note, all-once) }
   @top-left-corner     { text-align: right;  vertical-align: middle }
   @top-left            { text-align: left;   vertical-align: middle }
   @top-center          { text-align: center; vertical-align: middle }

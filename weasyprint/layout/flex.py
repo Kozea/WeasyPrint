@@ -143,10 +143,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     absolute_boxes.append(placeholder)
                 else:
                     fixed_boxes.append(placeholder)
-            elif child.is_running():
-                running_name = child.style['position'][1]
-                page = context.current_page
-                context.running_elements[running_name][page].append(child)
+            elif child.is_running() or child.is_note():
+                context.add_running_element(child)
             continue
         # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto.
         if main == 'width':
