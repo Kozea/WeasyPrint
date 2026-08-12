@@ -1922,16 +1922,6 @@ def anchor(token):
         return token.value
 
 
-@property(proprietary=True, wants_base_url=True)
-@single_token
-def link(token, base_url):
-    """Validation for ``link``."""
-    if token.type == 'url':
-        return get_url(token, base_url)
-    elif token.type == 'string':
-        return ('string', token.value)
-
-
 @property()
 @single_token
 def tab_size(token):

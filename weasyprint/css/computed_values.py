@@ -7,7 +7,6 @@ from tinycss2.color5 import parse_color
 
 from ..logger import LOGGER
 from ..text.line_break import strut
-from ..urls import get_link
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
 from .units import LENGTH_UNITS, to_pixels
@@ -690,16 +689,6 @@ def line_height(style, name, value):
         return Dimension(pixels, 'px')
     else:
         return length(style, name, value)
-
-
-@register_computer('link')
-def link(style, name, values):
-    """Compute the ``link`` property."""
-    name, value = values
-    if name == 'string':
-        return get_link(value, style.base_url)
-    elif name == 'url':
-        return values
 
 
 @register_computer('lang')

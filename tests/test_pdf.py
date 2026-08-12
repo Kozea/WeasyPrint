@@ -314,7 +314,7 @@ def test_links():
         p { display: block; height: 90pt; margin: 0 0 10pt 0 }
         img { width: 30pt; vertical-align: top }
       </style>
-      <p><a href="https://weasyprint.org"><img src=pattern.png></a></p>
+      <p><a href=" https://weasy\nprint.org\t"><img src=pattern.png></a></p>
       <p style="padding: 0 10pt"><a
          href="#lipsum"><img style="border: solid 1pt"
                              src=pattern.png></a></p>
@@ -400,19 +400,6 @@ def test_relative_links_missing_base():
 
 
 @assert_no_logs
-def test_relative_links_missing_base_link():
-    # Relative URI reference without a base URI: not supported for -weasy-link
-    with capture_logs() as logs:
-        pdf = FakeHTML(
-            string='<div style="-weasy-link: url(../lipsum)">',
-            base_url=None).write_pdf()
-    assert b'/Annots' not in pdf
-    assert len(logs) == 1
-    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
-    assert 'Relative URI reference without a base URI' in logs[0]
-
-
-@assert_no_logs
 def test_relative_links_internal():
     # Internal URI reference without a base URI: OK
     pdf = FakeHTML(
@@ -432,7 +419,7 @@ def test_relative_links_internal():
 @assert_no_logs
 def test_relative_links_anchors():
     pdf = FakeHTML(
-        string='<div style="-weasy-link: url(#lipsum)" id="lipsum"></div>a',
+        string='<a href="#lipsum" id="lipsum" style="display: block"></a>a',
         base_url=None).write_pdf()
     assert b'/Dest (lipsum)' in pdf
     link = re.search(

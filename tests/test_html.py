@@ -9,7 +9,7 @@ from .testing_utils import BASE_URL, assert_no_logs
 from weasyprint.html import (  # isort:skip
     map_to_dimension_property, map_to_dimension_property_ignoring_zero,
     map_to_pixel_length, parse_dimension_value, parse_integer,
-    parse_non_negative_integer, parse_string, parse_url)
+    parse_non_negative_integer)
 
 
 PH_TESTING_CSS = CSS(string='''
@@ -523,25 +523,3 @@ def test_map_to_dimension_property_ignoring_zero(string, expected):
 ])
 def test_map_to_dimension_property_ignoring_zero_invalid(string):
     assert map_to_dimension_property_ignoring_zero(string) is None
-
-
-@pytest.mark.parametrize(('string', 'expected'), [
-    ('a', '"a"'),
-    ('a\nb', '"a\\Ab"'),
-    ('a\rb', '"a\\Db"'),
-    ('\n\na', '"\\A\\Aa"'),
-    ('a"b', '"a\\"b"'),
-])
-def test_parse_string(string, expected):
-    assert parse_string(string) == expected
-
-
-@pytest.mark.parametrize(('string', 'expected'), [
-    ('a', 'url("a")'),
-    ('a\nb', 'url("a\\Ab")'),
-    ('a\rb', 'url("a\\Db")'),
-    ('\n\na', 'url("\\A\\Aa")'),
-    ('a"b', 'url("a\\"b")'),
-])
-def test_parse_url(string, expected):
-    assert parse_url(string) == expected

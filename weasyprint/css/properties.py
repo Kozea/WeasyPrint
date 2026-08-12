@@ -290,7 +290,6 @@ INITIAL_VALUES = {
 
     # Proprietary
     'anchor': None,  # computed value of 'none'
-    'link': None,  # computed value of 'none'
     'lang': None,  # computed value of 'none'
 }
 
@@ -340,7 +339,6 @@ INHERITED = {
     'lang',
     'letter_spacing',
     'line_height',
-    'link',
     'list_style_image',
     'list_style_position',
     'list_style_type',

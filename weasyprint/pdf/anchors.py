@@ -10,6 +10,7 @@ from urllib.parse import unquote, urlsplit
 import pydyf
 
 from .. import Attachment
+from ..html import parse_url
 from ..logger import LOGGER
 from ..text.ffi import ffi, gobject, pango
 from ..text.fonts import get_font_description
@@ -268,22 +269,25 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             pdf.add_object(field)
 
         elif input_type == 'submit' or element.tag == 'button':
-            flags = 1 << (3 - 1)  # HTML form format
-            if form.element.get('method', '').lower() != 'post':
-                flags += 1 << (4 - 1)  # GET method
-            fields = pydyf.Array(field.reference for field in forms[form].values())
-            field['FT'] = '/Btn'
-            field['DA'] = pydyf.String(b' '.join(field_stream.stream))
-            field['V'] = pydyf.String(form.element.get('value', ''))
-            field['Ff'] = 1 << (17 - 1)  # Push-button
-            field['A'] = pydyf.Dictionary({
-                'Type': '/Action',
-                'S': '/SubmitForm',
-                'F': pydyf.String(form.element.get('action')),
-                'Fields': fields,
-                'Flags': flags,
-            })
-            pdf.add_object(field)
+            action = form.element.get('action')
+            if action_url := parse_url(action, base_url=None, allow_relative=True):
+                flags = 1 << (3 - 1)  # HTML form format
+                if form.element.get('method', '').lower() != 'post':
+                    flags += 1 << (4 - 1)  # GET method
+                    fields = pydyf.Array(
+                        field.reference for field in forms[form].values())
+                    field['FT'] = '/Btn'
+                    field['DA'] = pydyf.String(b' '.join(field_stream.stream))
+                    field['V'] = pydyf.String(form.element.get('value', ''))
+                    field['Ff'] = 1 << (17 - 1)  # Push-button
+                    field['A'] = pydyf.Dictionary({
+                        'Type': '/Action',
+                        'S': '/SubmitForm',
+                        'F': pydyf.String(action_url),
+                        'Fields': fields,
+                        'Flags': flags,
+                    })
+                    pdf.add_object(field)
 
         else:
             # Text, password, textarea, files, and other unknown fields.

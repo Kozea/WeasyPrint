@@ -28,7 +28,7 @@ from PIL.ImageCms import ImageCmsProfile
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
-from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
+from ..urls import URLFetchingError, fetch, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS, PHYSICAL_FUNCTIONS
 from .functions import Function, check_math, check_var
@@ -253,6 +253,23 @@ class StyleFor:
         return True
 
 
+def string_to_css(string):
+    """Transform a string to CSS-escaped string, including quotes."""
+    string = (
+        string
+        .replace('\\', '\\\\')
+        .replace('"', '\\"')
+        .replace('\n', '\\A')
+        .replace('\r', '\\D')
+        .replace('\f', '\\C'))
+    return f'"{string}"'
+
+
+def url_to_css(string):
+    """Transform a URL to url() string."""
+    return f'url({string_to_css(string)})'
+
+
 def get_child_text(element):
     """Return the text directly in the element, not descendants."""
     content = [element.text] if element.text else []
@@ -288,7 +305,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
     The output order is the same as the source order.
 
     """
-    from ..html import element_has_link_type
+    from ..html import element_has_link_type, parse_url
 
     for wrapper in wrapper_element.query_all('style', 'link'):
         element = wrapper.etree_element
@@ -316,7 +333,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
             if not element_has_link_type(element, 'stylesheet') or \
                     element_has_link_type(element, 'alternate'):
                 continue
-            href = get_url_attribute(element, 'href', base_url)
+            href = parse_url(element.get('href'), base_url)
             if href is not None:
                 try:
                     yield CSS(
@@ -356,9 +373,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         if lang := element.get('lang'):
             yield parse_declaration(f'-weasy-lang:"{lang}"')
 
-        if href := element.get('href', '').strip(html.WHITESPACE):
-            yield parse_declaration(f'-weasy-link:"{href}"')
-
         if id_ := element.get('id'):
             yield parse_declaration(f'-weasy-anchor:"{id_}"')
 
@@ -394,8 +408,8 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     yield parse_declaration(f'margin-left:{value}')
                     yield parse_declaration(f'margin-right:{value}')
                     break
-            if background := element.get('background'):
-                url = html.parse_url(background)
+            if background := html.parse_url(element.get('background'), base_url):
+                url = url_to_css(background)
                 style_attribute = f'background-image:{url}'
                 yield parse_declaration(style_attribute)
             if bgcolor := element.get('bgcolor'):
@@ -420,7 +434,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 color = html.parse_legacy_color(color)
                 yield parse_declaration(f'color:{color}')
             if face := element.get('face'):
-                face = html.parse_string(face)
+                face = string_to_css(face)
                 yield parse_declaration(f'font-family:{face}')
             if size := element.get('size'):
                 size = size.strip(html.WHITESPACE)
@@ -465,8 +479,8 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 value = html.map_to_dimension_property(height)
                 if value is not None:
                     yield parse_declaration(f'height:{value}')
-            if background := element.get('background'):
-                url = html.parse_url(background)
+            if background := html.parse_url(element.get('background'), base_url):
+                url = url_to_css(background)
                 style_attribute = (f'background-image:{url}')
                 yield parse_declaration(style_attribute)
             if bgcolor := element.get('bgcolor'):
@@ -488,8 +502,8 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 yield parse_declaration('text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
                 yield parse_declaration(f'text-align:{align}')
-            if background := element.get('background'):
-                url = html.parse_url(background)
+            if background := html.parse_url(element.get('background'), base_url):
+                url = url_to_css(background)
                 style_attribute = f'background-image:{url}'
                 yield parse_declaration(style_attribute)
             if bgcolor := element.get('bgcolor'):

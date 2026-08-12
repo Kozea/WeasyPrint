@@ -97,23 +97,6 @@ def url_is_absolute(url):
     return bool(scheme.match(url))
 
 
-def get_url_attribute(element, attr_name, base_url, allow_relative=False):
-    """Get the URI corresponding to the ``attr_name`` attribute.
-
-    Return ``None`` if:
-
-    * the attribute is empty or missing or,
-    * the value is a relative URI but the document has no base URI and
-      ``allow_relative`` is ``False``.
-
-    Otherwise return an URI, absolute if possible.
-
-    """
-    if value := element.get(attr_name, '').strip():
-        context = f'<{element.tag} {attr_name}="{value}">'
-        return url_join(base_url or '', value, allow_relative, context)
-
-
 def get_url_tuple(url, base_url):
     """Get tuple describing internal or external URI."""
     if url.startswith('#'):

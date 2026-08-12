@@ -18,7 +18,7 @@ from .css.counters import CounterStyle
 from .formatting_structure import boxes
 from .images import SVGImage
 from .logger import LOGGER
-from .urls import get_url_attribute
+from .urls import get_link, url_join
 
 UA_COUNTER_STYLE = CounterStyle()
 UA = (files(css) / 'html5_ua.css').read_text('utf-8')
@@ -28,11 +28,35 @@ UA_STYLESHEET = CSS(string=UA, counter_style=UA_COUNTER_STYLE)
 UA_FORM_STYLESHEET = CSS(string=UA_FORM, counter_style=UA_COUNTER_STYLE)
 PH_STYLESHEET = CSS(string=PH)
 
-# https://html.spec.whatwg.org/multipage/#space-character
+# https://infra.spec.whatwg.org/#ascii-whitespace
 WHITESPACE = ' \t\n\f\r'
+TAB_OR_NEWLINE = '\t\n\r'
 SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{WHITESPACE}]+')
 INTEGER_RE = re.compile(f'^[{WHITESPACE}]*([+-]?)([0-9]+)')
 DIMENSION_RE = re.compile(f'^[{WHITESPACE}]*([0-9]+([.][0-9]*)?)(%)?')
+
+
+def parse_url(string, base_url, allow_relative=False):
+    """Parse a valid URL potentially surrounded by spaces.
+
+    Return ``None`` if:
+
+    * the attribute is empty or missing or,
+    * the value is a relative URI but the document has no base URI and
+      ``allow_relative`` is ``False``.
+
+    Otherwise return an URI, absolute if possible.
+
+    """
+    if not string:
+        return
+
+    string = string.strip(WHITESPACE)
+    for character in TAB_OR_NEWLINE:
+        string = string.replace(character, '')
+
+    if string:
+        return url_join(base_url or '', string, allow_relative, string)
 
 
 def parse_integer(string):
@@ -86,31 +110,6 @@ def parse_legacy_color(string):
     green = round(max(0, min(1, color.green)) * 255)
     blue = round(max(0, min(1, color.blue)) * 255)
     return f'#{red:02x}{green:02x}{blue:02x}'
-
-
-def parse_string(string):
-    """Parse a URL from an HTML attribute value.
-
-    Return a CSS-escaped string, including quotes.
-
-    """
-    string = (
-        string
-        .replace('\\', '\\\\')
-        .replace('"', '\\"')
-        .replace('\n', '\\A')
-        .replace('\r', '\\D')
-        .replace('\f', '\\C'))
-    return f'"{string}"'
-
-
-def parse_url(string):
-    """Parse a URL from an HTML attribute value.
-
-    Return a url() string.
-
-    """
-    return f'url({parse_string(string)})'
 
 
 def map_to_pixel_length(string):
@@ -219,7 +218,7 @@ def make_replaced_box(element, box, image):
 def handle_img(element, box, get_image_from_uri, base_url):
     """Handle ``<img>`` elements, return either an image or the alt-text."""
     # See: https://www.w3.org/TR/html5/embedded-content-1.html#the-img-element.
-    if src := get_url_attribute(element, 'src', base_url):
+    if src := parse_url(element.get('src'), base_url):
         orientation = box.style['image_orientation']
         if image := get_image_from_uri(url=src, orientation=orientation):
             return [make_replaced_box(element, box, image)]
@@ -231,11 +230,19 @@ def handle_img(element, box, get_image_from_uri, base_url):
     return []
 
 
+@handler('a')
+def handle_a(element, box, get_image_from_uri, base_url):
+    """Handle ``<a>`` elements, set the link attribute on the box."""
+    if href := parse_url(element.get('href'), base_url, allow_relative=True):
+        box.link = get_link(href, base_url)
+    return [box]
+
+
 @handler('embed')
 def handle_embed(element, box, get_image_from_uri, base_url):
     """Handle ``<embed>`` elements, return either an image or nothing."""
     # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-embed-element.
-    if src := get_url_attribute(element, 'src', base_url):
+    if src := parse_url(element.get('src'), base_url):
         mime_type = element.get('type', '').strip()
         orientation = box.style['image_orientation']
         image = get_image_from_uri(
@@ -250,7 +257,7 @@ def handle_embed(element, box, get_image_from_uri, base_url):
 def handle_object(element, box, get_image_from_uri, base_url):
     """Handle ``<object>`` elements, return either an image or the fallback."""
     # See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element.
-    if data := get_url_attribute(element, 'data', base_url):
+    if data := parse_url(element.get('data'), base_url):
         mime_type = element.get('type', '').strip()
         orientation = box.style['image_orientation']
         image = get_image_from_uri(
@@ -349,7 +356,7 @@ def get_html_metadata(html):
                 custom[name] = content
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
-            url = get_url_attribute(element, 'href', html.base_url)
+            url = parse_url(element.get('href'), html.base_url)
             attachment_title = element.get('title', None)
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')
