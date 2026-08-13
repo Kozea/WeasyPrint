@@ -1095,8 +1095,13 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
 
     """
     for box in box_list:
-        if isinstance(box, boxes.ParentBox):
-            remove_placeholders(context, box.children, absolute_boxes, fixed_boxes)
+        # Unwrap absolute placeholders so we also clean up out-of-flow boxes nested
+        # inside them (an absolute box inside another absolute box). The placeholder
+        # itself is kept for the membership checks below, as absolute_boxes,
+        # broken_out_of_flow and excluded_shapes are keyed by placeholders.
+        inner = box._box if isinstance(box, AbsolutePlaceholder) else box
+        if isinstance(inner, boxes.ParentBox):
+            remove_placeholders(context, inner.children, absolute_boxes, fixed_boxes)
         if box.style['position'] == 'absolute' and box in absolute_boxes:
             absolute_boxes.remove(box)
         elif box.style['position'] == 'fixed' and box in fixed_boxes:

@@ -519,6 +519,46 @@ def test_flex_absolute_positioning():
 
 
 @assert_no_logs
+def test_absolute_in_absolute_next_page():
+    # Regression test for #2714: content nested in absolutely-positioned boxes was
+    # duplicated when a relative container with no in-flow break point is pushed to
+    # the next page. The out-of-flow continuation registered during the first page’s
+    # layout attempt was not cleaned up, and got re-rendered on the next page in
+    # addition to the fresh layout of the deferred container.
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 30px 90px; margin: 0 }
+        body { font-family: weasyprint; font-size: 10px; line-height: 10px;
+               margin: 0 }
+        .p1 { height: 80px }
+        .rel { height: 80px; position: relative }
+        .a1, .a2 { position: absolute; top: 0; left: 0 }
+      </style>
+      <div class="p1">x</div>
+      <div class="rel"><div class="a1"><div class="a2">a<br>b<br>c</div></div></div>
+    ''')
+
+    # Page 1 only holds the in-flow filler.
+    html_1, = page_1.children
+    body_1, = html_1.children
+    div_1, = body_1.children
+    line_1, = div_1.children
+    text_1, = line_1.children
+    assert text_1.text == 'x'
+
+    # Page 2 holds the deferred relative container. Its <html> must have a single
+    # <body> child: no spurious out-of-flow box is prepended (that was the bug).
+    html_2, = page_2.children
+    assert [child.element_tag for child in html_2.children] == ['body']
+    body_2, = html_2.children
+    rel, = body_2.children
+    a1, = rel.children
+    a2, = a1.children
+    lines = a2.children
+    assert [line.children[0].text for line in lines] == ['a', 'b', 'c']
+
+
+@assert_no_logs
 @pytest.mark.xfail
 def test_grid_absolute_positioning():
     """TODO: Absolutely positioned grid items are not replaced by placeholders ."""
