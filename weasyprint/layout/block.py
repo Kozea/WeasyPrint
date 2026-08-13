@@ -1095,7 +1095,7 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
 
     """
     for box in box_list:
-        if isinstance(box, boxes.ParentBox):
+        if box.children:
             remove_placeholders(context, box.children, absolute_boxes, fixed_boxes)
         if box.style['position'] == 'absolute' and box in absolute_boxes:
             absolute_boxes.remove(box)

@@ -358,6 +358,35 @@ def test_absolute_images():
 
 
 @assert_no_logs
+def test_absolute_in_absolute_next_page():
+    # Regression test for #2714.
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 3px 9px }
+        body { font: 2px/1 weasyprint }
+        article { height: 8px }
+        div { position: absolute }
+      </style>
+      <article>a</article>
+      <article style="position: relative"><div><div>b<br>c
+    ''')
+    html, = page_1.children
+    body, = html.children
+    article, = body.children
+    line, = article.children
+    assert line.children[0].text == 'a'
+
+    html, = page_2.children
+    body, = html.children
+    article, = body.children
+    div_1, = article.children
+    div_2, = div_1.children
+    line_1, line_2 = div_2.children
+    assert line_1.children[0].text == 'b'
+    assert line_2.children[0].text == 'c'
+
+
+@assert_no_logs
 def test_fixed_positioning():
     # TODO:test page-break-before: left/right
     page_1, page_2, page_3 = render_pages('''
