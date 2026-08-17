@@ -940,7 +940,6 @@ def remake_page(index, context, root_box, html):
     set_page_type_computed_styles(page_type, html, context.style_for)
 
     context.forced_break = (next_page['break'] != 'any' or next_page['page'])
-    context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
     page_number = index + 1
