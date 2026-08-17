@@ -34,6 +34,8 @@ class ImageLoadingError(ValueError):
 class RasterImage:
     def __init__(self, pillow_image, image_id, image_data, filename=None,
                  cache=None, orientation='none', options=DEFAULT_OPTIONS):
+        source_image_data = image_data
+        source_filename = filename
         # Transpose image
         original_pillow_image = pillow_image
         pillow_image = rotate_pillow_image(pillow_image, orientation)
@@ -47,6 +49,8 @@ class RasterImage:
         self._cache = {} if cache is None else cache
         self._jpeg_quality = jpeg_quality = options['jpeg_quality']
         self._dpi = options['dpi']
+        self._orientation = orientation
+        self._decoded_image = None
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
@@ -67,14 +71,17 @@ class RasterImage:
 
         if pillow_image.format in ('JPEG', 'MPO'):
             self.format = 'JPEG'
-            if image_data is None or optimize or jpeg_quality is not None:
-                image_file = io.BytesIO()
-                options = {'format': 'JPEG', 'optimize': optimize}
-                if self._jpeg_quality is not None:
-                    options['quality'] = self._jpeg_quality
-                pillow_image.save(image_file, **options)
-                image_data = image_file.getvalue()
-                filename = None
+            self._jpeg_reencode = (
+                image_data is None or optimize or jpeg_quality is not None)
+            if self._jpeg_reencode:
+                source_file_exists = (
+                    source_filename is not None and
+                    Path(source_filename).is_file())
+                if source_image_data is None and not source_file_exists:
+                    self._decoded_image = pillow_image.copy()
+                else:
+                    image_data = source_image_data
+                    filename = source_filename
         else:
             self.format = 'PNG'
             if image_data is None or optimize or pillow_image.format != 'PNG':
@@ -82,7 +89,35 @@ class RasterImage:
                 pillow_image.save(image_file, format='PNG', optimize=optimize)
                 image_data = image_file.getvalue()
                 filename = None
-        self.image_data = self.cache_image_data(image_data, filename)
+        self.image_data = (
+            None if self._decoded_image is not None else
+            self.cache_image_data(image_data, filename))
+
+    def _get_jpeg_data(self, dpi_ratio):
+        if not self._jpeg_reencode and dpi_ratio == 1:
+            return self.image_data, self.width, self.height
+
+        if self._decoded_image is None:
+            pillow_image = Image.open(io.BytesIO(self.image_data.data))
+            pillow_image = rotate_pillow_image(
+                pillow_image, self._orientation)
+        else:
+            pillow_image = self._decoded_image.copy()
+        if dpi_ratio != 1:
+            width = max(1, round(self.width * dpi_ratio))
+            height = max(1, round(self.height * dpi_ratio))
+            pillow_image.thumbnail((width, height))
+
+        image_file = io.BytesIO()
+        options = {'format': 'JPEG', 'optimize': self.optimize}
+        if self._jpeg_quality is not None:
+            options['quality'] = self._jpeg_quality
+        pillow_image.save(image_file, **options)
+
+        width, height = pillow_image.size
+        image_data = self.cache_image_data(
+            image_file.getvalue(), slot=f'jpeg-{width}x{height}')
+        return image_data, width, height
 
     def get_intrinsic_size(self, resolution, font_size):
         return self.width / resolution, self.height / resolution, self.ratio
@@ -115,7 +150,9 @@ class RasterImage:
             return LazyImage(self._cache, key, data)
 
     def get_x_object(self, interpolate, dpi_ratio):
-        if dpi_ratio == 1:
+        if self.format == 'JPEG':
+            image_data, width, height = self._get_jpeg_data(dpi_ratio)
+        elif dpi_ratio == 1:
             width, height = self.width, self.height
         else:
             thumbnail = Image.open(io.BytesIO(self.image_data.data))
@@ -152,7 +189,7 @@ class RasterImage:
             if self.invert_colors:
                 extra['Decode'] = pydyf.Array((1, 0) * 4)
             extra['Filter'] = '/DCTDecode'
-            return pydyf.Stream([self.image_data], extra)
+            return pydyf.Stream([image_data], extra)
 
         extra['Filter'] = '/FlateDecode'
         extra['DecodeParms'] = pydyf.Dictionary({
