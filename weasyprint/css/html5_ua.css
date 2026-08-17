@@ -182,22 +182,22 @@ fieldset { border: groove 2px; margin-left: 2px; margin-right: 2px; padding: .35
 @page {
   margin: 75px;
   @footnote { margin-top: 1em }
-  @top-left-corner     { text-align: right;  vertical-align:  middle }
-  @top-left            { text-align: left;   vertical-align:  middle }
-  @top-center          { text-align: center; vertical-align:  middle }
-  @top-right           { text-align: right;  vertical-align:  middle }
-  @top-right-corner    { text-align: left;   vertical-align:  middle }
-  @left-top            { text-align: center; vertical-align:  top    }
-  @left-middle         { text-align: center; vertical-align:  middle }
-  @left-bottom         { text-align: center; vertical-align:  bottom }
-  @right-top           { text-align: center; vertical-align:  top    }
-  @right-middle        { text-align: center; vertical-align:  middle }
-  @right-bottom        { text-align: center; vertical-align:  bottom }
-  @bottom-left-corner  { text-align: right;  vertical-align:  middle }
-  @bottom-left         { text-align: left;   vertical-align:  middle }
-  @bottom-center       { text-align: center; vertical-align:  middle }
-  @bottom-right        { text-align: right;  vertical-align:  middle }
-  @bottom-right-corner { text-align: left;   vertical-align:  middle }
+  @top-left-corner     { text-align: right;  vertical-align: middle }
+  @top-left            { text-align: left;   vertical-align: middle }
+  @top-center          { text-align: center; vertical-align: middle }
+  @top-right           { text-align: right;  vertical-align: middle }
+  @top-right-corner    { text-align: left;   vertical-align: middle }
+  @left-top            { text-align: center; vertical-align: top    }
+  @left-middle         { text-align: center; vertical-align: middle }
+  @left-bottom         { text-align: center; vertical-align: bottom }
+  @right-top           { text-align: center; vertical-align: top    }
+  @right-middle        { text-align: center; vertical-align: middle }
+  @right-bottom        { text-align: center; vertical-align: bottom }
+  @bottom-left-corner  { text-align: right;  vertical-align: middle }
+  @bottom-left         { text-align: left;   vertical-align: middle }
+  @bottom-center       { text-align: center; vertical-align: middle }
+  @bottom-right        { text-align: right;  vertical-align: middle }
+  @bottom-right-corner { text-align: left;   vertical-align: middle }
 }
 
 /* Counters */

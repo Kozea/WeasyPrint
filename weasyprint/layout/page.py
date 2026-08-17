@@ -866,7 +866,7 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
     # Find the box that has the named page. It is a first in-flow child of the
     # element corresponding to resume_at.
 
-    # Find element corrensponding to resume_at.
+    # Find element corresponding to resume_at.
     current_resume_at = page_group_resume_at = copy.deepcopy(resume_at) or {0: None}
     current_element = root_box
     while True:
