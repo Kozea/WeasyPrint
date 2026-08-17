@@ -967,7 +967,7 @@ def wrap_table(box, children):
     return wrapper
 
 
-def blockify(box, layout):
+def blockify(box, layout=None):
     """Turn an inline box into a block box."""
     # See https://drafts.csswg.org/css-display-4/#blockify.
     if isinstance(box, boxes.InlineBlockBox):
@@ -979,7 +979,8 @@ def blockify(box, layout):
         anonymous = boxes.BlockReplacedBox.anonymous_from(box, replacement)
     elif isinstance(box, boxes.TextBox):
         anonymous = boxes.BlockBox.anonymous_from(box, [box])
-        setattr(box, f'is_{layout}_item', False)
+        if layout:
+            setattr(box, f'is_{layout}_item', False)
     elif isinstance(box, boxes.InlineFlexBox):
         anonymous = boxes.FlexBox.anonymous_from(box, box.children)
     elif isinstance(box, boxes.InlineGridBox):
@@ -989,7 +990,8 @@ def blockify(box, layout):
     else:
         return box
     anonymous.style = box.style
-    setattr(anonymous, f'is_{layout}_item', True)
+    if layout:
+        setattr(anonymous, f'is_{layout}_item', True)
     return anonymous
 
 
