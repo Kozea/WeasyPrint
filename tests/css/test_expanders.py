@@ -325,7 +325,7 @@ def test_list_style_invalid(rule):
 def test_background(rule, result):
     expanded = expand_to_dict(f'background: {rule}')
     assert expanded.pop('background_color') == result.pop(
-        'background_color', parse_color(INITIAL_VALUES['background_color']))
+        'background_color', INITIAL_VALUES['background_color'])
     nb_layers = len(expanded['background_image'])
     for name, value in result.items():
         assert expanded.pop(name) == value

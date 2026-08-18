@@ -537,8 +537,7 @@ def expand_background(tokens, name, base_url):
                 continue
             raise InvalidValues
 
-        color = results.pop(
-            'background-color', INITIAL_VALUES['background_color'])
+        color = results.pop('background-color', 'transparent')
         for name in expanded_names:
             if name not in results and name != 'background-color':
                 results[name] = INITIAL_VALUES[name.replace('-', '_')][0]
