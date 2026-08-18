@@ -157,15 +157,12 @@ def empty_cells(keyword):
     return keyword in ('show', 'hide')
 
 
-@property('color')
+@property()
 @single_token
 def color(token):
     """``*-color`` and ``color`` properties validation."""
-    result = parse_color(token)
-    if result == 'currentcolor':
-        return 'inherit'
-    elif result:
-        return token
+    if result := parse_color(token):
+        return 'inherit' if result == 'currentcolor' else token
 
 
 @property('background-image', wants_base_url=True)
