@@ -1254,28 +1254,39 @@ class ComputedStyle(Style):
             self.specified[key] = value
 
         if check_math(value):
-            solved_tokens = []
-            values = value if type(value) is tuple else (value,)
+            function = value
             try:
-                for value in values:
-                    if check_math(value):
-                        function = value
+                def resolve_nested(item):
+                    nonlocal function
+                    if type(item) is tuple:
+                        return tuple(resolve_nested(part) for part in item)
+                    if check_math(item):
+                        function = item
                         try:
                             token = resolve_math(function, self, key)
                         except PercentageInMath:
-                            solved_tokens.append(function)
+                            return function
                         else:
                             if token is None:
                                 raise Exception
-                            solved_tokens.append(token)
-                    else:
-                        solved_tokens.append(value)
-                original_key = key.replace('_', '-')
-                value = validate_non_shorthand(solved_tokens, original_key)[0][1]
+                            return token
+                    return item
+
+                resolved = resolve_nested(value)
+                # Nested tuples (object-position) are already validated.
+                if type(value) is tuple and any(type(part) is tuple for part in value):
+                    value = resolved
+                else:
+                    solved_tokens = (
+                        list(resolved) if type(resolved) is tuple else [resolved])
+                    original_key = key.replace('_', '-')
+                    value = validate_non_shorthand(solved_tokens, original_key)[0][1]
             except Exception:
                 LOGGER.warning(
                     'Invalid math function at %d:%d: %s',
-                    function.source_line, function.source_column, function.serialize())
+                    getattr(function, 'source_line', 0),
+                    getattr(function, 'source_column', 0),
+                    getattr(function, 'serialize', lambda: function)())
                 if key in INHERITED and parent_style is not None:
                     # Values in parent_style are already computed.
                     self[key] = value = parent_style[key]

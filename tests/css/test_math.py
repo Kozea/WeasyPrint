@@ -6,7 +6,8 @@ import pytest
 
 from weasyprint.css.validation.properties import PROPERTIES
 
-from ..testing_utils import assert_no_logs, capture_logs, render_pages
+from ..testing_utils import (  # isort:skip
+    BASE_URL, FakeHTML, assert_no_logs, capture_logs, render_pages)
 
 
 @assert_no_logs
@@ -460,3 +461,26 @@ def test_math_vertical_align_page_percent():
       <style>@page{@top-left{content: "a"; vertical-align: calc(1em + 1%)}}</style>
       <body>abc
     ''')
+
+
+# 1x1 PNG so object-position is exercised without a network fetch.
+_PIXEL_PNG = (
+    'data:image/png;base64,'
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQ'
+    'AAAABJRU5ErkJggg==')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('position', [
+    'calc(50% + 1px) 0',
+    'calc(50% + 1px) calc(0px)',
+])
+def test_math_object_position_nested_calc_2896(position):
+    # Regression test for #2896. object-position stores a nested tuple, so an
+    # inner calc(percentage + length) must be resolved without crashing.
+    html = f'''
+      <img src="{_PIXEL_PNG}" style="object-position: {position}">
+    '''
+    render_pages(html)
+    # Layout does not read object-position; drawing replaced boxes does.
+    FakeHTML(string=html, base_url=BASE_URL).write_pdf()
