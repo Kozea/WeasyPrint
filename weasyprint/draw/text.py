@@ -134,7 +134,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             textbox.pango_layout.set_text(new_text + ellipsis)
             first_line, index = textbox.pango_layout.get_first_line()
 
-    utf8_text = textbox.pango_layout.text.encode()
     stream.set_text_matrix(*matrix.values)
     previous_pango_font = None
     string = ''
@@ -147,16 +146,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
         run = run.next
         glyph_string = glyph_item.glyphs
         glyphs_info = glyph_string.glyphs
-        number_of_glyphs = glyph_string.num_glyphs
-        offset = glyph_item.item.offset
+        num_glyphs = glyph_string.num_glyphs
         clusters = glyph_string.log_clusters
-
-        # Get positions of the glyphs in the UTF-8 string.
-        utf8_positions = [offset + clusters[i] for i in range(number_of_glyphs)]
-        if glyph_item.item.analysis.level % 2:
-            utf8_positions.insert(0, offset + glyph_item.item.length)  # rtl
-        else:
-            utf8_positions.append(offset + glyph_item.item.length)  # ltr
+        utf8_text = None
 
         pango_font = glyph_item.item.analysis.font
         if pango_font != previous_pango_font:
@@ -175,7 +167,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             string = ''
             stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
-        for i in range(number_of_glyphs):
+        for i in range(num_glyphs):
             glyph_info = glyphs_info[i]
             glyph_id = glyph_info.glyph
             width = glyph_info.geometry.width
@@ -201,8 +193,15 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
 
             # Create mapping between glyphs and Unicode codepoints.
             if glyph_id not in font.to_unicode:
-                utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
-                font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
+                # Get positions of the glyph in the UTF-8 string.
+                offset = glyph_item.item.offset
+                t1 = clusters[i]
+                if glyph_item.item.analysis.level % 2:  # rtl
+                    t2 = glyph_item.item.length if i == 0 else clusters[i-1]
+                else:
+                    t2 = glyph_item.item.length if i == num_glyphs-1 else clusters[i+1]
+                utf8_text = utf8_text or textbox.pango_layout.text.encode()
+                font.to_unicode[glyph_id] = utf8_text[offset+t1:offset+t2].decode()
 
             # Set horizontal and vertical offsets.
             offset = glyph_info.geometry.x_offset / font_size
