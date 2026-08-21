@@ -823,8 +823,6 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
 
     args = []
     function = Function(token)
-    if function.name is None:
-        return
     for part in function.split_comma(single_tokens=False):
         args.append([])
         for arg in part:
