@@ -13,15 +13,16 @@ def percentage(value, computed, refer_to):
     ``refer_to`` is the length for 100%.
 
     """
-    if check_math(value):
-        value = resolve_math(value, computed, refer_to=refer_to)
     if value is None or value == 'auto':
         return value
-    elif value.unit.lower() == 'px':
-        return value.value
-    else:
-        assert value.unit == '%'
+    unit = getattr(value, 'unit', None)
+    if unit is None:
+        value = resolve_math(value, computed, refer_to=refer_to)
+        return percentage(value, computed, refer_to)
+    elif unit == '%':
         return refer_to * value.value / 100
+    else:  # px
+        return value.value
 
 
 def resolve_one_percentage(box, property_name, refer_to):
@@ -31,12 +32,10 @@ def resolve_one_percentage(box, property_name, refer_to):
     just replaces percentages.
 
     """
-    # box.style has computed values
-    value = box.style[property_name]
     # box attributes are used values
-    percent = percentage(value, box.style, refer_to)
+    percent = percentage(box.style[property_name], box.style, refer_to)
     setattr(box, property_name, percent)
-    if property_name in ('min_width', 'min_height') and percent == 'auto':
+    if percent == 'auto' and property_name in ('min_width', 'min_height'):
         setattr(box, property_name, 0)
 
 
