@@ -167,8 +167,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             string = ''
             stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
-        for i in range(num_glyphs):
-            glyph_info = glyphs_info[i]
+        for i, glyph_info in enumerate(glyphs_info[0:num_glyphs]):
             glyph_id = glyph_info.glyph
             width = glyph_info.geometry.width
 
