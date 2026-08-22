@@ -32,7 +32,6 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
     """
     resolve_percentages(box, containing_block)
     if skip_stack is None:
-        # TODO: wrong, see issue #679.
         resolve_one_percentage(box, 'text_indent', containing_block.width)
     else:
         box.text_indent = 0
