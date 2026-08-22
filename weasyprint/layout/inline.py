@@ -836,16 +836,19 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
 
             # Check that text doesn’t overflow.
             new_position_x = new_child.position_x + new_child.margin_width()
-            if new_position_x - trailing_whitespace_size(context, new_child) > max_x:
-                # Text overflows, find previous break point.
-                previous_resume_at = _break_waiting_children(
-                    context, containing_block, max_x, bottom_space, initial_skip_stack,
-                    absolute_boxes, fixed_boxes, line_placeholders, waiting_floats,
-                    line_children, children, waiting_children, first_letter_style,
-                    first_line_style)
-                if previous_resume_at:
-                    resume_at = previous_resume_at
-                    break
+            if new_position_x > max_x:
+                # Only calculate trailing space size if needed.
+                trailing_space = trailing_whitespace_size(context, new_child)
+                if new_position_x - trailing_space > max_x:
+                    # Text overflows, find previous break point.
+                    previous_resume_at = _break_waiting_children(
+                        context, containing_block, max_x, bottom_space,
+                        initial_skip_stack, absolute_boxes, fixed_boxes,
+                        line_placeholders, waiting_floats, line_children, children,
+                        waiting_children, first_letter_style, first_line_style)
+                    if previous_resume_at:
+                        resume_at = previous_resume_at
+                        break
 
             position_x = new_position_x
             waiting_children.append((index, new_child, child))
