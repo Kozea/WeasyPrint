@@ -34,3 +34,7 @@ h6        { bookmark-level: 6; bookmark-label: content(text) }
 
 ::footnote-call   { content: counter(footnote) }
 ::footnote-marker { content: counter(footnote) '.' }
+
+::note-call { content: counter(note) }
+::note-marker { content: counter(note) '.' }
+::note-callback { content: 'b' }
