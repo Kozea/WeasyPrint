@@ -368,13 +368,13 @@ class LayoutContext:
         if box.is_note():
             assert box.note_call
             assert box.note_callback
-            index = len(self.running_elements)
+            index = sum(
+                len(boxes) for names in self.running_elements.values()
+                for boxes in names.values())
             box.style['anchor'] = f'note-{index}'
             box.note_call.style['anchor'] = f'call-{index}'
-            box.note_call.style['link'] = get_link(
-                f'#note-{index}', box.style.base_url)
-            box.note_callback.style['link'] = get_link(
-                f'#call-{index}', box.style.base_url)
+            box.note_call.link = get_link(f'#note-{index}', box.style.base_url)
+            box.note_callback.link = get_link(f'#call-{index}', box.style.base_url)
         self.running_elements[running_name][self.current_page].append(box)
 
     def layout_footnote(self, footnote):
