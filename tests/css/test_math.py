@@ -6,7 +6,8 @@ import pytest
 
 from weasyprint.css.validation.properties import PROPERTIES
 
-from ..testing_utils import assert_no_logs, capture_logs, render_pages
+from ..testing_utils import (  # isort:skip
+    BASE_URL, FakeHTML, assert_no_logs, capture_logs, render_pages)
 
 
 @assert_no_logs
@@ -460,3 +461,25 @@ def test_math_vertical_align_page_percent():
       <style>@page{@top-left{content: "a"; vertical-align: calc(1em + 1%)}}</style>
       <body>abc
     ''')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('position', [
+    'calc(50% + 1px) 0',
+    'calc(50% + 1px) calc(0px)',
+])
+def test_math_object_position_nested_calc(position):
+    # Regression test for #2896. object-position stores nested tuples, so
+    # calc(percentage + length) must be computed and drawn without crashing.
+    html = f'<img src="pattern.png" style="object-position: {position}">'
+    render_pages(html)
+    FakeHTML(string=html, base_url=BASE_URL).write_pdf()
+
+
+def test_math_object_position_nested_invalid_unit():
+    # Nested calc() must still be validated: 1deg is not a <length-percentage>.
+    html = '<img src="pattern.png" style="object-position: calc(50% + 1deg) 0">'
+    with capture_logs() as logs:
+        FakeHTML(string=html, base_url=BASE_URL).write_pdf()
+    assert logs
+    assert any('invalid' in log.lower() for log in logs)

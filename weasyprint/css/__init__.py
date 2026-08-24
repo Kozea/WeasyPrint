@@ -709,6 +709,9 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
                 if unit is None:
                     unit = product.unit.lower()
                 elif unit == '%':
+                    # Percentages mix with lengths, not with angles or other units.
+                    if product.unit.lower() not in LENGTH_UNITS:
+                        return
                     raise PercentageInMath
                 elif unit != product.unit.lower():
                     return
@@ -719,8 +722,10 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
                 else:
                     if unit is None or unit == '%':
                         unit = '%'
-                    else:
+                    elif unit in LENGTH_UNITS:
                         raise PercentageInMath
+                    else:
+                        return
             if sign == '+':
                 value += product.value
             else:
@@ -1252,22 +1257,16 @@ class ComputedStyle(Style):
             self.specified[key] = value
 
         if check_math(value):
-            solved_tokens = []
-            values = value if type(value) is tuple else (value,)
+            function = value
             try:
-                for value in values:
-                    if check_math(value):
-                        function = value
-                        try:
-                            token = resolve_math(function, self, key)
-                        except PercentageInMath:
-                            solved_tokens.append(function)
-                        else:
-                            if token is None:
-                                raise Exception
-                            solved_tokens.append(token)
-                    else:
-                        solved_tokens.append(value)
+                try:
+                    token = resolve_math(function, self, key)
+                except PercentageInMath:
+                    solved_tokens = [function]
+                else:
+                    if token is None:
+                        raise Exception
+                    solved_tokens = [token]
                 original_key = key.replace('_', '-')
                 value = validate_non_shorthand(solved_tokens, original_key)[0][1]
             except Exception:

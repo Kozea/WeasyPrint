@@ -328,9 +328,26 @@ def break_before_after(style, name, value):
 @register_computer('text-decoration-thickness')
 def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
-    if value in ('auto', 'content', 'from-font') or check_math(value):
+    if value in ('auto', 'content', 'from-font'):
         return value
-    elif value.value == 0:
+    if check_math(value):
+        from . import resolve_math
+        from .tokens import PercentageInMath, RelativeLengthInMath
+        try:
+            token = resolve_math(value, style, name)
+        except (PercentageInMath, RelativeLengthInMath):
+            return value
+        if token is None:
+            return value
+        if token.type == 'percentage':
+            value = Dimension(token.value, '%')
+        elif token.type == 'dimension':
+            value = Dimension(token.value, token.unit.lower())
+        elif token.type == 'number' and token.value == 0:
+            value = Dimension(0, None)
+        else:
+            return value
+    if value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS
     elif value.unit not in LENGTH_UNITS:
         # A percentage or 'auto': no conversion needed.

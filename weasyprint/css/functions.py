@@ -175,9 +175,7 @@ def check_var(token):
 
 def check_math(token):
     # TODO: validate for real.
-    if type(token) is tuple:
-        return any(check_math(item) for item in token)
-    elif getattr(token, 'type', None) != 'function':
+    if getattr(token, 'type', None) != 'function':
         return
     function = Function(token)
     name = function.name
