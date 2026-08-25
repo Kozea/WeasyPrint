@@ -1,7 +1,5 @@
 """Tests for notes layout."""
 
-import pytest
-
 from ..testing_utils import assert_no_logs, render_pages
 
 

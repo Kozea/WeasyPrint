@@ -330,6 +330,8 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
 
     """
     style = style_for(element, 'marker')
+    if style is None:
+        style = parent_style.anonymous_style
 
     children = []
 

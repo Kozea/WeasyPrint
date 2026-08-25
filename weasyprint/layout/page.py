@@ -595,6 +595,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     initial_containing_block = page
 
     footnote_area_style = context.style_for(page_type, '@footnote')
+    if footnote_area_style is None:
+        footnote_area_style = style.anonymous_style
     footnote_area = boxes.FootnoteAreaBox(page, footnote_area_style)
     resolve_percentages(footnote_area, page)
     footnote_area.position_x = page.content_box_x()
@@ -625,6 +627,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
     note_area_style = context.style_for(page_type, '@note-area')
+    if note_area_style is None:
+        note_area_style = style.anonymous_style
     note_area = build.blockify(build.make_box('@note-area', note_area_style, (), None))
     note_area.position_x = page.content_box_x()
     note_area.position_y = page.content_box_y()

@@ -1,7 +1,7 @@
 /* Simplified user-agent stylesheet for HTML5 in tests. */
 
 @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-@page { background: white; bleed: 0; @footnote { margin: 0 }; @note-area { margin: 0 } }
+@page { background: white; bleed: 0 }
 
 html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre, section, article { display: block }
 
@@ -30,11 +30,8 @@ h4        { bookmark-level: 4; bookmark-label: content(text) }
 h5        { bookmark-level: 5; bookmark-label: content(text) }
 h6        { bookmark-level: 6; bookmark-label: content(text) }
 
-::marker  { font-variant-numeric: tabular-nums }
-
 ::footnote-call   { content: counter(footnote) }
 ::footnote-marker { content: counter(footnote) '.' }
-
-::note-call { content: counter(note) }
-::note-marker { content: counter(note) '.' }
-::note-callback { content: 'b' }
+::note-call       { content: counter(note) }
+::note-marker     { content: counter(note) '.' }
+::note-callback   { content: 'b' }
