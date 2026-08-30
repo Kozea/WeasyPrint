@@ -1293,6 +1293,51 @@ def text_indent(token):
 
 
 @property()
+@single_token
+def text_emphasis_color(token):
+    """``text-emphasis-color`` property validation."""
+    if result := parse_color(token):
+        return 'inherit' if result == 'currentcolor' else token
+
+
+@property()
+def text_emphasis_position(tokens):
+    """``text-emphasis-position`` property validation."""
+    keywords = {get_keyword(token) for token in tokens}
+    if len(tokens) != len(keywords):
+        return
+    for vertical in ('over', 'under'):
+        for horizontal in ('right', 'left'):
+            if keywords == {vertical, horizontal}:
+                return f'{vertical} {horizontal}'
+    if keywords == {'over'} or keywords == {'under'}:
+        return f'{keywords.copy().pop()} right'
+
+
+@property()
+def text_emphasis_style(tokens):
+    """``text-emphasis-style`` property validation."""
+    if len(tokens) == 1:
+        token = tokens[0]
+        keyword = get_keyword(token)
+        if keyword == 'none':
+            return 'none'
+        if keyword == 'filled':
+            return ('filled', 'circle')
+        shape_keywords = {
+            'dot', 'circle', 'double-circle', 'triangle', 'sesame'}
+        if keyword in shape_keywords:
+            return ('filled', keyword)
+        if token.type == 'string':
+            return ('custom', token.value)
+    elif len(tokens) == 2:
+        fill, shape = (get_keyword(token) for token in tokens)
+        if fill in ('filled', 'open') and shape in (
+                'dot', 'circle', 'double-circle', 'triangle', 'sesame'):
+            return (fill, shape)
+
+
+@property()
 @single_keyword
 def text_transform(keyword):
     """``text-align`` property validation."""

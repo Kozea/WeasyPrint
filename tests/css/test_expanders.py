@@ -999,3 +999,44 @@ def test_text_align(rule, result):
 ])
 def test_text_align_invalid(rule, reason):
     assert_invalid(f'text-align: {rule}', reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'result'), [
+    ('filled dot', {'text_emphasis_style': ('filled', 'dot')}),
+    ('open sesame red', {
+        'text_emphasis_style': ('open', 'sesame'),
+        'text_emphasis_color': parse_color('red'),
+    }),
+    ('blue circle', {
+        'text_emphasis_style': ('filled', 'circle'),
+        'text_emphasis_color': parse_color('blue'),
+    }),
+    ('"X"', {'text_emphasis_style': ('custom', 'X')}),
+    ('"X" red', {
+        'text_emphasis_style': ('custom', 'X'),
+        'text_emphasis_color': parse_color('red'),
+    }),
+    ('none', {'text_emphasis_style': 'none'}),
+    ('inherit', {
+        f'text_emphasis_{key}': 'inherit'
+        for key in ('color', 'style')}),
+])
+def test_text_emphasis(rule, result):
+    assert expand_to_dict(f'text-emphasis: {rule}') == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', [
+    'filled open',
+    'dot circle',
+    'red red',
+    '"X" filled',
+    '"X" "Y"',
+    'none filled',
+    'none red',
+    'dotted',
+    '5px',
+])
+def test_text_emphasis_invalid(rule):
+    assert_invalid(f'text-emphasis: {rule}')
