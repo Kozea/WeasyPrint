@@ -10,7 +10,7 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.ffi import FROM_UNITS, TO_UNITS, ffi, pango
 from ..text.fonts import get_hb_object_data
-from ..text.line_break import get_last_word_end
+from ..text.line_break import Layout, get_last_word_end
 from .border import draw_line
 from .color import get_color
 
@@ -54,10 +54,13 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
             stream, textbox, offset_x, offset_y, thickness,
             text_decoration_color)
 
-    # Draw text.
+    # Draw emphasis marks.
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
-    stream.set_color(textbox.style['color'])
     textbox.pango_layout.reactivate(textbox.style)
+    draw_text_emphasis(stream, textbox, x, y)
+
+    # Draw text.
+    stream.set_color(textbox.style['color'])
     stream.begin_text()
     emojis = draw_first_line(
         stream, textbox, text_overflow, block_ellipsis, Matrix(d=-1, e=x, f=y))
@@ -302,3 +305,137 @@ def draw_text_decoration(stream, textbox, offset_x, offset_y, thickness, color):
         stream, textbox.position_x, textbox.position_y + offset_y,
         textbox.position_x + textbox.width, textbox.position_y + offset_y,
         thickness, textbox.style['text_decoration_style'], color, offset_x)
+
+
+# Maps (fill, shape) keyword pairs to Unicode codepoints, as defined in
+# https://drafts.csswg.org/css-text-decor-4/#text-emphasis-style
+EMPHASIS_MARKS = {
+    ('filled', 'dot'): '•',
+    ('open', 'dot'): '◦',
+    ('filled', 'circle'): '●',
+    ('open', 'circle'): '○',
+    ('filled', 'double-circle'): '◉',
+    ('open', 'double-circle'): '◎',
+    ('filled', 'triangle'): '▲',
+    ('open', 'triangle'): '△',
+    ('filled', 'sesame'): '﹅',
+    ('open', 'sesame'): '﹆',
+}
+
+
+def draw_text_emphasis(stream, textbox, x, y):
+    """Draw emphasis marks of ``textbox`` to a ``pdf.stream.Stream``.
+
+    Each mark is drawn above (or below) the center of the corresponding
+    typographic character unit, at half the font size.
+
+    """
+    style = textbox.style
+    emphasis_style = style['text_emphasis_style']
+    if emphasis_style is None or emphasis_style == 'none':
+        return
+    if emphasis_style[0] == 'custom':
+        mark = emphasis_style[1]
+        if len(mark) > 1:
+            LOGGER.warning(
+                'Only one character can be used as custom text emphasis '
+                'mark: "%s" is ignored, first character is used', mark)
+            mark = mark[0]
+    else:
+        fill, shape = emphasis_style
+        mark = EMPHASIS_MARKS[(fill, shape)]
+
+    vertical, horizontal = style['text_emphasis_position'].split()
+    if horizontal != 'right':
+        LOGGER.warning(
+            'Only "right" text-emphasis-position horizontal keyword is '
+            'supported, "%s" is ignored', horizontal)
+
+    # Ruby position: above the ascent or below the descent, half font size.
+    font_size = style['font_size']
+    mark_size = font_size / 2
+    ascent = textbox.pango_layout.ascent
+    if vertical == 'over':
+        offset_y = -ascent - mark_size / 2
+    else:
+        # Descent from the bottom of the textbox content area.
+        offset_y = textbox.height - ascent + mark_size / 2
+
+    color = get_color(style, 'text_emphasis_color')
+
+    # Layout for the mark, so that Pango can select a font that has a glyph
+    # for it (the text font may not have one, e.g. for sesames).
+    mark_layout = Layout(style)
+    mark_layout.set_text(mark)
+    mark_line, _ = mark_layout.get_first_line()
+    mark_run = mark_line.runs[0]
+    if mark_run == ffi.NULL:
+        LOGGER.warning(
+            'No glyph found for text emphasis mark "%s"', mark)
+        return
+    mark_glyph_item = mark_run.data
+    mark_pango_font = mark_glyph_item.item.analysis.font
+    mark_font, _ = stream.add_font(mark_pango_font)
+    mark_glyph = mark_glyph_item.glyphs.glyphs[0].glyph
+
+    # Iterate over runs to draw a mark above each grapheme cluster.
+    first_line, _ = textbox.pango_layout.get_first_line()
+    run = first_line.runs[0]
+    while run != ffi.NULL:
+        glyph_item = run.data
+        run = run.next
+        glyph_string = glyph_item.glyphs
+        num_glyphs = glyph_string.num_glyphs
+        clusters = glyph_string.log_clusters
+
+        # Draw one mark per cluster, using the first cluster that maps to it.
+        item_offset = glyph_item.item.offset
+        item_length = glyph_item.item.length
+        utf8_text = textbox.pango_layout.text.encode()
+        for i in range(num_glyphs):
+            glyph_info = glyph_string.glyphs[i]
+            glyph_id = glyph_info.glyph
+
+            # Advance by the width of every glyph, cluster-start or not.
+            cluster_width = glyph_info.geometry.width * FROM_UNITS
+
+            cluster_start = not i or clusters[i] != clusters[i - 1]
+            if not cluster_start:
+                x += cluster_width
+                continue
+
+            if glyph_id == pango.PANGO_GLYPH_EMPTY:
+                x += cluster_width
+                continue
+
+            # Skip whitespace clusters, they don't get emphasis marks.
+            byte_start = item_offset + clusters[i]
+            byte_end = (
+                item_offset + clusters[i + 1]
+                if i + 1 < num_glyphs else item_offset + item_length)
+            cluster_text = utf8_text[byte_start:byte_end]
+            if not cluster_text.strip():
+                x += cluster_width
+                continue
+
+            # Draw the mark at half the font size, centered on the cluster.
+            if mark_glyph not in mark_font.widths:
+                pango.pango_font_get_glyph_extents(
+                    mark_pango_font, mark_glyph, stream.ink_rect,
+                    stream.logical_rect)
+                mark_font.widths[mark_glyph] = round(
+                    stream.logical_rect.width * 1000 * FROM_UNITS /
+                    mark_font.font_size)
+            if mark_glyph not in mark_font.to_unicode:
+                mark_font.to_unicode[mark_glyph] = mark
+
+            with stream.stacked():
+                stream.set_color(color)
+                stream.transform(
+                    d=-mark_size, e=x + cluster_width / 2,
+                    f=y + offset_y)
+                stream.begin_text()
+                stream.set_font_size(mark_font.hash, 1)
+                stream.show_text(f'<{mark_glyph:04x}>')
+                stream.end_text()
+            x += cluster_width

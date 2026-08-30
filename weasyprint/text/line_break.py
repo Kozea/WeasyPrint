@@ -96,7 +96,9 @@ class Layout:
         pango.pango_layout_set_font_description(self.layout, font_description)
 
         text_decoration = style['text_decoration_line']
-        if text_decoration != 'none':
+        text_emphasis = style['text_emphasis_style']
+        if text_decoration != 'none' or (
+                text_emphasis is not None and text_emphasis != 'none'):
             metrics = ffi.gc(
                 pango.pango_context_get_metrics(
                     pango_context, font_description, self.language),
