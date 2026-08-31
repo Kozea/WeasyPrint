@@ -268,11 +268,9 @@ INITIAL_VALUES = {
     'text_decoration_style': 'solid',
     'text_decoration_thickness': 'auto',
     'text_underline_offset': 'auto',
-
-    # Text Emphasis Module (WD): https://drafts.csswg.org/css-text-decor-4/
-    'text_emphasis_style': None,
+    'text_emphasis_style': 'none',
     'text_emphasis_color': 'currentcolor',
-    'text_emphasis_position': 'over right',
+    'text_emphasis_position': ('over',),
 
     # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
     'block_ellipsis': 'none',

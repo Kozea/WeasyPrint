@@ -129,6 +129,7 @@ def background_attachment(keyword):
 @property('border-inline-end-color')
 @property('column-rule-color', unstable=True)
 @property('text-decoration-color')
+@property('text-emphasis-color')
 @single_token
 def other_colors(token):
     if parse_color(token):
@@ -1293,25 +1294,18 @@ def text_indent(token):
 
 
 @property()
-@single_token
-def text_emphasis_color(token):
-    """``text-emphasis-color`` property validation."""
-    if result := parse_color(token):
-        return 'inherit' if result == 'currentcolor' else token
-
-
-@property()
 def text_emphasis_position(tokens):
     """``text-emphasis-position`` property validation."""
     keywords = {get_keyword(token) for token in tokens}
     if len(tokens) != len(keywords):
         return
-    for vertical in ('over', 'under'):
-        for horizontal in ('right', 'left'):
-            if keywords == {vertical, horizontal}:
-                return f'{vertical} {horizontal}'
-    if keywords == {'over'} or keywords == {'under'}:
-        return f'{keywords.copy().pop()} right'
+    if not keywords <= {'over', 'under', 'right', 'left'}:
+        return
+    if len({keyword for keyword in keywords if keyword in ('over', 'under')}) > 1:
+        return
+    if len({keyword for keyword in keywords if keyword in ('right', 'left')}) > 1:
+        return
+    return tuple(keywords)
 
 
 @property()

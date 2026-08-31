@@ -1446,17 +1446,20 @@ def test_text_emphasis_style_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize(('rule', 'value'), [
-    ('over right', 'over right'),
-    ('over left', 'over left'),
-    ('under right', 'under right'),
-    ('under left', 'under left'),
-    ('right over', 'over right'),
-    ('left under', 'under left'),
-    ('over', 'over right'),
-    ('under', 'under right'),
+    ('over right', {'over', 'right'}),
+    ('over left', {'over', 'left'}),
+    ('under right', {'under', 'right'}),
+    ('under left', {'under', 'left'}),
+    ('right over', {'over', 'right'}),
+    ('left under', {'under', 'left'}),
+    ('over', {'over'}),
+    ('under', {'under'}),
 ])
 def test_text_emphasis_position(rule, value):
-    assert get_value(f'text-emphasis-position: {rule}') == value
+    result = get_value(f'text-emphasis-position: {rule}')
+    # Computed values are the specified keywords only, "right" is the
+    # default and is used when drawing.
+    assert set(result) == value
 
 
 @assert_no_logs

@@ -8,6 +8,7 @@ from PIL import Image
 from ..images import RasterImage, SVGImage
 from ..logger import LOGGER
 from ..matrix import Matrix
+from ..text.constants import EMPHASIS_MARKS
 from ..text.ffi import FROM_UNITS, TO_UNITS, ffi, pango
 from ..text.fonts import get_hb_object_data
 from ..text.line_break import Layout, get_last_word_end
@@ -307,22 +308,6 @@ def draw_text_decoration(stream, textbox, offset_x, offset_y, thickness, color):
         thickness, textbox.style['text_decoration_style'], color, offset_x)
 
 
-# Maps (fill, shape) keyword pairs to Unicode codepoints, as defined in
-# https://drafts.csswg.org/css-text-decor-4/#text-emphasis-style
-EMPHASIS_MARKS = {
-    ('filled', 'dot'): '•',
-    ('open', 'dot'): '◦',
-    ('filled', 'circle'): '●',
-    ('open', 'circle'): '○',
-    ('filled', 'double-circle'): '◉',
-    ('open', 'double-circle'): '◎',
-    ('filled', 'triangle'): '▲',
-    ('open', 'triangle'): '△',
-    ('filled', 'sesame'): '﹅',
-    ('open', 'sesame'): '﹆',
-}
-
-
 def draw_text_emphasis(stream, textbox, x, y):
     """Draw emphasis marks of ``textbox`` to a ``pdf.stream.Stream``.
 
@@ -332,7 +317,7 @@ def draw_text_emphasis(stream, textbox, x, y):
     """
     style = textbox.style
     emphasis_style = style['text_emphasis_style']
-    if emphasis_style is None or emphasis_style == 'none':
+    if emphasis_style == 'none':
         return
     if emphasis_style[0] == 'custom':
         mark = emphasis_style[1]
@@ -345,11 +330,14 @@ def draw_text_emphasis(stream, textbox, x, y):
         fill, shape = emphasis_style
         mark = EMPHASIS_MARKS[(fill, shape)]
 
-    vertical, horizontal = style['text_emphasis_position'].split()
-    if horizontal != 'right':
+    # The horizontal keyword defaults to "right", as required by the
+    # specification, and is ignored as vertical writing is not supported.
+    position = style['text_emphasis_position']
+    if 'left' in position:
         LOGGER.warning(
             'Only "right" text-emphasis-position horizontal keyword is '
-            'supported, "%s" is ignored', horizontal)
+            'supported, "left" is ignored')
+    vertical = 'under' if 'under' in position else 'over'
 
     # Ruby position: above the ascent or below the descent, half font size.
     font_size = style['font_size']
