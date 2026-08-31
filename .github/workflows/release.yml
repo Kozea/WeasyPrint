@@ -19,7 +19,7 @@ jobs:
       - name: Install requirements
         run: python -m pip install flit
       - name: Build packages
-        run: flit build
+        run: flit build --use-vcs
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
   add-version:
