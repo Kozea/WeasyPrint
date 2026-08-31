@@ -1403,3 +1403,72 @@ def test_box_shadow(rule, value):
 ])
 def test_box_shadow_invalid(rule):
     assert_invalid(f'box-shadow: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('filled dot', ('filled', 'dot')),
+    ('filled circle', ('filled', 'circle')),
+    ('filled double-circle', ('filled', 'double-circle')),
+    ('filled triangle', ('filled', 'triangle')),
+    ('filled sesame', ('filled', 'sesame')),
+    ('open dot', ('open', 'dot')),
+    ('open circle', ('open', 'circle')),
+    ('open double-circle', ('open', 'double-circle')),
+    ('open triangle', ('open', 'triangle')),
+    ('open sesame', ('open', 'sesame')),
+    ('filled', ('filled', 'circle')),
+    ('dot', ('filled', 'dot')),
+    ('circle', ('filled', 'circle')),
+    ('double-circle', ('filled', 'double-circle')),
+    ('triangle', ('filled', 'triangle')),
+    ('sesame', ('filled', 'sesame')),
+    ('"X"', ('custom', 'X')),
+    ('none', 'none'),
+])
+def test_text_emphasis_style(rule, value):
+    assert get_value(f'text-emphasis-style: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', [
+    'filled square',
+    'open square',
+    'dot dot',
+    'filled filled',
+    '"X" filled',
+    'dotted',
+    '5px',
+])
+def test_text_emphasis_style_invalid(rule):
+    assert_invalid(f'text-emphasis-style: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('over right', {'over', 'right'}),
+    ('over left', {'over', 'left'}),
+    ('under right', {'under', 'right'}),
+    ('under left', {'under', 'left'}),
+    ('right over', {'over', 'right'}),
+    ('left under', {'under', 'left'}),
+    ('over', {'over'}),
+    ('under', {'under'}),
+])
+def test_text_emphasis_position(rule, value):
+    result = get_value(f'text-emphasis-position: {rule}')
+    # Computed values are the specified keywords only, "right" is the
+    # default and is used when drawing.
+    assert set(result) == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', [
+    'over under',
+    'left right',
+    'over over',
+    'above right',
+    'over right left',
+])
+def test_text_emphasis_position_invalid(rule):
+    assert_invalid(f'text-emphasis-position: {rule}')

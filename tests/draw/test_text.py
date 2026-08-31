@@ -1346,3 +1346,74 @@ def test_unicode_range(assert_pixels):
           margin: 2px 1px;
         }
       </style>ADZB''' % SANS_FONTS)
+
+
+def test_text_emphasis(assert_pixels):
+    # Text is white, so only the red emphasis marks are visible.
+    assert_pixels('''
+        ______________
+        ______________
+        _______R___R__
+        _______R___R__
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+    ''', '''
+      <style>
+        @page {
+          size: 14px 14px;
+        }
+        body {
+          color: white;
+          font-family: weasyprint;
+          font-size: 4px;
+          margin: 5px;
+        }
+        span {
+          text-emphasis: filled dot red;
+        }
+      </style>
+      <body><span>ab</span>''')
+
+
+def test_text_emphasis_under(assert_pixels):
+    # Same as above, but marks are drawn below the text.
+    assert_pixels('''
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        ______________
+        _______R___R__
+        ______________
+        ______________
+        ______________
+        ______________
+    ''', '''
+      <style>
+        @page {
+          size: 14px 14px;
+        }
+        body {
+          color: white;
+          font-family: weasyprint;
+          font-size: 4px;
+          margin: 5px;
+        }
+        span {
+          text-emphasis: filled dot red;
+          text-emphasis-position: under right;
+        }
+      </style>
+      <body><span>ab</span>''')

@@ -268,6 +268,9 @@ INITIAL_VALUES = {
     'text_decoration_style': 'solid',
     'text_decoration_thickness': 'auto',
     'text_underline_offset': 'auto',
+    'text_emphasis_style': 'none',
+    'text_emphasis_color': 'currentcolor',
+    'text_emphasis_position': ('over',),
 
     # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
     'block_ellipsis': 'none',
@@ -348,6 +351,9 @@ INHERITED = {
     'tab_size',
     'text_align_all',
     'text_align_last',
+    'text_emphasis_color',
+    'text_emphasis_position',
+    'text_emphasis_style',
     'text_indent',
     'text_transform',
     'text_underline_offset',
