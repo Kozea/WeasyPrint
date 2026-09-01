@@ -699,14 +699,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     initial_root_box = root_box
     initial_resume_at = resume_at
     previous_running_elements = {
-        name: {page_number: running_elements.get(page_number)}
-        for name, running_elements in context.running_elements.items()
-    }
+        name: running_elements.get(page_number)
+        for name, running_elements in context.running_elements.items()}
     for running_elements in context.running_elements.values():
         running_elements.pop(page_number, None)
-    for name, elements in previous_running_elements.items():
-        if elements:
-            context.rendered_notes.extend(elements)
+    notes = (
+        element for elements in previous_running_elements.values()
+        for element in (elements or ()) if element.is_note())
+    context.rendered_notes.extend(notes)
     root_box, resume_at, next_page, _, _, _ = block_level_layout(
         context, root_box, 0, resume_at, initial_containing_block,
         page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
@@ -728,12 +728,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         resume_at = initial_resume_at
     root_box.children = out_of_flow_boxes + root_box.children
     running_elements = {
-        name: {page_number: running_elements.get(page_number)}
-        for name, running_elements in context.running_elements.items()
-    }
+        name: running_elements.get(page_number)
+        for name, running_elements in context.running_elements.items()}
     if previous_running_elements != running_elements:
-        remake_state = context.page_maker[page_number - 1][-1]
-        remake_state['content_changed'] = True
+        for name, previous_runnings in previous_running_elements.items():
+            if runnings := running_elements[name]:
+                if previous_runnings is None or len(previous_runnings) > len(runnings):
+                    remake_state = context.page_maker[page_number - 1][-1]
+                    remake_state['content_changed'] = True
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
     footnote_area = block_level_layout(

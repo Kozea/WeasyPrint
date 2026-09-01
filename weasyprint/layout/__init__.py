@@ -366,9 +366,7 @@ class LayoutContext:
     def add_running_element(self, box):
         """Add a running element to the list of running elements."""
         running_name = box.style['position'][1]
-        if box.is_note():
-            assert box.note_call
-            assert box.note_callback
+        if box.is_note() and box.style['anchor'] is None:
             index = sum(
                 len(boxes) for names in self.running_elements.values()
                 for boxes in names.values())
