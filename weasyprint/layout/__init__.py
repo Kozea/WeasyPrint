@@ -241,6 +241,7 @@ class LayoutContext:
         self.page_footnotes = {}
         self.current_page_footnotes = []
         self.reported_footnotes = []
+        self.rendered_notes = None
         self.current_footnote_area = None  # Not initialized yet
         self.page_bottom = None
         self.string_set = defaultdict(lambda: defaultdict(list))
@@ -375,7 +376,8 @@ class LayoutContext:
             box.note_call.style['anchor'] = f'call-{index}'
             box.note_call.link = get_link(f'#note-{index}', box.style.base_url)
             box.note_callback.link = get_link(f'#call-{index}', box.style.base_url)
-        self.running_elements[running_name][self.current_page].append(box)
+        if box not in self.rendered_notes:
+            self.running_elements[running_name][self.current_page].append(box)
 
     def remove_running_element(self, box):
         """Remove a running element from the list of running elements."""

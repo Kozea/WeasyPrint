@@ -704,6 +704,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     }
     for running_elements in context.running_elements.values():
         running_elements.pop(page_number, None)
+    for name, elements in previous_running_elements.items():
+        if elements:
+            context.rendered_notes.extend(elements)
     root_box, resume_at, next_page, _, _, _ = block_level_layout(
         context, root_box, 0, resume_at, initial_containing_block,
         page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
@@ -1040,6 +1043,7 @@ def make_all_pages(context, root_box, html, pages):
     """
     i = 0
     reported_footnotes = None
+    context.rendered_notes = []
     while True:
         remake_state = context.page_maker[i][-1]
         if (len(pages) == 0 or
