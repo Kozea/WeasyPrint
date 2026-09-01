@@ -377,6 +377,14 @@ class LayoutContext:
             box.note_callback.link = get_link(f'#call-{index}', box.style.base_url)
         self.running_elements[running_name][self.current_page].append(box)
 
+    def remove_running_element(self, box):
+        """Remove a running element from the list of running elements."""
+        running_name = box.style['position'][1]
+        if pages := self.running_elements.get(running_name):
+            if boxes := pages.get(self.current_page):
+                if box in boxes:
+                    boxes.remove(box)
+
     def layout_footnote(self, footnote):
         """Add a footnote to the layout for this page."""
         self.footnotes.remove(footnote)

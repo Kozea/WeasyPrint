@@ -205,7 +205,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             note_call.children = content_to_boxes(
                 call_style, note_call, quote_depth, counter_values,
                 get_image_from_uri, target_collector, counter_style)
-            note.note_call = note_call
+            note.note_call, note_call.note = note_call, note
             child_boxes = [note_call, note]
 
         children.extend(child_boxes)

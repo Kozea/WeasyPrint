@@ -81,6 +81,7 @@ class Box:
     bookmark_label = None
     string_set = None
     footnote = None
+    note = None
     note_call = None
     note_callback = None
     cached_counter_values = None
