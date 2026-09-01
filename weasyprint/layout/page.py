@@ -646,12 +646,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         note_area, _, _, _, _, _ = block_level_layout(
             context, note_area, 0, resume_at, initial_containing_block,
             page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
-        root_box.position_y = note_area.position_y + note_area.margin_height()
+        if note_area.children:
+            root_box.position_y = note_area.position_y + note_area.margin_height()
     elif note_area.is_floated():
         note_area, _ = float_layout(
             context, note_area, initial_containing_block, positioned_boxes,
             positioned_boxes, 0, None)
-        context._excluded_shapes[root_box] = note_area
+        if note_area.children:
+            context._excluded_shapes[root_box] = note_area
     else:
         note_area, _ = absolute_box_layout(
             context, note_area, page, positioned_boxes, bottom_space=0,
