@@ -386,20 +386,62 @@ def test_next_page_split_not_fitted_note(assert_pixels):
         RRRRRRRRRRRRRRRR
         RRRRRRRRRRRRRRRR
         RRRRRRRRRRRRRRRR
+        RRRRRRBB________
+        RRRRRRBB________
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRBB________
+        RRRRRRBB________
+        BBBBBBBB________
+        BBBBBBBB________
         ________________
         ________________
+    ''', '''
+        <style>
+            @page {
+                size: 16px 6px;
+                @note-area {
+                    content: element(sidenotes, all-once);
+                }
+            }
+            div {
+                color: red;
+                font: 2px/1 weasyprint;
+            }
+            span {
+                color: blue;
+                display: block;
+                position: note(sidenotes);
+            }
+        </style>
+        <div>
+          aaaaaaaa
+          aaaaaaaa
+          abc<span>d</span>
+          aaaaaaaa
+          fgh<span>i</span></div>''')
+
+
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_next_page_split_not_fitted_note_2(assert_pixels):
+    assert_pixels('''
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRBB________
+        RRRRRRBB________
+        BBBBBBBB________
+        BBBBBBBB________
         BBBBBBBB________
         BBBBBBBB________
         RRRRRRBB________
         RRRRRRBB________
-        ________________
-        ________________
-        BBBBBBBB________
-        BBBBBBBB________
-        RRRRRRBB________
-        RRRRRRBB________
-        ________________
-        ________________
     ''', '''
         <style>
             @page {
@@ -427,7 +469,7 @@ def test_next_page_split_not_fitted_note(assert_pixels):
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_next_page_split_not_fitted_note_2(assert_pixels):
+def test_next_page_split_not_fitted_note_3(assert_pixels):
     assert_pixels('''
         BBBBBBBB________
         BBBBBBBB________
