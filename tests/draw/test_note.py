@@ -1,5 +1,7 @@
 """Test how notes are drawn."""
 
+import pytest
+
 from ..testing_utils import assert_no_logs
 
 
@@ -298,3 +300,158 @@ def test_grid_note(assert_pixels):
             }
         </style>
         <div>abc<span>d</span>fgh<span>i</span></div>''')
+
+
+@assert_no_logs
+def test_next_page_note(assert_pixels):
+    assert_pixels('''
+        BBBBBBBB________
+        BBBBBBBB________
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRBBRRRRRRBB
+        RRRRRRBBRRRRRRBB
+        ________________
+        ________________
+        ________________
+        ________________
+    ''', '''
+        <style>
+            @page {
+                size: 16px 6px;
+                @note-area {
+                    content: element(sidenotes, all-once);
+                }
+            }
+            div {
+                color: red;
+                font: 2px/1 weasyprint;
+            }
+            span {
+                color: blue;
+                display: block;
+                position: note(sidenotes);
+            }
+        </style>
+        <div>aaaaaaaa
+          abc<span>d</span>fgh<span>i</span></div>''')
+
+
+@assert_no_logs
+def test_next_page_split_note(assert_pixels):
+    assert_pixels('''
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRBB________
+        RRRRRRBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRBB________
+        RRRRRRBB________
+    ''', '''
+        <style>
+            @page {
+                size: 16px 6px;
+                @note-area {
+                    content: element(sidenotes, all-once);
+                }
+            }
+            div {
+                color: red;
+                font: 2px/1 weasyprint;
+            }
+            span {
+                color: blue;
+                display: block;
+                position: note(sidenotes);
+            }
+        </style>
+        <div>abc<span>d</span>
+          aaaaaaaa
+          aaaaaaaa
+          fgh<span>i</span></div>''')
+
+
+@assert_no_logs
+def test_next_page_split_not_fitted_note(assert_pixels):
+    assert_pixels('''
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRBB________
+        RRRRRRBB________
+        RRRRRRBB________
+        RRRRRRBB________
+    ''', '''
+        <style>
+            @page {
+                size: 16px 6px;
+                @note-area {
+                    content: element(sidenotes, all-once);
+                }
+            }
+            div {
+                color: red;
+                font: 2px/1 weasyprint;
+            }
+            span {
+                color: blue;
+                display: block;
+                position: note(sidenotes);
+            }
+        </style>
+        <div>
+          aaaaaaaa
+          aaaaaaaa
+          abc<span>d</span>
+          fgh<span>i</span></div>''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_next_page_split_not_fitted_note_2(assert_pixels):
+    assert_pixels('''
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRBB________
+        RRRRRRBB________
+        RRRRRRRRRRRRRRRR
+        RRRRRRRRRRRRRRRR
+        BBBBBBBB________
+        BBBBBBBB________
+        RRRRRRBB________
+        RRRRRRBB________
+        ________________
+        ________________
+    ''', '''
+        <style>
+            @page {
+                size: 16px 6px;
+                @note-area {
+                    content: element(sidenotes, all-once);
+                }
+            }
+            div {
+                color: red;
+                font: 2px/1 weasyprint;
+            }
+            span {
+                color: blue;
+                display: block;
+                position: note(sidenotes);
+            }
+        </style>
+        <div>abc<span>d</span>
+          aaaaaaaa
+          fgh<span>i</span></div>''')
