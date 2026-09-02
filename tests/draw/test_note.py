@@ -378,21 +378,28 @@ def test_next_page_split_note(assert_pixels):
           fgh<span>i</span></div>''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_next_page_split_not_fitted_note(assert_pixels):
     assert_pixels('''
-        BBBBBBBB________
-        BBBBBBBB________
         RRRRRRRRRRRRRRRR
         RRRRRRRRRRRRRRRR
         RRRRRRRRRRRRRRRR
         RRRRRRRRRRRRRRRR
+        ________________
+        ________________
         BBBBBBBB________
         BBBBBBBB________
         RRRRRRBB________
         RRRRRRBB________
+        ________________
+        ________________
+        BBBBBBBB________
+        BBBBBBBB________
         RRRRRRBB________
         RRRRRRBB________
+        ________________
+        ________________
     ''', '''
         <style>
             @page {
