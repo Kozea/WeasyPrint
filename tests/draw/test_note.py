@@ -398,6 +398,8 @@ def test_next_page_split_not_fitted_note(assert_pixels):
         BBBBBBBB________
         ________________
         ________________
+        ________________
+        ________________
     ''', '''
         <style>
             @page {
