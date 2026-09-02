@@ -443,6 +443,27 @@ over the rendering of difficult pages with ``footnote-policy``.
 .. _running elements: https://www.w3.org/TR/css-gcpm-3/#running-elements
 .. _Footnotes: https://www.w3.org/TR/css-gcpm-3/#footnotes
 
+CSS Notes
++++++++++
+
+The `CSS Notes Module`_ is an unofficial draft "for the creation and positioning of
+notes in both continuous and paged media."
+
+The properties and features proposed by this module are not stable and may change in the
+future, they should be used for testing purpose only.
+
+The ``note()`` function and the ``all-once`` parameter of the ``element`` function are
+supported.
+
+The ``@note-area`` at-block is supported, without the features of page floats.
+
+The ``::note-call``, ``::note-marker`` and ``::note-callback`` pseudo-elements are
+supported.
+
+The ``note-policy`` property is **not** implemented.
+
+.. _CSS Notes Module: https://css-print-lab.github.io/specs/notes-in-css-print/
+
 CSS Generated Content Module Level 3
 ++++++++++++++++++++++++++++++++++++
 

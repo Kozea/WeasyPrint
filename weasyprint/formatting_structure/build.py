@@ -141,10 +141,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         state = (
             # Shared mutable objects:
             [0],  # quote_depth: single integer
-            # TODO: define the footnote counter where it can be updated by page
-            {'footnote': [0]},  # counter_values: name -> stacked/scoped values
-            [{'footnote'}],  # counter_scopes: element depths -> counter names
-            [] # page_groups
+            # TODO: define the note counters where it can be updated by page.
+            {'footnote': [0], 'note': [0]},  # counter_values: name -> stacked values
+            [{'footnote', 'note'}],  # counter_scopes: element depths -> counter names
+            [], # page_groups
         )
     quote_depth, counter_values, counter_scopes, _page_groups = state
 
@@ -196,6 +196,17 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
                 get_image_from_uri, target_collector, counter_style)
             footnote_call.footnote = footnote
             child_boxes = [footnote_call]
+        if child_boxes and child_boxes[0].is_note():
+            note = child_boxes[0]
+            note.style = note.style.copy()
+            call_style = style_for(note.element, 'note-call')
+            note_call = make_box(
+                f'{note.element.tag}::note-call', call_style, [], note.element)
+            note_call.children = content_to_boxes(
+                call_style, note_call, quote_depth, counter_values,
+                get_image_from_uri, target_collector, counter_style)
+            note.note_call, note_call.note = note_call, note
+            child_boxes = [note_call, note]
 
         children.extend(child_boxes)
         text = child_element.tail
@@ -244,6 +255,22 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             marker_style, marker, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
         box.children.insert(0, marker)
+    elif style['position'][0] == 'note()':
+        counter_values['note'][-1] += 1
+        marker_style = style_for(element, 'note-marker')
+        marker = make_box(f'{element.tag}::note-marker', marker_style, [], element)
+        marker.children = content_to_boxes(
+            marker_style, marker, quote_depth, counter_values, get_image_from_uri,
+            target_collector, counter_style)
+        box.children.insert(0, marker)
+        callback_style = style_for(element, 'note-callback')
+        callback = make_box(
+            f'{element.tag}::note-callback', callback_style, [], element)
+        callback.children = content_to_boxes(
+            callback_style, callback, quote_depth, counter_values, get_image_from_uri,
+            target_collector, counter_style)
+        box.children.append(callback)
+        box.note_callback = callback
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)
@@ -303,6 +330,8 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
 
     """
     style = style_for(element, 'marker')
+    if style is None:
+        style = parent_style.anonymous_style
 
     children = []
 
@@ -430,7 +459,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     '"string(%s)" is only allowed in page margins',
                     ' '.join(value))
                 continue
-            add_text(context.get_string_set_for(page, *value))
+            add_text(''.join(context.get_string_set_for(page, *value)))
         elif type_ in ('counter()', 'counters()'):
             counter_name, counter_type = value[0], value[-1]
             if counter_type == 'none':
@@ -509,19 +538,20 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     '"element(%s)" is only allowed in page margins',
                     ' '.join(value))
                 continue
-            new_box = context.get_running_element_for(page, *value)
-            if new_box is None:
-                continue
-            new_box = new_box.deepcopy()
-            new_box.style['position'] = 'relative'
-            for child in new_box.descendants():
-                if child.style['content'] in ('normal', 'none'):
-                    continue
-                child.children = content_to_boxes(
-                    child.style, child, quote_depth, counter_values,
-                    get_image_from_uri, target_collector, counter_style,
-                    context=context, page=page)
-            content_boxes.append(new_box)
+            for new_box in context.get_running_element_for(page, *value):
+                new_box = new_box.deepcopy()
+                new_box.style = new_box.style.copy()
+                new_box.style['position'] = 'relative'
+                if value[1] != 'all-once':
+                    # Use page counters instead of box counters.
+                    for child in new_box.descendants():
+                        if child.style['content'] in ('normal', 'none'):
+                            continue
+                        child.children = content_to_boxes(
+                            child.style, child, quote_depth, counter_values,
+                            get_image_from_uri, target_collector, counter_style,
+                            context=context, page=page)
+                content_boxes.append(new_box)
         elif type_ == 'leader()':
             if not value[1]:
                 continue
@@ -1102,7 +1132,7 @@ def inline_in_block(box):
         ]
 
     """
-    if not box.children or box.is_running():
+    if not box.children or box.is_running() or box.is_note():
         return box
 
     box_children = list(box.children)
@@ -1237,7 +1267,7 @@ def block_in_inline(box):
         ]
 
     """
-    if not box.children or box.is_running():
+    if not box.children or box.is_running() or box.is_note():
         return box
 
     new_children = []
