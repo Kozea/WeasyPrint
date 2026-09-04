@@ -556,21 +556,140 @@ def page_height(box, context, containing_block_height):
     page_width_or_height(VerticalBox(context, box), containing_block_height)
 
 
-def make_page(context, root_box, page_type, resume_at, page_number,
-              page_state):
-    """Take just enough content from the beginning to fill one page.
+def set_page_type_computed_styles(page_type, html, style_for):
+    """Set style for page types and pseudo-types matching ``page_type``."""
+    style_for.add_page_declarations(page_type)
 
-    Return ``(page, finished)``. ``page`` is a laid out PageBox object
-    and ``resume_at`` indicates where in the document to start the next page,
-    or is ``None`` if this was the last page.
+    # Apply style for page
+    style_for.set_computed_styles(
+        page_type,
+        # @page inherits from the root element:
+        # https://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+        root=html.etree_element, parent=html.etree_element,
+        base_url=html.base_url)
 
-    :param int page_number:
-        Page number, starts at 1 for the first page.
-    :param resume_at:
-        As returned by ``make_page()`` for the previous page, or ``None`` for
-        the first page.
+    # Apply style for page pseudo-elements (margin boxes)
+    for element, pseudo_type in style_for.get_cascaded_styles():
+        if pseudo_type and element == page_type:
+            style_for.set_computed_styles(
+                element, pseudo_type=pseudo_type,
+                # The pseudo-element inherits from the element.
+                root=html.etree_element, parent=element,
+                base_url=html.base_url)
+
+
+def _includes_resume_at(resume_at, page_group_resume_at):
+    if not page_group_resume_at:
+        return True
+    (page_child_index, page_child_resume_at), = page_group_resume_at.items()
+    if resume_at is None or page_child_index not in resume_at:
+        return False
+    if page_child_resume_at is None:
+        return True
+    return _includes_resume_at(resume_at[page_child_index], page_child_resume_at)
+
+
+def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
+    # https://www.w3.org/TR/css-gcpm-3/#document-sequence-selectors
+
+    # Remove or increment page groups.
+    page_groups_length = len(page_groups)
+    for i, page_group in enumerate(page_groups[:]):
+        if _includes_resume_at(resume_at, page_group[2]):
+            page_group[1] += 1
+        else:
+            page_groups.pop(i - page_groups_length)
+
+    # Add page groups.
+    if not blank:
+        if (resume_at and next_page['break'] == 'any') or not next_page['page']:
+            # We don’t have a forced page break or a named page.
+            return next_page['page']
+        if page_groups and page_groups[-1][0] == next_page['page']:
+            # We’re already in an element whose page name is the next page name.
+            return next_page['page']
+
+    # Find the box that has the named page. It is a first in-flow child of the
+    # element corresponding to resume_at.
+
+    # Find element corresponding to resume_at.
+    current_resume_at = page_group_resume_at = copy.deepcopy(resume_at) or {0: None}
+    current_element = root_box
+    while True:
+        child_index, child_resume_at = tuple(current_resume_at.items())[-1]
+        parent_element = current_element
+        current_element = current_element.children[child_index]
+        if child_resume_at is None:
+            break
+        current_resume_at = child_resume_at
+
+    if blank:
+        # Page is blank, don’t create a new page group and return parent’s page name.
+        return parent_element.style['page']
+
+    # Find the descendant with named page.
+    while True:
+        if current_element.style['page'] == next_page['page']:
+            page_groups.append([next_page['page'], 0, page_group_resume_at])
+            return next_page['page']
+        if not isinstance(current_element, boxes.ParentBox):
+            # Shouldn’t happen.
+            return next_page['page']
+        for i, child in enumerate(current_element.children):
+            if not child.is_in_normal_flow():
+                continue
+            current_resume_at[child_index] = {i: None}
+            current_resume_at = current_resume_at[child_index]
+            child_index = i
+            current_element = child
+            break
+        else:
+            # Shouldn’t happen.
+            return next_page['page']
+
+
+def make_page(index, context, root_box, html):
+    """Return one laid out page without margin boxes.
+
+    Start with the initial values from ``context.page_maker[index]``.
+    The resulting values / initial values for the next page are stored in
+    the ``page_maker``.
+
+    As the function's name suggests: the plan is not to make all pages
+    repeatedly when a missing counter was resolved, but rather re-make the
+    single page where the ``content_changed`` happened.
 
     """
+    page_maker = context.page_maker
+    resume_at, next_page, right_page, page_state, _ = page_maker[index]
+
+    # PageType for current page, values for page_maker[index + 1].
+    # Don't modify actual page_maker[index] values!
+    page_state = copy.deepcopy(page_state)
+    if next_page['break'] in ('left', 'right'):
+        next_page_side = next_page['break']
+    elif next_page['break'] in ('recto', 'verso'):
+        direction_ltr = root_box.style['direction'] == 'ltr'
+        break_verso = next_page['break'] == 'verso'
+        next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
+    else:
+        next_page_side = None
+    blank = bool(
+        (next_page_side == 'left' and right_page) or
+        (next_page_side == 'right' and not right_page) or
+        (context.reported_footnotes and resume_at is None))
+    side = 'right' if right_page else 'left'
+    page_groups = page_state[3]
+    name = _update_page_groups(page_groups, resume_at, next_page, root_box, blank)
+    groups = tuple((name, index) for name, index, _ in page_groups)
+    page_type = PageType(side, blank, name, index, groups)
+    set_page_type_computed_styles(page_type, html, context.style_for)
+
+    context.forced_break = (next_page['break'] != 'any' or next_page['page'])
+
+    # make_page wants a page_number of index + 1
+    page_number = index + 1
+
     style = context.style_for(page_type)
 
     # Propagated from the root or <body>.
@@ -861,144 +980,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         resume_at = previous_resume_at
         next_page = page_maker[page_number - 1][1]
 
-    return page, resume_at, next_page
-
-
-def set_page_type_computed_styles(page_type, html, style_for):
-    """Set style for page types and pseudo-types matching ``page_type``."""
-    style_for.add_page_declarations(page_type)
-
-    # Apply style for page
-    style_for.set_computed_styles(
-        page_type,
-        # @page inherits from the root element:
-        # https://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-        root=html.etree_element, parent=html.etree_element,
-        base_url=html.base_url)
-
-    # Apply style for page pseudo-elements (margin boxes)
-    for element, pseudo_type in style_for.get_cascaded_styles():
-        if pseudo_type and element == page_type:
-            style_for.set_computed_styles(
-                element, pseudo_type=pseudo_type,
-                # The pseudo-element inherits from the element.
-                root=html.etree_element, parent=element,
-                base_url=html.base_url)
-
-
-def _includes_resume_at(resume_at, page_group_resume_at):
-    if not page_group_resume_at:
-        return True
-    (page_child_index, page_child_resume_at), = page_group_resume_at.items()
-    if resume_at is None or page_child_index not in resume_at:
-        return False
-    if page_child_resume_at is None:
-        return True
-    return _includes_resume_at(resume_at[page_child_index], page_child_resume_at)
-
-
-def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
-    # https://www.w3.org/TR/css-gcpm-3/#document-sequence-selectors
-
-    # Remove or increment page groups.
-    page_groups_length = len(page_groups)
-    for i, page_group in enumerate(page_groups[:]):
-        if _includes_resume_at(resume_at, page_group[2]):
-            page_group[1] += 1
-        else:
-            page_groups.pop(i - page_groups_length)
-
-    # Add page groups.
-    if not blank:
-        if (resume_at and next_page['break'] == 'any') or not next_page['page']:
-            # We don’t have a forced page break or a named page.
-            return next_page['page']
-        if page_groups and page_groups[-1][0] == next_page['page']:
-            # We’re already in an element whose page name is the next page name.
-            return next_page['page']
-
-    # Find the box that has the named page. It is a first in-flow child of the
-    # element corresponding to resume_at.
-
-    # Find element corresponding to resume_at.
-    current_resume_at = page_group_resume_at = copy.deepcopy(resume_at) or {0: None}
-    current_element = root_box
-    while True:
-        child_index, child_resume_at = tuple(current_resume_at.items())[-1]
-        parent_element = current_element
-        current_element = current_element.children[child_index]
-        if child_resume_at is None:
-            break
-        current_resume_at = child_resume_at
-
-    if blank:
-        # Page is blank, don’t create a new page group and return parent’s page name.
-        return parent_element.style['page']
-
-    # Find the descendant with named page.
-    while True:
-        if current_element.style['page'] == next_page['page']:
-            page_groups.append([next_page['page'], 0, page_group_resume_at])
-            return next_page['page']
-        if not isinstance(current_element, boxes.ParentBox):
-            # Shouldn’t happen.
-            return next_page['page']
-        for i, child in enumerate(current_element.children):
-            if not child.is_in_normal_flow():
-                continue
-            current_resume_at[child_index] = {i: None}
-            current_resume_at = current_resume_at[child_index]
-            child_index = i
-            current_element = child
-            break
-        else:
-            # Shouldn’t happen.
-            return next_page['page']
-
-
-def remake_page(index, context, root_box, html):
-    """Return one laid out page without margin boxes.
-
-    Start with the initial values from ``context.page_maker[index]``.
-    The resulting values / initial values for the next page are stored in
-    the ``page_maker``.
-
-    As the function's name suggests: the plan is not to make all pages
-    repeatedly when a missing counter was resolved, but rather re-make the
-    single page where the ``content_changed`` happened.
-
-    """
-    page_maker = context.page_maker
-    resume_at, next_page, right_page, page_state, _ = page_maker[index]
-
-    # PageType for current page, values for page_maker[index + 1].
-    # Don't modify actual page_maker[index] values!
-    page_state = copy.deepcopy(page_state)
-    if next_page['break'] in ('left', 'right'):
-        next_page_side = next_page['break']
-    elif next_page['break'] in ('recto', 'verso'):
-        direction_ltr = root_box.style['direction'] == 'ltr'
-        break_verso = next_page['break'] == 'verso'
-        next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
-    else:
-        next_page_side = None
-    blank = bool(
-        (next_page_side == 'left' and right_page) or
-        (next_page_side == 'right' and not right_page) or
-        (context.reported_footnotes and resume_at is None))
-    side = 'right' if right_page else 'left'
-    page_groups = page_state[3]
-    name = _update_page_groups(page_groups, resume_at, next_page, root_box, blank)
-    groups = tuple((name, index) for name, index, _ in page_groups)
-    page_type = PageType(side, blank, name, index, groups)
-    set_page_type_computed_styles(page_type, html, context.style_for)
-
-    context.forced_break = (next_page['break'] != 'any' or next_page['page'])
-
-    # make_page wants a page_number of index + 1
-    page_number = index + 1
-    page, resume_at, next_page = make_page(
-        context, root_box, page_type, resume_at, page_number, page_state)
     assert next_page
     right_page = not right_page
 
@@ -1057,7 +1038,7 @@ def make_all_pages(context, root_box, html, pages):
             remake_state['pages_wanted'] = False
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
-            page, resume_at = remake_page(i, context, root_box, html)
+            page, resume_at = make_page(i, context, root_box, html)
             reported_footnotes = context.reported_footnotes
             yield page
         else:

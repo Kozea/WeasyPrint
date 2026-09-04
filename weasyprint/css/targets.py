@@ -54,7 +54,7 @@ class CounterLookupItem:
         # Box position during pagination (page_number - 1)
         self.page_maker_index = None
 
-        # Marker for remake_page
+        # Marker for make_page
         self.pending = False
 
         # Targeting box's page_counters during pagination
@@ -212,7 +212,7 @@ class TargetCollector:
                     if missing_counters is None:
                         continue
 
-                    # Pending marker for remake_page
+                    # Pending marker for make_page
                     if (item.page_maker_index is None or
                             item.page_maker_index >= len(page_maker)):
                         item.pending = True
