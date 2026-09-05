@@ -909,9 +909,9 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
                 return
             multiple = multiple_token.value
         if strategy == 'nearest':
-            # TODO: always round x.5 to +inf, see
-            # https://drafts.csswg.org/css-values-4/#combine-integers.
-            function = round
+            # Always round x.5 to +inf, see https://drafts.csswg.org/css-values-4/#combine-integers.
+            round_nearest = lambda num : math.floor(num+0.5)
+            function = round_nearest
         elif strategy == 'up':
             function = math.ceil
         elif strategy == 'down':
