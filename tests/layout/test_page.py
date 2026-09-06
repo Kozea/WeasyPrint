@@ -1832,3 +1832,33 @@ def test_running_float():
         Hello!
       </footer>
     ''')
+
+
+@assert_no_logs
+def test_fixed_height_root_keeps_overflowing_siblings():
+    """Content after an overflowing bottom decoration must still be laid out.
+
+    See https://github.com/Kozea/WeasyPrint/issues/2798
+    """
+    pages = render_pages('''
+      <html style="height:100%">
+        <body>
+          <h3 style="padding-top: 914.8px;">Header</h3>
+          <hr/>
+          Overflow
+        </body>
+      </html>
+    ''')
+    texts = []
+
+    def collect(box):
+        if isinstance(box, boxes.TextBox) and box.text:
+            texts.append(box.text)
+        children = getattr(box, 'children', None)
+        if children:
+            for child in children:
+                collect(child)
+
+    for page in pages:
+        collect(page)
+    assert 'Overflow' in ''.join(texts)

@@ -673,8 +673,13 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     if adjoining_margins is None:
         adjoining_margins = []
 
+    # Always reserve bottom padding/border for overflow detection. With the
+    # default box-decoration-break:slice those were ignored, so an unbreakable
+    # bottom decoration could overflow the page and remaining siblings were
+    # discarded (#2798).
+    bottom_space += box.padding_bottom + box.border_bottom_width
     if draw_bottom_decoration:
-        bottom_space += box.padding_bottom + box.border_bottom_width + box.margin_bottom
+        bottom_space += box.margin_bottom
 
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
