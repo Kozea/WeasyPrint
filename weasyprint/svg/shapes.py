@@ -95,7 +95,7 @@ def line(svg, node, font_size):
     svg.stream.move_to(x1, y1)
     svg.stream.line_to(x2, y2)
     angle = atan2(y2 - y1, x2 - x1)
-    node.vertices = [(x1, y1), (pi - angle, angle), (x2, y2)]
+    node.vertices.extend(((x1, y1), (pi - angle, angle), (x2, y2)))
 
 
 def polygon(svg, node, font_size):
@@ -110,7 +110,7 @@ def polyline(svg, node, font_size):
     if points:
         x, y, points = point(svg, points, font_size)
         svg.stream.move_to(x, y)
-        node.vertices = [(x, y)]
+        node.vertices.append((x, y))
         while points:
             x_old, y_old = x, y
             x, y, points = point(svg, points, font_size)
