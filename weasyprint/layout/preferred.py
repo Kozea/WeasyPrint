@@ -99,7 +99,7 @@ def _block_content_width(context, box, function, outer):
         # https://dbaron.org/css/intrinsic/#outer-intrinsic
         children_widths = [
             function(context, child, outer=True) for child in box.children
-            if not child.is_absolutely_positioned()]
+            if not child.is_absolutely_positioned() and not child.is_note()]
         width = max(children_widths) if children_widths else 0
     elif box.style['box_sizing'] == 'content-box':
         width = width.value
@@ -281,7 +281,7 @@ def table_cell_min_content_width(context, box, outer):
     children_widths = [
         min_content_width(context, child)
         for child in box.children
-        if not child.is_absolutely_positioned()]
+        if not child.is_absolutely_positioned() and not child.is_note()]
     children_min_width = adjust(
         box,
         outer,
@@ -323,7 +323,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
         (skip, skip_stack), = skip_stack.items()
     for child in box.children[skip:]:
         # Skip absolutely positioned elements.
-        if child.is_absolutely_positioned():
+        if child.is_absolutely_positioned() or child.is_note():
             continue
 
         # None is used in "lines" to track line breaks, transformed to 0 when yielded.

@@ -926,3 +926,21 @@ def test_svg_gradient_color_ops_before_path():
     lineto_offset = pdf.find(b'100 5 l')
     assert lineto_offset != -1
     assert cs_offset < lineto_offset
+
+
+@assert_no_logs
+def test_links_note():
+    pdf = FakeHTML(string='''
+      <style>
+        @page {
+          @note-area {
+            content: element(sidenotes, all-once);
+          }
+        }
+        span {
+          display: block;
+          position: note(sidenotes);
+        }
+      </style>
+      <div>abc<span>de</span>fgh<span>ij</span></div>''').write_pdf()
+    assert b'/Dest (note-1)' in pdf

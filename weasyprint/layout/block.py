@@ -296,10 +296,8 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                     new_child = None
 
     # Running element layout.
-    elif child.is_running():
-        running_name = child.style['position'][1]
-        page = context.current_page
-        context.running_elements[running_name][page].append(child)
+    elif child.is_running() or child.is_note():
+        context.add_running_element(child)
 
     return stop, resume_at, new_child, out_of_flow_resume_at
 
@@ -380,8 +378,10 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             # report footnotes and see if we don’t overflow.
             could_break_before = can_break_now = True
             needed = box.style['widows'] - 1
-            for _ in lines_iterator:
+            for next_line, _ in lines_iterator:
                 needed -= 1
+                remove_placeholders(
+                    context, next_line.children, absolute_boxes, fixed_boxes)
                 # Don’t iterate over all lines as it can be long.
                 if needed == -1:
                     break
@@ -1107,6 +1107,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             context.broken_out_of_flow.pop(box)
         if box in context.excluded_shapes:
             context.excluded_shapes.remove(box)
+        if box.note:
+            context.remove_running_element(box.note)
 
 
 def avoid_page_break(page_break, context):

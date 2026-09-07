@@ -46,12 +46,12 @@ from .tokens import (  # isort:skip
 # Reject anything not in here:
 PSEUDO_ELEMENTS = frozenset((
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
-    'footnote-call', 'footnote-marker'))
+    'footnote-call', 'footnote-marker', 'note-call', 'note-marker', 'note-callback'))
 PAGE_MARGIN_BOXES = frozenset((
     'bottom-center', 'bottom-left', 'bottom-left-corner', 'bottom-right',
     'bottom-right-corner', 'left-bottom', 'left-middle', 'left-top',
     'right-bottom', 'right-middle', 'right-top', 'top-center', 'top-left',
-    'top-left-corner', 'top-right', 'top-right-corner', 'footnote'))
+    'top-left-corner', 'top-right', 'top-right-corner', 'footnote', 'note-area'))
 
 PageSelectorType = namedtuple(
     'PageSelectorType', ['side', 'blank', 'first', 'index', 'name'])

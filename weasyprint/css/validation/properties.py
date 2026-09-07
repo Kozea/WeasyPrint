@@ -1212,9 +1212,9 @@ def text_overflow(keyword):
 @single_token
 def position(token):
     """``position`` property validation."""
-    if token.type == 'function' and token.name == 'running':
+    if token.type == 'function' and token.name in ('running', 'note'):
         if len(token.arguments) == 1 and token.arguments[0].type == 'ident':
-            return ('running()', token.arguments[0].value)
+            return (f'{token.name}()', token.arguments[0].value)
     keyword = get_single_keyword([token])
     if keyword in ('static', 'relative', 'absolute', 'fixed'):
         return keyword

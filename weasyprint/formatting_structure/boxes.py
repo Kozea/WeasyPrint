@@ -81,6 +81,9 @@ class Box:
     bookmark_label = None
     string_set = None
     footnote = None
+    note = None
+    note_call = None
+    note_callback = None
     cached_counter_values = None
     link = None
     missing_link = None
@@ -298,6 +301,10 @@ class Box:
         """Return whether this box is a footnote."""
         return self.style['float'] == 'footnote'
 
+    def is_note(self):
+        """Return whether this box is a note."""
+        return self.style['position'][0] == 'note()'
+
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
         return self.style['position'] in ('absolute', 'fixed')
@@ -310,7 +317,7 @@ class Box:
         """Return whether this box is in normal flow."""
         return not (
             self.is_floated() or self.is_absolutely_positioned() or
-            self.is_running() or self.is_footnote())
+            self.is_running() or self.is_footnote() or self.is_note())
 
     def is_monolithic(self):
         """Return whether this box is monolithic."""
@@ -388,7 +395,7 @@ class Box:
         return following_collapsible_space
 
     def process_text_transform(self):
-        if not self.is_running():
+        if not (self.is_running() or self.is_footnote() or self.is_note()):
             for child in self.children:
                 child.process_text_transform()
 
