@@ -140,7 +140,7 @@ the following packages::
 To install WeasyPrint inside a virtualenv without using wheels, you need the
 following packages::
 
-  dnf install python3-pip pango gcc python3-devel gcc-c++ zlib-devel libjpeg-devel openjpeg2-devel libffi-devel
+  dnf install python3-pip pango gcc python3-devel gcc-c++ zlib-devel libjpeg-devel openjpeg2-devel libffi-devel harfbuzz-vector
 
 
 Ubuntu ≥ 20.04
