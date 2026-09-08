@@ -559,7 +559,7 @@ class SVG:
 
         # Restore concrete and inner size of root svg tag
         if node.tag == 'svg':
-            self.tree.set_svg_size(svg, concrete_width, concrete_height)
+            self.tree.set_svg_size(self, concrete_width, concrete_height)
 
         # Handle text anchor
         if text_anchor_shift:
