@@ -400,8 +400,15 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     x, y = bounding_box[0], bounding_box[1]
     matrix = Matrix(e=x, f=y)
     if pattern.get('patternUnits') == 'userSpaceOnUse':
-        pattern_width = size(pattern.get('width', 0), font_size, 1)
-        pattern_height = size(pattern.get('height', 0), font_size, 1)
+        # Percentages refer to the viewport, as they do for masks. The
+        # resolved lengths replace the attributes, because the pattern is
+        # drawn as an "svg" node that would otherwise resolve them again.
+        pattern_width = size(
+            pattern.get('width', 0), font_size, svg.inner_width)
+        pattern_height = size(
+            pattern.get('height', 0), font_size, svg.inner_height)
+        pattern.attrib['width'] = pattern_width
+        pattern.attrib['height'] = pattern_height
     else:
         width, height = bounding_box[2], bounding_box[3]
         pattern_width = (
