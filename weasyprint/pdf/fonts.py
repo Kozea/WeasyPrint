@@ -62,7 +62,8 @@ class Font:
 
         # Set font name.
         name = re.split(b' [#@]', description_string)[0]
-        self.name = b'/' + self.hash.encode() + b'+' + name.replace(b' ', b'-')
+        name = re.sub(b'[^A-Za-z0-9-]', b'', name.replace(b' ', b'-'))
+        self.name = b'/' + self.hash.encode() + b'+' + name
 
         # Set ascent and descent.
         if self.font_size:

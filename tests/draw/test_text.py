@@ -1346,3 +1346,29 @@ def test_unicode_range(assert_pixels):
           margin: 2px 1px;
         }
       </style>ADZB''' % SANS_FONTS)
+
+
+def test_bad_font_name(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRRRRR___
+        _RRRRRR___
+        __________
+    ''', '''
+      <style>
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: "w/e\\\\a\\Az\\2fy";
+        }
+        @page {
+          size: 10px 4px;
+        }
+        body {
+          color: red;
+          font-family: "w/e\\\\a\\Az\\2fy";
+          font-size: 2px;
+          line-height: 0;
+          margin: 2px 1px;
+        }
+      </style>
+      abc''')
