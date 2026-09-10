@@ -755,6 +755,16 @@ def test_custom_rdf_metadata():
 
 
 @assert_no_logs
+def test_pdf_a_attachments():
+    html = '<title>test</title><link rel="attachment" href="data:,hi"><body>test'
+    pdf_document = FakeHTML(string=html).render()
+    pdf_bytes = pdf_document.write_pdf(
+        pdf_variant='pdf/a-3b', pdf_identifier=b'example-bytes', uncompressed_pdf=True)
+    assert pdf_bytes.count(b'AFRelationship') == 1
+    assert re.search(rb'/AF \[\d+ \d+ R\]', pdf_bytes)
+
+
+@assert_no_logs
 def test_color_spaces_with_icc_output_intent():
     shading_pdf = FakeHTML(string='''
       <style>html { background: linear-gradient(red, blue) }</style>
