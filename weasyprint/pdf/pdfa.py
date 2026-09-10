@@ -32,12 +32,6 @@ def pdfa(pdf, document, page_streams, attachments, compress, version, variant):
         relationships = {
             f'<{attachment.md5}>': attachment.relationship
             for attachment in attachments if attachment.md5}
-        pdf_attachments = []
-        if 'Names' in pdf.catalog and 'EmbeddedFiles' in pdf.catalog['Names']:
-            reference = int(pdf.catalog['Names']['EmbeddedFiles'].split()[0])
-            names = pdf.objects[reference]
-            for name in names['Names'][1::2]:
-                pdf_attachments.append(name)
         for pdf_object in pdf.objects:
             if not isinstance(pdf_object, dict):
                 continue
@@ -47,11 +41,9 @@ def pdfa(pdf, document, page_streams, attachments, compress, version, variant):
             checksum = pdf.objects[reference].extra['Params']['CheckSum']
             relationship = relationships.get(checksum, 'Unspecified')
             pdf_object['AFRelationship'] = f'/{relationship}'
-            pdf_attachments.append(pdf_object.reference)
-        if pdf_attachments:
             if 'AF' not in pdf.catalog:
                 pdf.catalog['AF'] = pydyf.Array()
-            pdf.catalog['AF'].extend(pdf_attachments)
+            pdf.catalog['AF'].append(pdf_object.reference)
 
     # Print annotations.
     for pdf_object in pdf.objects:
