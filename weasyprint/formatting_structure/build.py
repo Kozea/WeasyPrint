@@ -366,7 +366,6 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             counter_type = style['list_style_type']
             if marker_text := counter_style.render_marker(counter_type, counter_value):
                 box = boxes.TextBox.anonymous_from(box, marker_text)
-                box.style['white_space'] = 'pre-wrap'
                 children.append(box)
 
     if not children:

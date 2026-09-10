@@ -30,6 +30,8 @@ h4        { bookmark-level: 4; bookmark-label: content(text) }
 h5        { bookmark-level: 5; bookmark-label: content(text) }
 h6        { bookmark-level: 6; bookmark-label: content(text) }
 
+::marker  { white-space: pre }
+
 ::footnote-call   { content: counter(footnote) }
 ::footnote-marker { content: counter(footnote) '.' }
 ::note-call       { content: counter(note) }
