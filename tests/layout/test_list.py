@@ -129,3 +129,22 @@ def test_lists_page_break_margin():
             assert (
                 li.children[0].position_y ==
                 li.children[1].children[0].position_y)
+
+
+def test_lists_marker_content():
+    # Regression test for #2918.
+    page, = render_pages('''
+      <style>
+        ::marker { content: 'a' }
+      </style>
+      <ul>
+        <li>b</li>
+      </ul>
+    ''')
+    html, = page.children
+    body, = html.children
+    ul, = body.children
+    li, = ul.children
+    marker, li = li.children
+    assert marker.children[0].children[0].text == 'a'
+    assert li.children[0].children[0].text == 'b'

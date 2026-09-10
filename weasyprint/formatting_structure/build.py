@@ -366,7 +366,6 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             counter_type = style['list_style_type']
             if marker_text := counter_style.render_marker(counter_type, counter_value):
                 box = boxes.TextBox.anonymous_from(box, marker_text)
-                box.style['white_space'] = 'pre-wrap'
                 children.append(box)
 
     if not children:
@@ -376,6 +375,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         marker_box = boxes.BlockBox.anonymous_from(box, children)
         # We can safely edit everything that can't be changed by user style
         # See https://drafts.csswg.org/css-pseudo-4/#marker-pseudo
+        marker_box.style = marker_box.style.copy()
         marker_box.style['position'] = 'absolute'
         marker_box.is_outside_marker = True
     else:
