@@ -6,6 +6,7 @@ import re
 from codecs import BOM_UTF16_BE
 
 import pytest
+from PIL import Image
 
 from weasyprint import Attachment
 from weasyprint.document import Document, DocumentMetadata
@@ -498,6 +499,21 @@ def test_embed_jpeg():
     assert b'/Filter /DCTDecode' in FakeHTML(
         base_url=resource_path('dummy.html'),
         string='<img src="blue.jpg">').write_pdf()
+
+
+@assert_no_logs
+def test_resize_jpeg_with_quality():
+    image = Image.open(resource_path('not-optimized.jpg'))
+    image.thumbnail((5, 5))
+    expected = io.BytesIO()
+    image.save(expected, format='JPEG', optimize=False, quality=1)
+
+    pdf = FakeHTML(
+        base_url=resource_path('dummy.html'),
+        string='<img src="not-optimized.jpg">',
+    ).write_pdf(dpi=48, jpeg_quality=1)
+
+    assert expected.getvalue() in pdf
 
 
 @assert_no_logs
