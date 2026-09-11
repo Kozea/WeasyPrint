@@ -10,81 +10,85 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('width', [
-    'calc(100px)',
-    'calc(10em)',
-    'calc(50vw)',
-    'calc(20pvh)',
-    'calc(50%)',
-    'calc(10px + 90px)',
-    'calc(5em + 50px)',
-    'calc(2 * 5em)',
-    'calc(2 * (3em + 20px))',
-    'calc(25% * (1 + 1))',
-    'calc(20% * (1 + 1) + 20px)',
-    'calc(100px',
-    'max(100px)',
-    'max(30%, 2em, 100px)',
-    'max(-30%, -2em, 10em)',
-    'calc(max(-1, 1, 2) * 50px)',
-    'min(100px)',
-    'min(100%, 20em, 100px)',
-    'calc(min(4, 2) * 50px)',
-    'calc(sqrt(4) * 50px)',
-    'calc(pow(2, 2) * 25px)',
-    'calc(hypot(2) * 50px)',
-    'calc(hypot(3, 4) * 20px)',
-    'calc(hypot(2px) * 50)',
-    'calc(hypot(3px, 4px) * 20)',
-    'calc(log(e) * 100px)',
-    'calc(log(100, 10) * 50px)',
-    'calc(exp(1) / e * 100px)',
-    'abs(-100px)',
-    'calc(abs(-100) * 1px)',
-    'calc(sign(-100) * -100px)',
-    'calc(sign(-100px) * -100px)',
-    'calc(sqrt(16) * min(25px, 100%))',
-    'clamp(calc(-infinity * 1px), 10em, calc(infinity * 1px))',
-    'clamp(50px, 10em, 500px)',
-    'clamp(100px, 2em, 500px)',
-    'clamp(10px, 100em, 10em)',
-    'clamp(10px, 100%, 10em)',
-    'round(100.4px)',
-    'round(145.4px, 100px)',
-    'round(nearest, 100px)',
-    'round(down, 195px, 100px)',
-    'round(up, 5px, 100px)',
-    'round(to-zero, 195px, 100px)',
-    'mod(300px, 200px)',
-    'calc(mod(300px, -200px) * -1)',
-    'calc(mod(-300px, -200px) * -1)',
-    'rem(300px, 200px)',
-    'rem(300px, -200px)',
-    'calc(rem(-300px, -200px) * -1)',
-    'calc(sin(30deg) * 200px)',
-    'calc(cos(60deg) * 200px)',
-    'calc(tan(45deg) * 100px)',
-    'calc(tan(calc(pi / 4)) * 100px)',
-    'calc(sin(asin(0.5)) * 200px)',
-    'calc(cos(acos(0.5)) * 200px)',
-    'calc(tan(atan(1)) * 100px)',
-    'calc(tan(atan2(1, 1)) * 100px)',
-    'calc(100px * var(--one))',
-    'calc(50% * var(--one))',
-    'calc(100px * sqrt(var(--one)))',
+@pytest.mark.parametrize(('width', 'expected'), [
+    ('calc(100px)', 100),
+    ('calc(10em)', 100),
+    ('calc(50vw)', 100),
+    ('calc(20pvh)', 100),
+    ('calc(50%)', 100),
+    ('calc(10px + 90px)', 100),
+    ('calc(5em + 50px)', 100),
+    ('calc(2 * 5em)', 100),
+    ('calc(2 * (3em + 20px))', 100),
+    ('calc(25% * (1 + 1))', 100),
+    ('calc(20% * (1 + 1) + 20px)', 100),
+    ('calc(100px', 100),
+    ('max(100px)', 100),
+    ('max(30%, 2em, 100px)', 100),
+    ('max(-30%, -2em, 10em)', 100),
+    ('calc(max(-1, 1, 2) * 50px)', 100),
+    ('min(100px)', 100),
+    ('min(100%, 20em, 100px)', 100),
+    ('calc(min(4, 2) * 50px)', 100),
+    ('calc(sqrt(4) * 50px)', 100),
+    ('calc(pow(2, 2) * 25px)', 100),
+    ('calc(hypot(2) * 50px)', 100),
+    ('calc(hypot(3, 4) * 20px)', 100),
+    ('calc(hypot(2px) * 50)', 100),
+    ('calc(hypot(3px, 4px) * 20)', 100),
+    ('calc(log(e) * 100px)', 100),
+    ('calc(log(100, 10) * 50px)', 100),
+    ('calc(exp(1) / e * 100px)', 100),
+    ('abs(-100px)', 100),
+    ('calc(abs(-100) * 1px)', 100),
+    ('calc(sign(-100) * -100px)', 100),
+    ('calc(sign(-100px) * -100px)', 100),
+    ('calc(sqrt(16) * min(25px, 100%))', 100),
+    ('clamp(calc(-infinity * 1px), 10em, calc(infinity * 1px))', 100),
+    ('clamp(50px, 10em, 500px)', 100),
+    ('clamp(100px, 2em, 500px)', 100),
+    ('clamp(10px, 100em, 10em)', 100),
+    ('clamp(10px, 100%, 10em)', 100),
+    ('round(100.4px)', 100),
+    ('round(145.4px, 100px)', 100),
+    ('round(nearest, 100px)', 100),
+    ('round(nearest, 100.5px)', 101),
+    ('round(nearest, 99.5px)', 100),
+    ('round(down, 195px, 100px)', 100),
+    ('round(up, 5px, 100px)', 100),
+    ('round(to-zero, 195px, 100px)', 100),
+    ('mod(300px, 200px)', 100),
+    ('calc(mod(300px, -200px) * -1)', 100),
+    ('calc(mod(-300px, -200px) * -1)', 100),
+    ('rem(300px, 200px)', 100),
+    ('rem(300px, -200px)', 100),
+    ('calc(rem(-300px, -200px) * -1)', 100),
+    ('calc(sin(30deg) * 200px)', 100),
+    ('calc(cos(60deg) * 200px)', 100),
+    ('calc(tan(45deg) * 100px)', 100),
+    ('calc(tan(calc(pi / 4)) * 100px)', 100),
+    ('calc(sin(asin(0.5)) * 200px)', 100),
+    ('calc(cos(acos(0.5)) * 200px)', 100),
+    ('calc(tan(atan(1)) * 100px)', 100),
+    ('calc(tan(atan2(1, 1)) * 100px)', 100),
+    ('calc(100px * var(--one))', 100),
+    ('calc(50% * var(--one))', 100),
+    ('calc(100px * sqrt(var(--one)))', 100),
 ])
-def test_math_functions(width):
-    page, = render_pages('''
-      <style>
-        @page { size: 400px 500px; margin: 100px }
-        body { font-size: 10px; width: 200px }
-      </style>
-      <div style="--one: 1; height: 1px; width: %s"></div>
-    ''' % width)
-    html, = page.children
-    body, = html.children
-    div, = body.children
-    assert isclose(div.width, 100)
+def test_math_functions(width, expected):
+    def render(value):
+      page, = render_pages('''
+        <style>
+          @page { size: 400px 500px; margin: 100px }
+          body { font-size: 10px; width: 200px }
+        </style>
+        <div style="--one: 1; height: 1px; width: %s"></div>
+      ''' % value)
+      html, = page.children
+      body, = html.children
+      div, = body.children
+      return div.width
+    assert isclose(render(width), expected)
 
 
 @assert_no_logs
