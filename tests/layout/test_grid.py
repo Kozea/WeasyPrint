@@ -1897,14 +1897,12 @@ def test_grid_in_columns():
     html, = page2.children
     body, = html.children
     div, = body.children
-    column1, column2 = div.children
+    column1, = div.children
     grid, = column1.children
     assert len(grid.children) == 1
-    grid, = column2.children
-    assert len(grid.children) == 0
 
 
-@pytest.mark.xfail
+
 @assert_no_logs
 def test_grid_in_columns_with_break():
     # Regression test for #2695.
@@ -1928,7 +1926,8 @@ def test_grid_in_columns_with_break():
     div, = body.children
     column1, = div.children
     grid, = column1.children
-    section1, = grid.children
+    div_child, = grid.children
+    section1, = div_child.children
     assert section1.position_y == 6
 
     html, = page2.children
@@ -1936,6 +1935,7 @@ def test_grid_in_columns_with_break():
     div, = body.children
     column1, = div.children
     grid, = column1.children
-    section2, section3 = grid.children
+    div_child, = grid.children
+    section2, section3 = div_child.children
     assert section2.position_y == 0
     assert section3.position_y == 4
