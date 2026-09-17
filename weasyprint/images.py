@@ -404,8 +404,8 @@ def process_color_stops(vector_length, positions, hints, style):
         if position is not None:
             base = positions[previous_i]
             increment = (position - base) / (i - previous_i)
-            for j in range(previous_i + 1, i):
-                positions[j] = base + j * increment
+            for j in range(1, i - previous_i):
+                positions[previous_i + j] = base + j * increment
             previous_i = i
 
     # Calculate exponential value for PDF hints, avoid big numbers.
