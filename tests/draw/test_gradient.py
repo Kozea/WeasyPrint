@@ -478,3 +478,14 @@ def test_gradient_positions(assert_same_renderings):
         style % 'blue 0.0001%, red 33.3333%, pink, green 99.9999%',
         style % 'blue 0.0001%, red 33.3333%, pink 66.6666%, green 99.9999%',
     )
+
+
+@assert_no_logs
+def test_gradient_hints(assert_same_renderings):
+    style = '<style>@page { size: 9px 1px; background: linear-gradient(to right, %s) }'
+    assert_same_renderings(
+        style % 'blue, red, green',
+        style % 'blue 0.0001%, red, green',
+        style % 'blue, red, green 99.9999%',
+        style % 'blue, red 50.00001%, green',
+    )

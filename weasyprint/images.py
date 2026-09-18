@@ -409,20 +409,7 @@ def process_color_stops(vector_length, positions, hints, style):
             previous_i = i
 
     # Calculate exponential value for PDF hints, avoid big numbers.
-    pdf_hints = []
-    for i, hint in enumerate(hints):
-        if hint <= 0:
-            hint = 0
-        elif hint >= 1:
-            hint = 2 ** 32
-        else:
-            before = positions[i] / vector_length
-            after = positions[i+1] / vector_length
-            if before == after or hint >= after or hint <= before:
-                hint = 1
-            else:
-                hint = min(2 ** 32, math.log(0.5, (hint - before) / (after - before)))
-        pdf_hints.append(hint)
+    pdf_hints = [math.log(0.5, max(0, min(hint, 1))) for hint in hints]
 
     return positions, pdf_hints
 
