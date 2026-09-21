@@ -8,7 +8,7 @@ import traceback
 import zlib
 from email.message import EmailMessage
 from gzip import GzipFile
-from io import BytesIO, StringIO
+from io import BufferedIOBase, BytesIO, StringIO
 from pathlib import Path
 from urllib import request
 from urllib.parse import quote, unquote, urljoin, urlsplit
@@ -42,6 +42,73 @@ class StreamingGzipFile(GzipFile):
 
     def seekable(self):
         return False
+
+
+class StreamingDeflateFile(BufferedIOBase):
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+        self.decompressor = zlib.decompressobj()
+        self.buffer = b''
+        self.first_try = True
+        self.first_try_data = b''
+        self.eof = False
+
+    def readable(self):
+        return True
+
+    def seekable(self):
+        return False
+
+    def close(self):
+        super().close()
+        self.fileobj.close()
+
+    def _decompress(self, chunk):
+        if not self.first_try:
+            return self.decompressor.decompress(
+                self.decompressor.unconsumed_tail + chunk)
+        self.first_try_data += chunk
+        try:
+            decomp = self.decompressor.decompress(chunk)
+            if decomp:
+                self.first_try = False
+                self.first_try_data = b''
+            return decomp
+        except zlib.error:
+            self.first_try = False
+            self.decompressor = zlib.decompressobj(-15)
+            try:
+                return self.decompressor.decompress(self.first_try_data)
+            finally:
+                self.first_try_data = b''
+
+    def read(self, size=-1):
+        if size is None or size < 0:
+            chunks = [self.buffer]
+            self.buffer = b''
+            while not self.eof:
+                chunk = self.fileobj.read(65536)
+                if not chunk:
+                    self.eof = True
+                    chunks.append(self.decompressor.flush())
+                    break
+                chunks.append(self._decompress(chunk))
+            return b''.join(chunks)
+
+        if size == 0:
+            return b''
+
+        while len(self.buffer) < size and not self.eof:
+            chunk = self.fileobj.read(65536)
+            if not chunk:
+                self.eof = True
+                self.buffer += self.decompressor.flush()
+                break
+            self.buffer += self._decompress(chunk)
+
+        result = self.buffer[:size]
+        self.buffer = self.buffer[size:]
+        return result
 
 
 def iri_to_uri(url):
@@ -314,12 +381,7 @@ class URLFetcher(request.OpenerDirector):
             if content_encoding == 'gzip':
                 body = StreamingGzipFile(fileobj=response)
             elif content_encoding == 'deflate':
-                data = response.read()
-                try:
-                    body = zlib.decompress(data)
-                except zlib.error:
-                    # Try without zlib header or checksum.
-                    body = zlib.decompress(data, -15)
+                body = StreamingDeflateFile(fileobj=response)
 
         return URLFetcherResponse(response.url, body, response.headers, response.status)
 

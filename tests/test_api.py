@@ -25,7 +25,8 @@ from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 from weasyprint.urls import (  # isort:skip
-    FatalURLFetchingError, URLFetcher, URLFetcherResponse, URLFetchingError, path2url)
+    FatalURLFetchingError, StreamingDeflateFile, URLFetcher,
+    URLFetcherResponse, URLFetchingError, path2url)
 
 try:
     # Available in Python 3.11+
@@ -1488,6 +1489,10 @@ def test_http():
         assert HTML(f'{root_url}/redirect').etree_element.get('test') == 'ok'
 
         url_fetcher = URLFetcher()
+        assert isinstance(
+            url_fetcher(f'{root_url}/deflate')._file_obj, StreamingDeflateFile)
+        assert isinstance(
+            url_fetcher(f'{root_url}/raw-deflate')._file_obj, StreamingDeflateFile)
         HTML(f'{root_url}/redirect', url_fetcher=url_fetcher).render()
         with capture_logs() as logs:
             HTML(
