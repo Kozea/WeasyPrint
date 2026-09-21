@@ -253,6 +253,7 @@ def image(style, name, image):
 @register_computer('column-rule-color')
 @register_computer('outline-color')
 @register_computer('text-decoration-color')
+@register_computer('text-emphasis-color')
 def color(style, name, values):
     return parse_color(values, style['color_scheme'])
 
