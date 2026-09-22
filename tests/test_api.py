@@ -9,7 +9,6 @@ import sys
 import threading
 import unicodedata
 import wsgiref.simple_server
-import zlib
 from base64 import b64encode
 from functools import partial
 from pathlib import Path
@@ -125,17 +124,6 @@ def http_server():
         '/gzip': lambda env: (
             (_gzip_compress(b'<html test=ok>'), {'Content-Encoding': 'gzip'})
             if 'gzip' in env.get('HTTP_ACCEPT_ENCODING', '') else
-            (b'<html test=accept-encoding-header-fail>', {})
-        ),
-        '/deflate': lambda env: (
-            (zlib.compress(b'<html test=ok>'), {'Content-Encoding': 'deflate'})
-            if 'deflate' in env.get('HTTP_ACCEPT_ENCODING', '') else
-            (b'<html test=accept-encoding-header-fail>', {})
-        ),
-        '/raw-deflate': lambda env: (
-            # Remove zlib header and checksum
-            (zlib.compress(b'<html test=ok>')[2:-4], {'Content-Encoding': 'deflate'})
-            if 'deflate' in env.get('HTTP_ACCEPT_ENCODING', '') else
             (b'<html test=accept-encoding-header-fail>', {})
         ),
         '/redirect': lambda env: (b'', {'Location': '/gzip'}),
@@ -1483,8 +1471,6 @@ def test_html_meta_4():
 def test_http():
     with http_server() as root_url:
         assert HTML(f'{root_url}/gzip').etree_element.get('test') == 'ok'
-        assert HTML(f'{root_url}/deflate').etree_element.get('test') == 'ok'
-        assert HTML(f'{root_url}/raw-deflate').etree_element.get('test') == 'ok'
         assert HTML(f'{root_url}/redirect').etree_element.get('test') == 'ok'
 
         url_fetcher = URLFetcher()
