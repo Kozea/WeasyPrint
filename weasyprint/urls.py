@@ -5,7 +5,6 @@ import os.path
 import re
 import sys
 import traceback
-import zlib
 from email.message import EmailMessage
 from gzip import GzipFile
 from io import BytesIO, StringIO
@@ -27,7 +26,7 @@ FILESYSTEM_ENCODING = sys.getfilesystemencoding()
 HTTP_HEADERS = {
     'User-Agent': f'WeasyPrint {__version__}',
     'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate',
+    'Accept-Encoding': 'gzip',
 }
 
 
@@ -313,13 +312,6 @@ class URLFetcher(request.OpenerDirector):
             del response.headers['Content-Encoding']
             if content_encoding == 'gzip':
                 body = StreamingGzipFile(fileobj=response)
-            elif content_encoding == 'deflate':
-                data = response.read()
-                try:
-                    body = zlib.decompress(data)
-                except zlib.error:
-                    # Try without zlib header or checksum.
-                    body = zlib.decompress(data, -15)
 
         return URLFetcherResponse(response.url, body, response.headers, response.status)
 
