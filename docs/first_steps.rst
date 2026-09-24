@@ -70,8 +70,8 @@ in a `virtual environment`_ using `pip`_::
 .. _pip: https://pip.pypa.io/
 
 
-Alpine ≥ 3.17
-+++++++++++++
+Alpine
+++++++
 
 To install WeasyPrint using your distribution’s package::
 
@@ -107,8 +107,8 @@ following packages::
   pacman -S python-pip pango gcc libjpeg-turbo openjpeg2
 
 
-Debian ≥ 11
-+++++++++++
+Debian
+++++++
 
 To install WeasyPrint using your distribution’s package::
 
@@ -125,8 +125,8 @@ following packages::
   apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 libjpeg-dev libopenjp2-7-dev libffi-dev
 
 
-Fedora ≥ 39
-+++++++++++
+Fedora
+++++++
 
 To install WeasyPrint using your distribution’s package::
 
@@ -143,7 +143,7 @@ following packages::
   dnf install python3-pip pango gcc python3-devel gcc-c++ zlib-devel libjpeg-devel openjpeg2-devel libffi-devel harfbuzz-vector
 
 
-Ubuntu ≥ 20.04
+Ubuntu ≥ 24.04
 ++++++++++++++
 
 To install WeasyPrint using your distribution’s package::
