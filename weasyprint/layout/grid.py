@@ -1402,6 +1402,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         relative_positioning(child, (box.width, box.height))
 
     # Resume early when there’s no resume_at.
+    if resume_at is not None:
+        empty_rows = [y for y, row in resume_at.items() if not row and row is not None]
+        for y in empty_rows:
+            del resume_at[y]
+        if not resume_at:
+            resume_at = None
+
     if not resume_at:
         context.finish_block_formatting_context(box)
         return box, resume_at, next_page, [], False
