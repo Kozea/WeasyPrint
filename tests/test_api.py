@@ -11,6 +11,7 @@ import unicodedata
 import wsgiref.simple_server
 from base64 import b64encode
 from functools import partial
+from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
 
@@ -44,6 +45,10 @@ except ImportError:
 
         def __exit__(self, *excinfo):
             os.chdir(self._old_cwd.pop())
+
+
+MOVED, OK, UNAUTHORIZED = (
+    HTTPStatus.MOVED_PERMANENTLY, HTTPStatus.OK, HTTPStatus.UNAUTHORIZED)
 
 
 def _test_resource(class_, name, check, **kwargs):
@@ -110,38 +115,25 @@ def _run(args, stdin=b''):
     return stdout.getvalue()
 
 
-def _gzip_compress(data):
-    file_obj = io.BytesIO()
-    gzip_file = gzip.GzipFile(fileobj=file_obj, mode='wb')
-    gzip_file.write(data)
-    gzip_file.close()
-    return file_obj.getvalue()
-
-
 @contextlib.contextmanager
 def http_server():
     handlers = {
         '/gzip': lambda env: (
-            (_gzip_compress(b'<html test=ok>'), {'Content-Encoding': 'gzip'})
+            (gzip.compress(b'<html test=ok>'), {'Content-Encoding': 'gzip'}, OK)
             if 'gzip' in env.get('HTTP_ACCEPT_ENCODING', '') else
-            (b'<html test=accept-encoding-header-fail>', {})
+            (b'<html test=accept-encoding-header-fail', {}, OK)
         ),
-        '/redirect': lambda env: (b'', {'Location': '/gzip'}),
-        '/redirect-loop': lambda env: (b'', {'Location': '/redirect-loop-2'}),
-        '/redirect-loop-2': lambda env: (b'', {'Location': '/redirect-loop'}),
+        '/auth': lambda env: (
+            (b'secret', {}, OK) if env.get('HTTP_AUTHORIZATION') == 'auth' else
+            (b'', {}, UNAUTHORIZED)),
+        '/redirect': lambda env: (b'', {'Location': '/gzip'}, MOVED),
+        '/redirect-loop': lambda env: (b'', {'Location': '/redirect-loop-2'}, MOVED),
+        '/redirect-loop-2': lambda env: (b'', {'Location': '/redirect-loop'}, MOVED),
     }
 
     def wsgi_app(environ, start_response):
-        handler = handlers.get(environ['PATH_INFO'])
-        if handler:
-            response, headers = handler(environ)
-            status = '301 Moved Permanently' if 'Location' in headers else '200 OK'
-            headers = [(str(name), str(value)) for name, value in headers.items()]
-        else:  # pragma: no cover
-            status = '404 Not Found'
-            response = b''
-            headers = []
-        start_response(status, headers)
+        response, headers, status = handlers[environ['PATH_INFO']](environ)
+        start_response(f'{status.value} {status.phrase}', list(headers.items()))
         return [response]
 
     # Port 0: let the OS pick an available port number
@@ -702,6 +694,29 @@ def test_no_redirect_fail_on_error():
             _run(
                 '--no-http-redirect --fail-on-http-error - -',
                 f'<link rel=stylesheet href="{root_url}/bad">'.encode())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('command', [
+    'gzip',
+    'auth --http-header Authorization:auth',
+    'auth --http-header test:test --http-header Authorization:auth',
+])
+def test_headers(command):
+    with http_server() as root_url:
+        _run(f'{root_url}/{command} -')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('command', [
+    'auth',
+    'auth --http-header Authorization:bad',
+    'auth --http-header test:auth',
+])
+def test_headers_no_auth(command):
+    with http_server() as root_url:
+        with pytest.raises(URLFetchingError):
+            _run(f'{root_url}/{command} -')
 
 
 @assert_no_logs
