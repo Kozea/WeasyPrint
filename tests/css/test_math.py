@@ -6,7 +6,13 @@ import pytest
 
 from weasyprint.css.validation.properties import PROPERTIES
 
-from ..testing_utils import assert_no_logs, capture_logs, render_pages
+from ..testing_utils import (
+    BASE_URL,
+    FakeHTML,
+    assert_no_logs,
+    capture_logs,
+    render_pages,
+)
 
 
 @assert_no_logs
@@ -460,3 +466,96 @@ def test_math_vertical_align_page_percent():
       <style>@page{@top-left{content: "a"; vertical-align: calc(1em + 1%)}}</style>
       <body>abc
     ''')
+
+
+def _replaced_img(html):
+    page, = render_pages(html)
+    html_box, = page.children
+    body, = html_box.children
+    img, = body.children
+    return img
+
+
+@pytest.mark.parametrize(('position', 'dx', 'dy'), [
+    # 10px box, 4px image: ref = 6. calc(50% + 1px) = 4.
+    ('calc(50% + 1px) 0', 4, 0),
+    ('calc(50% + 1px) calc(0px)', 4, 0),
+    # Same-unit calc stays a length: 11px from the left, 0 from the top.
+    ('calc(10px + 1px) 0', 11, 0),
+    # Relative length inside the percentage sum: 50% of 6 + 1em (10px) = 13.
+    ('calc(50% + 1em) 0', 13, 0),
+])
+def test_object_position_length_percentage_calc(position, dx, dy):
+    # Regression test for #2896. Mixed calc used to crash while painting.
+    html = f'''
+      <style>
+        @page {{ size: 30px; margin: 0 }}
+        html, body {{ margin: 0; font-size: 10px }}
+        img {{ display: block; width: 10px; height: 10px; object-fit: none;
+               object-position: {position} }}
+      </style>
+      <img src="pattern.png">
+    '''
+    from weasyprint.layout.replaced import replacedbox_layout
+
+    img = _replaced_img(html)
+    draw_width, draw_height, draw_x, draw_y = replacedbox_layout(img)
+    assert draw_width == 4
+    assert draw_height == 4
+    assert draw_x == pytest.approx(img.content_box_x() + dx)
+    assert draw_y == pytest.approx(img.content_box_y() + dy)
+    with capture_logs() as logs:
+        pdf = FakeHTML(string=html, base_url=BASE_URL).write_pdf()
+    assert pdf
+    assert not any('Invalid math function' in message for message in logs)
+
+
+@pytest.mark.parametrize('position', [
+    'calc(50% + 1deg) 0',
+    'calc(1deg + 50%) 0',
+])
+def test_object_position_rejects_angle_calc(position):
+    html = f'''
+      <style>
+        @page {{ size: 30px; margin: 0 }}
+        html, body {{ margin: 0 }}
+        img {{ display: block; width: 10px; height: 10px; object-fit: none;
+               object-position: {position} }}
+      </style>
+      <img src="pattern.png">
+    '''
+    from weasyprint.layout.replaced import replacedbox_layout
+
+    with capture_logs() as logs:
+        img = _replaced_img(html)
+        draw_width, _, draw_x, draw_y = replacedbox_layout(img)
+        pdf = FakeHTML(string=html, base_url=BASE_URL).write_pdf()
+    assert pdf
+    assert any('invalid value' in message for message in logs)
+    # Invalid position is dropped; initial value is 50% 50%.
+    ref = img.width - draw_width
+    assert draw_x == pytest.approx(img.content_box_x() + ref / 2)
+    assert draw_y == pytest.approx(img.content_box_y() + ref / 2)
+
+
+def test_background_position_length_percentage_calc():
+    page, = render_pages('''
+      <style>
+        @page { size: 20px; margin: 0 }
+        html, body { margin: 0 }
+        div {
+          width: 10px; height: 10px;
+          background: url(pattern.png) no-repeat;
+          background-size: 4px 4px;
+          background-position: calc(50% + 1px) 0;
+        }
+      </style>
+      <div></div>
+    ''')
+    html_box, = page.children
+    body, = html_box.children
+    div, = body.children
+    layer, = div.background.layers
+    # Positioning area is the padding box, 10px; image is 4px; 50% + 1px = 4.
+    assert layer.position[0] == pytest.approx(4)
+    assert layer.position[1] == pytest.approx(0)

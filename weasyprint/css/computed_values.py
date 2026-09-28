@@ -9,6 +9,7 @@ from ..logger import LOGGER
 from ..text.line_break import strut
 from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
+from .tokens import UnresolvedLength
 from .units import LENGTH_UNITS, to_pixels
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
@@ -328,6 +329,10 @@ def break_before_after(style, name, value):
 @register_computer('text-decoration-thickness')
 def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
+    if isinstance(value, UnresolvedLength):
+        # Percentage reference is the used positioning area, not known here.
+        # percentage() resolves the math token against that area.
+        return value.token
     if value in ('auto', 'content', 'from-font') or check_math(value):
         return value
     elif value.value == 0:

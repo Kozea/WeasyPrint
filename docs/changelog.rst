@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+Version 71.0
+------------
+
+Unreleased.
+
+Bug fixes:
+
+* `#2896 <https://github.com/Kozea/WeasyPrint/issues/2896>`_:
+  Don't crash on mixed percentage and length ``calc()`` in ``object-position``
+
+
 Version 70.0
 ------------
 

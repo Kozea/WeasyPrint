@@ -14,6 +14,11 @@ from .functions import check_math
 from .properties import Dimension
 from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, RESOLUTION_TO_DPPX
 
+# Angles are legal inside these functions because they return a number.
+# ponytail: other number-returning functions (atan2, sign, …) are rejected
+# and the position falls back to its initial value.
+_NUMBER_FROM_ANGLE = frozenset(('sin', 'cos', 'tan'))
+
 ZERO_PERCENT = Dimension(0, '%')
 FIFTY_PERCENT = Dimension(50, '%')
 HUNDRED_PERCENT = Dimension(100, '%')
@@ -59,6 +64,21 @@ class PercentageInMath(ValueError):  # noqa: N818
 
 class RelativeLengthInMath(ValueError):  # noqa: N818
     """Relative length unit in math function without reference style."""
+
+
+class UnresolvedLength:
+    """<length-percentage> math that still needs a used-value reference.
+
+    Position properties store a parsed tuple. A function token inside that
+    tuple makes the style layer treat the tuple as a math function and crash.
+    ``length()`` hands ``token`` to ``percentage()``, which resolves it.
+
+    """
+
+    __slots__ = ('token',)
+
+    def __init__(self, token):
+        self.token = token
 
 
 class Pending(ABC):
@@ -182,6 +202,47 @@ def parse_2d_position(tokens):
         # Swap tokens. They need to be in (horizontal, vertical) order.
         return (BACKGROUND_POSITION_PERCENTAGES[keyword_2],
                 BACKGROUND_POSITION_PERCENTAGES[keyword_1])
+
+
+def _non_length_dimension(token, skip=False):
+    """Return true when ``token`` contains a dimension that is not a length."""
+    token_type = getattr(token, 'type', None)
+    if token_type == 'dimension':
+        return not skip and token.unit.lower() not in LENGTH_UNITS
+    if token_type == 'function':
+        inner = skip or token.lower_name in _NUMBER_FROM_ANGLE
+        return any(_non_length_dimension(arg, inner) for arg in token.arguments)
+    if token_type == '() block':
+        return any(_non_length_dimension(item, skip) for item in token.content)
+    return False
+
+
+def position_length(value):
+    """Accept one position axis.
+
+    Fully resolved lengths pass through. Unresolved length-percentage math is
+    wrapped so the cascaded value is not a nested tuple of function tokens.
+    Angles and other non-lengths are rejected.
+
+    """
+    if not check_math(value):
+        return value
+    if _non_length_dimension(value):
+        return None
+    return UnresolvedLength(value)
+
+
+def validate_position(tokens):
+    """Parse a position and reject math that is not a <length-percentage>."""
+    parsed = parse_position(tokens)
+    if parsed is None:
+        return None
+    origin_x, pos_x, origin_y, pos_y = parsed
+    pos_x = position_length(pos_x)
+    pos_y = position_length(pos_y)
+    if None in (pos_x, pos_y):
+        return None
+    return origin_x, pos_x, origin_y, pos_y
 
 
 def parse_position(tokens):
