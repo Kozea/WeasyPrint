@@ -769,3 +769,23 @@ def test_emoji_text_svg(assert_pixels):
         <text>🚀</text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_font_family(assert_pixels):
+    # Regression text for #2943.
+    assert_pixels('''
+        BBBBBB__BBBBBB______
+        BBBBBB__BBBBBB______
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="1.5" font-size="2" fill="blue"
+            style="font-family: 'unknown font' , 'weasyprint'">
+          ABC DEF
+        </text>
+      </svg>
+    ''')
