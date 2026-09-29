@@ -379,9 +379,8 @@ def process_color_stops(vector_length, positions, hints, style):
     Return processed color stops, as a list of floats in px.
 
     """
-    # Resolve percentages.
+    # Resolve percentages for positions.
     positions = [percentage(position, style, vector_length) for position in positions]
-    hints = [percentage(hint, style, vector_length) / vector_length for hint in hints]
 
     # First and last default to 100%.
     if positions[0] is None:
@@ -390,15 +389,15 @@ def process_color_stops(vector_length, positions, hints, style):
         positions[-1] = vector_length
 
     # Make sure positions are increasing.
-    previous_pos = positions[0]
+    previous_position = positions[0]
     for i, position in enumerate(positions):
         if position is not None:
-            if position < previous_pos:
-                positions[i] = previous_pos
+            if position < previous_position:
+                positions[i] = previous_position
             else:
-                previous_pos = position
+                previous_position = position
 
-    # Assign missing values.
+    # Assign missing positions.
     previous_i = -1
     for i, position in enumerate(positions):
         if position is not None:
@@ -408,8 +407,24 @@ def process_color_stops(vector_length, positions, hints, style):
                 positions[previous_i + j] = base + j * increment
             previous_i = i
 
-    # Calculate exponential value for PDF hints, avoid big numbers.
-    pdf_hints = [math.log(0.5, max(0, min(hint, 1))) for hint in hints]
+    # Assign missing hints and resolve percentages.
+    hints = [
+        (positions[i] + (positions[i+1] - positions[i]) / 2)
+        if hint is None else percentage(hint, style, vector_length)
+        for i, hint in enumerate(hints)]
+
+    # Make sure hints are increasing.
+    previous_hint = hints[0]
+    for i, hint in enumerate(hints):
+        if previous_hint > hint:
+            hints[i] = hint = previous_hint
+            positions[i] = positions[i+1]
+        previous_hint = hint
+
+    # Calculate exponential value for PDF hints.
+    pdf_hints = [
+        0 if hint <= 0 else 2 ** 16 if hint >= vector_length else
+        math.log(0.5, hint / vector_length) for hint in hints]
 
     return positions, pdf_hints
 
