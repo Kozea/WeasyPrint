@@ -4,7 +4,7 @@ import argparse
 import logging
 import platform
 import sys
-
+import urllib.request
 import pydyf
 
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
@@ -89,6 +89,8 @@ PARSER.add_argument(
 PARSER.add_argument(
     '--version', action='version', version=f'WeasyPrint version {__version__}',
     help='print WeasyPrint’s version number and exit')
+PARSER.add_argument('--user', help='username for password protected URLs')
+PARSER.add_argument('--password', help='password for password protected URLs')
 
 group = PARSER.add_argument_group('rendering options')
 group.add_argument(
@@ -207,6 +209,10 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
         fetcher_args['allow_redirects'] = False
     if args.fail_on_http_errors:
         fetcher_args['fail_on_errors'] = True
+    if args.user:
+        pwmanager=urllib.request.HTTPPasswordMgrWithDefaultRealm()
+        pwmanager.add_password(None,args.input,args.user,args.password)
+        fetcher_args['pwmanager'] = pwmanager
     url_fetcher = URLFetcher(**fetcher_args)
 
     options = {
