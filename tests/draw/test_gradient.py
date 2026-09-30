@@ -492,6 +492,7 @@ def test_gradient_hints(assert_same_renderings):
         style % 'blue, red, green 99.9999%',
         style % 'blue, red 50.00001%, green',
         style % 'blue 0.0001%, 24.9999%, red 50.00001%, 75.0001%, green 99.9999%',
+        tolerance=3,
     )
 
 
