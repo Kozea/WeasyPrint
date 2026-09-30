@@ -497,6 +497,16 @@ def test_gradient_hints(assert_same_renderings):
 
 
 @assert_no_logs
+def test_gradient_hints_and_positions(assert_same_renderings):
+    style = '<style>@page { size: 9px 1px; background: linear-gradient(to right, %s) }'
+    assert_same_renderings(
+        style % 'blue, 10%, red, 60%, green',
+        style % 'blue, 10%, red 35%, 60%, green',
+        style % 'blue 0%, 10%, red, 60%, green 100%',
+    )
+
+
+@assert_no_logs
 @pytest.mark.parametrize('gradient', [
     'blue, 100%, red',
     'blue, 110%, red',
