@@ -160,6 +160,9 @@ group.add_argument(
 group.add_argument(
     '--fail-on-http-errors', action='store_true',
     help='abort document rendering on any HTTP error')
+group.add_argument(
+    '--http-header', action='append', dest='http_headers',
+    help='include header:value in HTTP requests')
 
 group = PARSER.add_argument_group('command-line logging options')
 group = group.add_mutually_exclusive_group()
@@ -207,6 +210,11 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
         fetcher_args['allow_redirects'] = False
     if args.fail_on_http_errors:
         fetcher_args['fail_on_errors'] = True
+    if args.http_headers:
+        assert all(':' in header for header in args.http_headers), (
+            '":" needed to separate HTTP header and value')
+        fetcher_args['http_headers'] = dict(
+            header.split(':', 1) for header in args.http_headers)
     url_fetcher = URLFetcher(**fetcher_args)
 
     options = {
