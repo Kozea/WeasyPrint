@@ -2120,3 +2120,21 @@ def test_flex_inline_grid():
     span, = div.children
     assert span.position_x == 2
     assert span.position_y == 2
+
+
+@assert_no_logs
+def test_flex_float_gap():
+    page, = render_pages('''
+      <article style="display: flex; float: left; font: 2px/1 weasyprint; gap: 1px">
+        <div>a b</div>
+        <div>c d</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.width == 13
+    div1, div2 = article.children
+    assert div1.width == div2.width == 6
+    assert div1.position_x == 0
+    assert div2.position_x == 7

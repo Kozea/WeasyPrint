@@ -780,9 +780,17 @@ def flex_min_content_width(context, box, outer=True):
         for child in box.children if child.is_flex_item]
     if not min_contents:
         return adjust(box, outer, 0)
-    if (box.style['flex_direction'].startswith('row') and
-            box.style['flex_wrap'] == 'nowrap'):
-        return adjust(box, outer, sum(min_contents))
+    single_row = (
+        box.style['flex_direction'].startswith('row') and
+        box.style['flex_wrap'] == 'nowrap')
+    if single_row:
+        column_gap = box.style['column_gap']
+        if column_gap == 'normal' or check_math(column_gap) or column_gap.unit == '%':
+            column_gap = 0
+        else:
+            column_gap = column_gap.value
+        column_gaps = (len(min_contents) - 1) * column_gap
+        return adjust(box, outer, sum(min_contents)) + column_gaps
     else:
         return adjust(box, outer, max(min_contents))
 
@@ -797,7 +805,13 @@ def flex_max_content_width(context, box, outer=True):
     if not max_contents:
         return adjust(box, outer, 0)
     if box.style['flex_direction'].startswith('row'):
-        return adjust(box, outer, sum(max_contents))
+        column_gap = box.style['column_gap']
+        if column_gap == 'normal' or check_math(column_gap) or column_gap.unit == '%':
+            column_gap = 0
+        else:
+            column_gap = column_gap.value
+        column_gaps = (len(max_contents) - 1) * column_gap
+        return adjust(box, outer, sum(max_contents)) + column_gaps
     else:
         return adjust(box, outer, max(max_contents))
 
