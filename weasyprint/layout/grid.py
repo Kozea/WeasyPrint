@@ -409,9 +409,11 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                     context, child, bottom_space, skip_stack=None,
                     containing_block=parent)
                 height = max(height, child.margin_height())
-            if min_function in ('min-content', 'max_content', 'auto'):
+            if min_function in ('min-content', 'max-content', 'auto'):
                 sizes[0] = height
-            if max_function in ('min-content', 'max_content'):
+            elif sizes[0] is not None:
+                sizes[0] = max(height, sizes[0])
+            if max_function in ('min-content', 'max-content'):
                 sizes[1] = height
             if None not in sizes:
                 sizes[1] = max(sizes)
@@ -431,7 +433,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             sizes[1] = max(
                 min_content_width(context, child) for child in children)
         elif (max_function in ('auto', 'max-content') or
-              max_function[0] == 'fit_content()'):
+              max_function[0] == 'fit-content()'):
             sizes[1] = max(
                 max_content_width(context, child) for child in children)
         if None not in sizes:
@@ -561,9 +563,9 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         direction == 'y' and set(align_content) & {'normal', 'stretch'})
     if (x_stretch or y_stretch) and free_space is not None and free_space > 0:
         auto_tracks_sizes = [
-            sizes for sizes, (min_function, _)
+            sizes for sizes, (_, max_function)
             in zip(tracks_sizes, sizing_functions)
-            if min_function == 'auto']
+            if max_function == 'auto']
         if auto_tracks_sizes:
             distributed_free_space = free_space / len(auto_tracks_sizes)
             for sizes in auto_tracks_sizes:
