@@ -1939,3 +1939,55 @@ def test_grid_in_columns_with_break():
     section2, section3 = grid.children
     assert section2.position_y == 0
     assert section3.position_y == 4
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('min_value', 'max_value', 'width'), [
+    ('auto', 'auto', 20),
+    ('0', 'auto', 20),
+    ('1px', 'auto', 20),
+    ('10px', 'auto', 20),
+    ('10px', '10px', 10),
+])
+def test_grid_minmax_x(min_value, max_value, width):
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px / 1 weasyprint }
+        article { display: grid; grid-auto-columns: minmax(%s, %s) }
+      </style>
+      <article style="display: grid">
+        <div>ab</div>
+      </article>
+    ''' % (min_value, max_value))
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.width == width
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('min_value', 'max_value', 'height'), [
+    ('auto', 'auto', 2),
+    ('0', 'auto', 2),
+    ('1px', 'auto', 2),
+    ('10px', 'auto', 10),
+    ('10px', '10px', 10),
+])
+def test_grid_minmax_y(min_value, max_value, height):
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px / 1 weasyprint }
+        article { display: grid; grid-auto-rows: minmax(%s, %s) }
+      </style>
+      <article style="display: grid">
+        <div>ab</div>
+      </article>
+    ''' % (min_value, max_value))
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == height
