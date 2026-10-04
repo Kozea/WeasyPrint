@@ -577,6 +577,7 @@ class SVG:
                 x_align = width / 2 if text_anchor == 'middle' else width
                 if node.tag == 'text' or 'x' in node.attrib or 'y' in node.attrib:
                     self.stream.transform(e=-x_align)
+                    node.text_bounding_box = (x - x_align, y, width, height)
             self.stream.draw_x_object(group_id)
             self.stream.pop_state()
 
