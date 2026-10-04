@@ -516,8 +516,9 @@ class SVG:
         if node.display and TAGS.get(node.tag) == text:
             text_anchor = node.get('text-anchor', 'start')
             direction = node.get('direction', 'ltr')
-            text_anchor_shift = (text_anchor, direction) not in (
-                ('start', 'ltr'), ('end', 'rtl'))
+            text_anchor_shift = (
+                text_anchor in ('start', 'middle', 'end') and
+                (text_anchor, direction) not in (('start', 'ltr'), ('end', 'rtl')))
             if text_anchor_shift:
                 group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
                 original_streams.append(self.stream)
