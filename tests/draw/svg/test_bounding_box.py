@@ -233,6 +233,35 @@ def test_bounding_box_text_anchor(assert_pixels):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('text', [
+    'ab',
+    '<tspan>ab</tspan>',
+    '<tspan><tspan>ab</tspan></tspan>',
+    'a<tspan>b</tspan>',
+    '<tspan x="4">ab</tspan>',
+    '<tspan y="3">ab</tspan>',
+])
+def test_bounding_box_text_anchor_tspan(assert_pixels, text):
+    assert_pixels('''
+        ________
+        __tttt__
+        __tttt__
+        ________
+    ''', '''
+      <style>
+        @page { size: 8px 4px }
+        svg { display: block }
+      </style>
+      <svg width="8px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="4" y="3" opacity="0.5" fill="lime"
+              font-family="weasyprint" font-size="2" text-anchor="middle">
+          %s
+        </text>
+      </svg>
+    ''' % text)
+
+
+@assert_no_logs
 def test_bounding_box_path_hv(assert_pixels):
     assert_pixels('''
         BBBBB
