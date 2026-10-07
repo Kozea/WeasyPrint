@@ -138,6 +138,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     previous_pango_font = None
     string = ''
     x_advance = 0
+    # Fractional part of the kerning that could not be written for the previous
+    # glyphs: carried over so that the error never accumulates (error diffusion).
+    kerning_carry = 0
     emojis = []
     run = first_line.runs[0]
     while run != ffi.NULL:
@@ -236,8 +239,12 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
 
             # Set kerning, word spacing, letter spacing.
             kerning = logical_width + offset - width * 1000 * FROM_UNITS / font_size
-            if kerning:
-                string += f'>{int(kerning)}<'
+            if kerning or kerning_carry:
+                wanted_kerning = kerning + kerning_carry
+                emitted_kerning = int(wanted_kerning)
+                kerning_carry = wanted_kerning - emitted_kerning
+                if emitted_kerning:
+                    string += f'>{emitted_kerning}<'
 
             # Create list of emojis.
             if font.svg:

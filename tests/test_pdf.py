@@ -954,3 +954,29 @@ def test_links_note():
       </style>
       <div>abc<span>de</span>fgh<span>ij</span></div>''').write_pdf()
     assert b'/Dest (note-1)' in pdf
+
+
+def _emitted_kerning_sum(letter_spacing):
+    pdf = FakeHTML(string=f'''
+      <style>
+        @page {{ size: 400px }}
+        body {{
+          font-family: weasyprint; font-size: 10px;
+          letter-spacing: {letter_spacing};
+        }}
+      </style>
+      {'x' * 40}''').write_pdf()
+    arrays = re.findall(rb'\[(.*?)\]\s*TJ', pdf, re.S)
+    return sum(int(n) for array in arrays for n in re.findall(rb'>(-?\d+)<', array))
+
+
+@assert_no_logs
+def test_letter_spacing_kerning_not_truncated():
+    # Glyph spacing is written as integers (1/1000 em). A spacing whose
+    # per-glyph value is below one unit used to be truncated to zero on every
+    # glyph, and the fractional part of larger values was lost on every glyph
+    # too, so lines with letter-spacing drifted by up to 0.5 unit per glyph.
+    small = _emitted_kerning_sum('0.0125px')
+    triple = _emitted_kerning_sum('0.0375px')
+    assert small <= -10  # not lost
+    assert abs(triple - 3 * small) <= 5  # linear: the carried fractions add up
