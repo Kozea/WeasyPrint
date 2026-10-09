@@ -954,3 +954,11 @@ def test_links_note():
       </style>
       <div>abc<span>de</span>fgh<span>ij</span></div>''').write_pdf()
     assert b'/Dest (note-1)' in pdf
+
+
+@assert_no_logs
+def test_debug_variant():
+    pdf = FakeHTML(string='<div id="lipsum">abc</div>').write_pdf(
+        pdf_variant='debug', uncompressed_pdf=True)
+    assert b'/T (lipsum)' in pdf
+    assert b'/Dest (lipsum)' in pdf

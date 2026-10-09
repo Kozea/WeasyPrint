@@ -5,7 +5,7 @@ import pydyf
 from ..matrix import Matrix
 
 
-def debug(pdf, metadata, document, page_streams, attachments, compress):
+def debug(pdf, document, page_streams, attachments, compress):
     """Set debug PDF metadata."""
 
     # Add links on ids.
