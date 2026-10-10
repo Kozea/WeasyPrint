@@ -1221,3 +1221,34 @@ def test_gradient_bad_url(assert_pixels, url):
         <rect x="0" y="0" width="10" height="10" fill="url(%s)" />
       </svg>
     ''' % url)
+
+
+@assert_no_logs
+def test_linear_gradient_stroke(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBKKBBBB
+        RRRRKKRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="6" height="6" stroke-width="4" stroke="url(#grad)" />
+      </svg>
+    ''')

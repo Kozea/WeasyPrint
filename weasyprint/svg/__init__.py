@@ -745,6 +745,7 @@ class SVG:
 
         # Get stroke data
         if stroke_width := self.length(node.get('stroke-width', '1px'), font_size):
+            self.stream.set_line_width(stroke_width)
             source, stroke = node.get_paint('stroke', context)
             opacity = alpha_value(node.get('stroke-opacity', 1))
             if gradient := self.gradients.get(source):
@@ -757,7 +758,6 @@ class SVG:
                 stream_color = color(stroke)
                 stream_color.alpha *= opacity
                 self.stream.set_color(stream_color, stroke=True)
-                self.stream.set_line_width(stroke_width)
         else:
             stroke = None
 
