@@ -1236,6 +1236,34 @@ def test_links_12():
         base_url='https://weasyprint.org')
 
 
+@assert_no_logs
+def test_links_flex_item():
+    # Regression test for #2941.
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <div style="display: flex">
+              <a href="https://weasyprint.org" style="width: 10px; height: 10px">
+        ''',
+        [[('external', 'https://weasyprint.org', (0, 0, 10, 10))]], [{}],
+        [([('external', 'https://weasyprint.org', (0, 0, 10, 10))], [])],
+        base_url='https://weasyprint.org')
+
+
+@assert_no_logs
+def test_links_grid_item():
+    # Regression test for #2941.
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <div style="display: grid">
+              <a href="https://weasyprint.org" style="height: 10px">
+        ''',
+        [[('external', 'https://weasyprint.org', (0, 0, 200, 10))]], [{}],
+        [([('external', 'https://weasyprint.org', (0, 0, 200, 10))], [])],
+        base_url='https://weasyprint.org')
+
+
 # Make relative URL references work with our custom URL scheme.
 uses_relative.append('weasyprint-custom')
 

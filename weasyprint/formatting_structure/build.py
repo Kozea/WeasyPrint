@@ -997,20 +997,16 @@ def wrap_table(box, children):
     return wrapper
 
 
-def blockify(box, layout=None):
+def blockify(box):
     """Turn an inline box into a block box."""
     # See https://drafts.csswg.org/css-display-4/#blockify.
     if isinstance(box, boxes.InlineBlockBox):
         anonymous = boxes.BlockBox.anonymous_from(box, box.children)
-        if box.is_table_wrapper:
-            anonymous.is_table_wrapper = True
     elif isinstance(box, boxes.InlineReplacedBox):
         replacement = box.replacement
         anonymous = boxes.BlockReplacedBox.anonymous_from(box, replacement)
     elif isinstance(box, boxes.TextBox):
         anonymous = boxes.BlockBox.anonymous_from(box, [box])
-        if layout:
-            setattr(box, f'is_{layout}_item', False)
     elif isinstance(box, boxes.InlineFlexBox):
         anonymous = boxes.FlexBox.anonymous_from(box, box.children)
     elif isinstance(box, boxes.InlineGridBox):
@@ -1020,8 +1016,10 @@ def blockify(box, layout=None):
     else:
         return box
     anonymous.style = box.style
-    if layout:
-        setattr(anonymous, f'is_{layout}_item', True)
+    anonymous.is_table_wrapper = box.is_table_wrapper
+    anonymous.is_flex_item = box.is_flex_item
+    anonymous.is_grid_item = box.is_grid_item
+    anonymous.link = box.link
     return anonymous
 
 
@@ -1054,7 +1052,7 @@ def flex_children(box, children):
                 # affected by the white-space property"
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
-            flex_children.append(blockify(child, 'flex'))
+            flex_children.append(blockify(child))
         return flex_children
     else:
         return children
@@ -1088,7 +1086,7 @@ def grid_children(box, children):
                 # affected by the white-space property"
                 # https://drafts.csswg.org/css-grid-2/#grid-item
                 continue
-            grid_children.append(blockify(child, 'grid'))
+            grid_children.append(blockify(child))
         return grid_children
     else:
         return children
