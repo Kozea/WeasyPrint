@@ -1099,6 +1099,29 @@ def test_page_break_child_margin_no_collapse():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('container', [
+    '<div>{paragraphs}</div>',
+    '<div style="overflow: hidden">{paragraphs}</div>',
+    '<div style="display: flow-root">{paragraphs}</div>',
+    '<div style="overflow: hidden"><div>{paragraphs}</div></div>',
+])
+def test_margin_top_is_truncated_after_unforced_page_break(container):
+    paragraphs = ''.join(f'<p>{index}</p>' for index in range(6))
+    pages = render_pages(f'''
+      <style>
+        @page {{ size: 100mm 60mm; margin: 10mm; }}
+        body {{ margin: 0; font-size: 10pt; line-height: 15pt; }}
+        p {{ margin: 20pt 0 0; height: 15pt; }}
+      </style>
+      {container.format(paragraphs=paragraphs)}
+    ''')
+
+    first_paragraph = next(
+        box for box in pages[1].descendants() if box.element_tag == 'p')
+    assert first_paragraph.border_box_y() - pages[1].content_box_y() == 0
+
+
+@assert_no_logs
 def test_min_max_rtl():
     page1, = render_pages('''
       <style>

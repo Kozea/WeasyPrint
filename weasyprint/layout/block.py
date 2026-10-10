@@ -40,7 +40,8 @@ def block_level_layout(context, box, bottom_space, skip_stack, containing_block,
             # one of the ancestors breaks collapsing margins.
             # See test_margin_break_clearance.
             collapse_with_page = (
-                containing_block.is_for_root_element or adjoining_margins)
+                containing_block.is_for_root_element or adjoining_margins or
+                containing_block.establishes_formatting_context())
             if collapse_with_page:
                 if box.style['margin_break'] == 'discard':
                     box.margin_top = 0
