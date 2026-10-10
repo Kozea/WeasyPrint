@@ -228,12 +228,27 @@ def _get_template_tracks(tracks):
     return tracks_list
 
 
+def _distribute_extra_space_to_tracks(space, tracks_sizes, tracks_numbers, size_index,
+                                      item_incurred_increases, beyond_limits=False):
+    distributed_space = space / (len(tracks_numbers) or 1)
+    for track_number in tracks_numbers:
+        base_size, growth_limit = tracks_sizes[track_number]
+        item_incurred_increase = distributed_space
+        affected_size = tracks_sizes[track_number][size_index]
+        limit = inf if beyond_limits else tracks_sizes[track_number][1]
+        if affected_size + item_incurred_increase >= limit:
+            extra = item_incurred_increase + affected_size - limit
+            item_incurred_increase -= extra
+        space -= item_incurred_increase
+        item_incurred_increases[track_number] = item_incurred_increase
+    return space
+
+
 def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribution,
                             tracks_children, sizing_functions, tracks_sizes, span,
                             direction, context):
     assert affected_sizes in ('min', 'max')
-    assert affected_tracks_types in (
-        'intrinsic', 'content-based', 'max-content')
+    assert affected_tracks_types in ('intrinsic', 'content-based', 'max-content')
     assert size_contribution in ('minimum', 'min-content', 'max-content')
     assert direction in 'xy'
 
@@ -271,7 +286,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribu
             continue
         for item, parent in children:
             # 2.1 Find the space distribution.
-            # TODO: Differenciate minimum and min-content values.
+            # TODO: Differentiate minimum and min-content values.
             # TODO: Find a better way to get height.
             if direction == 'x':
                 if size_contribution in ('minimum', 'min-content'):
@@ -296,41 +311,22 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribu
             item_incurred_increases = [0] * len(sizing_functions)
             affected_tracks_numbers = [
                 j for j, affected in tracks_numbers if affected]
-            distributed_space = space / (len(affected_tracks_numbers) or 1)
-            for track_number in affected_tracks_numbers:
-                base_size, growth_limit = tracks_sizes[track_number]
-                item_incurred_increase = distributed_space
-                affected_size = tracks_sizes[track_number][affected_size_index]
-                limit = tracks_sizes[track_number][1]
-                if affected_size + item_incurred_increase >= limit:
-                    extra = (
-                        item_incurred_increase + affected_size - limit)
-                    item_incurred_increase -= extra
-                space -= item_incurred_increase
-                item_incurred_increases[track_number] = item_incurred_increase
+            space = _distribute_extra_space_to_tracks(
+                space, tracks_sizes, affected_tracks_numbers, affected_size_index,
+                item_incurred_increases)
             # 2.3 Distribute space to non-affected tracks.
             if space and affected_tracks_numbers:
                 unaffected_tracks_numbers = [
                     j for j, affected in tracks_numbers if not affected]
-                distributed_space = (
-                    space / (len(unaffected_tracks_numbers) or 1))
-                for track_number in unaffected_tracks_numbers:
-                    base_size, growth_limit = tracks_sizes[track_number]
-                    item_incurred_increase = distributed_space
-                    affected_size = (
-                        tracks_sizes[track_number][affected_size_index])
-                    limit = tracks_sizes[track_number][1]
-                    if affected_size + item_incurred_increase >= limit:
-                        extra = (
-                            item_incurred_increase + affected_size - limit)
-                        item_incurred_increase -= extra
-                    space -= item_incurred_increase
-                    item_incurred_increases[track_number] = (
-                        item_incurred_increase)
+                space = _distribute_extra_space_to_tracks(
+                    space, tracks_sizes, unaffected_tracks_numbers, affected_size_index,
+                    item_incurred_increases)
             # 2.4 Distribute space beyond limits.
             if space:
-                # TODO: Distribute space beyond limits.
-                pass
+                # TODO: Filter tracks with right track sizing functions.
+                space = _distribute_extra_space_to_tracks(
+                    space, tracks_sizes, affected_tracks_numbers,
+                    affected_size_index, item_incurred_increases, beyond_limits=True)
             # 2.5. Set the track’s planned increase.
             for k, extra in enumerate(item_incurred_increases):
                 if extra > planned_increases[k]:
@@ -356,22 +352,17 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     percent_box_size = 0 if box_size == 'auto' else box_size
     # 1.1 Initialize track sizes.
     for min_function, max_function in sizing_functions:
-        base_size = None
         if _is_length(min_function):
             base_size = percentage(
                 min_function, containing_block.style, percent_box_size)
-        elif (min_function in ('min-content', 'max-content', 'auto') or
-              min_function[0] == 'fit-content()'):
+        else:
             base_size = 0
-        growth_limit = None
         if _is_length(max_function):
             growth_limit = percentage(
                 max_function, containing_block.style, percent_box_size)
-        elif (max_function in ('min-content', 'max-content', 'auto') or
-              max_function[0] == 'fit-content()' or _is_fr(max_function)):
+        else:
             growth_limit = inf
-        if None not in (base_size, growth_limit):
-            growth_limit = max(base_size, growth_limit)
+        growth_limit = max(base_size, growth_limit)
         tracks_sizes.append([base_size, growth_limit])
 
     # 1.2 Resolve intrinsic track sizes.
@@ -409,33 +400,27 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                     context, child, bottom_space, skip_stack=None,
                     containing_block=parent)
                 height = max(height, child.margin_height())
-            if min_function in ('min-content', 'max_content', 'auto'):
-                sizes[0] = height
-            if max_function in ('min-content', 'max_content'):
-                sizes[1] = height
-            if None not in sizes:
-                sizes[1] = max(sizes)
-            continue
-        if min_function == 'min-content':
-            sizes[0] = max(0, *(
+            # TODO: Get real min/max contributions.
+            min_size = max_size = height
+        else:
+            min_size = max(0, *(
                 min_content_width(context, child) for child in children))
-        elif min_function == 'max-content':
-            sizes[0] = max(0, *(
+            max_size = max(0, *(
                 max_content_width(context, child) for child in children))
+        if min_function == 'min-content':
+            sizes[0] = min_size
+        elif min_function == 'max-content':
+            sizes[0] = max_size
         elif min_function == 'auto':
             # TODO: Handle min-/max-content constrained parents.
             # TODO: Use real "minimum contributions".
-            sizes[0] = max(0, *(
-                min_content_width(context, child) for child in children))
+            sizes[0] = min(min_size, sizes[1])
         if max_function == 'min-content':
-            sizes[1] = max(
-                min_content_width(context, child) for child in children)
+            sizes[1] = min_size
         elif (max_function in ('auto', 'max-content') or
-              max_function[0] == 'fit_content()'):
-            sizes[1] = max(
-                max_content_width(context, child) for child in children)
-        if None not in sizes:
-            sizes[1] = max(sizes)
+              max_function[0] == 'fit-content()'):
+            sizes[1] = max_size
+        sizes[1] = max(sizes)
     # 1.2.3 Increase sizes to accommodate items spanning content-sized tracks.
     spans = sorted({
         width if direction == 'x' else height
@@ -485,17 +470,18 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     # TODO: Support spans for flexible tracks.
     # 1.2.5 Fix infinite growth limits.
     for sizes in tracks_sizes:
-        if sizes[1] is inf:
+        if sizes[1] == inf:
             sizes[1] = sizes[0]
     # 1.3 Maximize tracks.
     if box_size == 'auto':
-        free_space = None
+        # TODO: detect if the grid container is sized under min-content constraint.
+        free_space = inf
     else:
         free_space = (
             box_size -
             sum(size[0] for size in tracks_sizes) -
             (len(tracks_sizes) - 1) * gap)
-    if free_space is not None and free_space > 0:
+    if free_space > 0:
         distributed_free_space = free_space / len(tracks_sizes)
         for i, sizes in enumerate(tracks_sizes):
             base_size, growth_limit = sizes
@@ -508,10 +494,10 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     # TODO: Respect max-width/-height.
     # 1.4 Expand flexible tracks.
     inflexible_tracks = set()
-    if free_space is not None and free_space <= 0:
+    if free_space <= 0:
         # TODO: Respect min-content constraint.
         flex_fraction = 0
-    elif free_space is not None:
+    elif free_space < inf:
         stop = False
         while not stop:
             leftover_space = free_space
@@ -549,21 +535,18 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     for i, (sizes, (_, max_function)) in iterable:
         if _is_fr(max_function) and i not in inflexible_tracks:
             if flex_fraction * max_function.value > sizes[0]:
-                if free_space is not None:
-                    free_space -= flex_fraction * max_function.value
+                free_space -= flex_fraction * max_function.value
                 sizes[0] = flex_fraction * max_function.value
     # 1.5 Expand stretched auto tracks.
     justify_content = containing_block.style['justify_content']
     align_content = containing_block.style['align_content']
-    x_stretch = (
-        direction == 'x' and set(justify_content) & {'normal', 'stretch'})
-    y_stretch = (
-        direction == 'y' and set(align_content) & {'normal', 'stretch'})
-    if (x_stretch or y_stretch) and free_space is not None and free_space > 0:
+    x_stretch = direction == 'x' and set(justify_content) & {'normal', 'stretch'}
+    y_stretch = direction == 'y' and set(align_content) & {'normal', 'stretch'}
+    if (x_stretch or y_stretch) and 0 < free_space < inf:
         auto_tracks_sizes = [
-            sizes for sizes, (min_function, _)
+            sizes for sizes, (_, max_function)
             in zip(tracks_sizes, sizing_functions)
-            if min_function == 'auto']
+            if max_function == 'auto']
         if auto_tracks_sizes:
             distributed_free_space = free_space / len(auto_tracks_sizes)
             for sizes in auto_tracks_sizes:
