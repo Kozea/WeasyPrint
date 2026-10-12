@@ -2003,3 +2003,27 @@ def test_grid_minmax_y(value, height):
     article, = body.children
     div, = article.children
     assert div.height == height
+
+
+@assert_no_logs
+def test_grid_minmax_y_span():
+    # An item spanning 2 minmax(1px, auto) rows grows both of them.
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px / 1 weasyprint }
+        article { display: grid; grid-template-columns: 5px 5px;
+                  grid-auto-rows: minmax(1px, auto) }
+      </style>
+      <article>
+        <div style="grid-row: span 2">a<br>b<br>c<br>d</div>
+        <div>e</div>
+        <div>f</div>
+        <div style="grid-column: 1">g</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    *_, div_g = article.children
+    assert div_g.position_y == 8
