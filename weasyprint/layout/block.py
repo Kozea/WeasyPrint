@@ -700,7 +700,7 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     if box.style['max_lines'] != 'none':
         max_lines = min(box.style['max_lines'], max_lines or inf)
 
-    if box.first_line_style is not None:
+    if is_start and box.first_line_style is not None:
         box_first_line_style = {
             key: box.first_line_style[key] for key in box.first_line_style.cascaded}
         if first_line_style is None:
