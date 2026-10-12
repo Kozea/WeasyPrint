@@ -1616,6 +1616,35 @@ def test_first_line_across_pages():
 
 
 @assert_no_logs
+def test_first_line_after_block_across_pages():
+    # The first line is on the second page, after a block filling the first one.
+    page1, page2 = render_pages('''
+      <style>
+        @page { margin: 0; size: 10px }
+        body { margin: 0 }
+        div { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        div::first-line { font-weight: bold }
+      </style>
+      <div>
+        <article style="height: 9px"></article>
+        abc<br> def
+      </div>
+    ''')
+    html1, = page1.children
+    body1, = html1.children
+    div1, = body1.children
+    article, = div1.children
+    assert article.element_tag == 'article'
+    html2, = page2.children
+    body2, = html2.children
+    div2, = body2.children
+    anonymous, = div2.children
+    line1, line2 = anonymous.children
+    assert line1.children[0].element_tag == 'div::first-line'
+    assert line2.children[0].element_tag == 'div'
+
+
+@assert_no_logs
 def test_first_line_nested():
     page, = render_pages('''
       <style>

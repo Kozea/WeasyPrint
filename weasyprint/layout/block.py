@@ -654,6 +654,38 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         new_children, max_lines)
 
 
+def _has_line(box):
+    """Whether ``box`` holds in-flow line boxes, directly or in in-flow descendants."""
+    if isinstance(box, boxes.LineBox):
+        return True
+    return any(
+        _has_line(child) for child in getattr(box, 'children', ())
+        if child.is_in_normal_flow())
+
+
+def _first_line_done(box, skip_stack):
+    """Whether the first line of ``box`` was laid out before ``skip_stack``.
+
+    A box resumed on a new page may not have laid out any line yet, for example
+    when only an empty block fitted on the previous page.
+
+    """
+    if skip_stack is None:
+        return False
+    (skip, child_skip_stack), = skip_stack.items()
+    if any(_has_line(child) for child in box.children[:skip]
+           if child.is_in_normal_flow()):
+        return True
+    if skip >= len(box.children) or child_skip_stack is None:
+        return False
+    child = box.children[skip]
+    if isinstance(child, boxes.LineBox):
+        return True
+    if isinstance(child, boxes.BlockContainerBox):
+        return _first_line_done(child, child_skip_stack)
+    return _has_line(child)
+
+
 def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty,
                            absolute_boxes, fixed_boxes, adjoining_margins,
                            first_letter_style, first_line_style, discard, max_lines):
@@ -700,7 +732,7 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     if box.style['max_lines'] != 'none':
         max_lines = min(box.style['max_lines'], max_lines or inf)
 
-    if is_start and box.first_line_style is not None:
+    if box.first_line_style is not None and not _first_line_done(box, skip_stack):
         box_first_line_style = {
             key: box.first_line_style[key] for key in box.first_line_style.cascaded}
         if first_line_style is None:
