@@ -198,7 +198,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             domain, encode, bounds, sub_functions)
         alpha_shading = alpha_stream.add_shading(
             shading_type, domain, coords, extend, function, 'DeviceGray')
-        alpha_stream.stream = [f'/{alpha_shading.id} sh']
+        alpha_stream.paint_shading(alpha_shading.id)
 
     group.paint_shading(shading.id)
     pattern.set_alpha(1)

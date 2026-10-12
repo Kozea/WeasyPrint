@@ -166,7 +166,7 @@ class Stream(pydyf.Stream):
             'Type': '/ExtGState',
             'SMask': pydyf.Dictionary({
                 'Type': '/Mask',
-                'S': f'/{mode.capitalize()}',
+                'S': pydyf.name(mode.capitalize()),
                 'G': alpha_stream,
             }),
             'ca': 1,
@@ -178,7 +178,7 @@ class Stream(pydyf.Stream):
     def set_blend_mode(self, mode):
         self.set_state(pydyf.Dictionary({
             'Type': '/ExtGState',
-            'BM': f'/{mode}',
+            'BM': pydyf.name(mode),
         }))
 
     def add_font(self, pango_font):
@@ -259,7 +259,7 @@ class Stream(pydyf.Stream):
         shading = pydyf.Dictionary({
             'ShadingType': shading_type,
             'ColorSpace': (
-                f'/{color_space}' if color_space else self._default_color_space),
+                pydyf.name(color_space) if color_space else self._default_color_space),
             'Domain': pydyf.Array(domain),
             'Coords': pydyf.Array(coords),
             'Function': function,

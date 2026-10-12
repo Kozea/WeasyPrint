@@ -220,10 +220,10 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
 
             color = style['color'].coordinates
             checked = 'checked' in element.attrib
-            key = len(group['Kids']) if input_type == 'radio' else 'on'
+            key = f'{len(group["Kids"])}' if input_type == 'radio' else 'on'
             appearance = pydyf.Dictionary({key: checked_stream.reference})
             field['FT'] = '/Btn'
-            field['AS'] = f'/{key}' if checked else '/Off'
+            field['AS'] = pydyf.name(key) if checked else '/Off'
             field['AP'] = pydyf.Dictionary({'N': appearance})
             field['MK'] = pydyf.Dictionary({'BC': pydyf.Array(color)})
             field['Border'] = pydyf.Array((0, 0, 0))
@@ -231,7 +231,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             if input_type == 'radio':
                 field['Parent'] = group.reference
                 if checked:
-                    group['V'] = f'/{key}'
+                    group['V'] = pydyf.name(key)
                 group['Kids'].append(field.reference)
                 group['Opt'].append(pydyf.String(input_value))
             else:
@@ -407,7 +407,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     mod = pydyf.String(attachment.modified.strftime('D:%Y%m%d%H%M%SZ'))
     file_extra = pydyf.Dictionary({
         'Type': '/EmbeddedFile',
-        'Subtype': f'/{mime_type.replace("/", "#2f")}',
+        'Subtype': pydyf.name(mime_type),
         'Params': pydyf.Dictionary({
             'CheckSum': f'<{attachment.md5}>',
             'Size': len(stream),

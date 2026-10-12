@@ -61,9 +61,8 @@ class Font:
             in md5(description_string, usedforsecurity=False).digest()[:6])
 
         # Set font name.
-        name = re.split(b' [#@]', description_string)[0]
-        name = re.sub(b'[^A-Za-z0-9-]', b'', name.replace(b' ', b'-'))
-        self.name = b'/' + self.hash.encode() + b'+' + name
+        name = re.split(' [#@]', description_string.decode())[0]
+        self.name = pydyf.name(f'{self.hash}+{name}')
 
         # Set ascent and descent.
         if self.font_size:
@@ -122,7 +121,7 @@ class Font:
         self.flags = 2 ** (3 - 1)  # Symbolic, custom character set
         if self.style:
             self.flags += 2 ** (7 - 1)  # Italic
-        if b'Serif' in name.split(b' '):
+        if b'Serif' in name.split(' '):
             self.flags += 2 ** (2 - 1)  # Serif
 
     def get_unused_glyph_id(self, codepoint):
@@ -417,7 +416,7 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
     for glyph in sorted(widths):
         if glyph - 1 not in widths:
             differences.append(glyph)
-        differences.append(f'/{glyph}')
+        differences.append(pydyf.name(f'{glyph}'))
     font_dictionary['FirstChar'] = first
     font_dictionary['LastChar'] = last
     font_dictionary['Encoding'] = pydyf.Dictionary({
