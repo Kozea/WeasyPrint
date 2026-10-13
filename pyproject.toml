@@ -18,7 +18,7 @@ dependencies = [
   'tinycss2 >=1.5.0',
   'cssselect2 >=0.10.0',
   'Pyphen >=0.9.1',
-  'Pillow >=9.1.0',
+  'Pillow >=12.1.0',
   'fonttools[woff] >=4.59.2',
 ]
 classifiers = [
@@ -53,7 +53,7 @@ Donation = 'https://opencollective.com/courtbouillon'
 
 [project.optional-dependencies]
 doc = ['sphinx', 'furo']
-test = ['pytest', 'ruff', 'Pillow >=12.1.0']
+test = ['pytest', 'ruff']
 
 [project.scripts]
 weasyprint = 'weasyprint.__main__:main'
