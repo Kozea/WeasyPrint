@@ -539,6 +539,34 @@ def test_path_a7(assert_pixels):
 
 
 @assert_no_logs
+def test_path_a_zero_radius(assert_pixels):
+    # Arcs with a zero radius are straight lines to their absolute end point.
+    assert_pixels('''
+        ____________
+        ____________
+        __BBBBBB____
+        __BBBBBB____
+        __BBBBBB____
+        __BBBBBB____
+        __BBBBBB____
+        __BBBBBB____
+        ____________
+        ____________
+        ____________
+        ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 2 L 8 2 A 0 0 0 0 1 8 2 L 8 8 A 0 2 0 0 1 2 8 Z"
+          fill="blue"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_path_wrong_point(assert_pixels):
     assert_pixels('''
         ____________

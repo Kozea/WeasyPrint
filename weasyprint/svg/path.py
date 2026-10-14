@@ -73,11 +73,11 @@ def path(svg, node, font_size):
             # rx=0 or ry=0 means straight line
             if not rx or not ry:
                 if string := string.strip():
-                    # As we replace the current operation by l, we must be sure
+                    # As we replace the current operation by L, we must be sure
                     # that the next letter is set to the real current letter (a
                     # or A) in case it’s omitted
                     matches.appendleft((letter, string))
-                matches.appendleft(('l', f'{x3} {y3}'))
+                matches.appendleft(('L', f'{x3} {y3}'))
                 continue
 
             # Cancel the rotation of the second point
