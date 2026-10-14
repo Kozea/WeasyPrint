@@ -15,8 +15,8 @@ jobs:
           - os: ubuntu-latest
             python-version: 'pypy3.11-7.3'
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Ghostscript and HarfBuzz-Subset (Ubuntu)
