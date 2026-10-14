@@ -551,7 +551,7 @@ class Gradient:
             alpha_shading = alpha_stream.add_shading(
                 shading_type, domain, points, extend, function, 'DeviceGray')
             alpha_stream.transform(d=scale_y)
-            alpha_stream.stream = [f'/{alpha_shading.id} sh']
+            alpha_stream.paint_shading(alpha_shading.id)
 
         stream.paint_shading(shading.id)
 

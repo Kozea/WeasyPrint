@@ -40,7 +40,7 @@ def pdfa(pdf, document, page_streams, attachments, compress, version, variant):
             reference = int(pdf_object['EF']['F'].split()[0])
             checksum = pdf.objects[reference].extra['Params']['CheckSum']
             relationship = relationships.get(checksum, 'Unspecified')
-            pdf_object['AFRelationship'] = f'/{relationship}'
+            pdf_object['AFRelationship'] = pydyf.name(relationship)
             if 'AF' not in pdf.catalog:
                 pdf.catalog['AF'] = pydyf.Array()
             pdf.catalog['AF'].append(pdf_object.reference)

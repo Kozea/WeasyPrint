@@ -11,7 +11,7 @@ WeasyPrint |version| depends on:
 
 * Python_ ≥ 3.11.0
 * Pango_ ≥ 1.44.0
-* pydyf_ ≥ 0.11.0
+* pydyf_ ≥ 0.13.0
 * CFFI_ ≥ 0.6
 * tinyhtml5_ ≥ 2.0.0b1
 * tinycss2_ ≥ 1.5.0

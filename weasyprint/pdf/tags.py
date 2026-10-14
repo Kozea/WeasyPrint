@@ -22,7 +22,7 @@ def add_tags(pdf, document, pdf_version, page_streams):
     pdf.add_object(structure_root)
     structure_document = pydyf.Dictionary({
         'Type': '/StructElem',
-        'S': '/Document',
+        'S': b'/Document',
         'K': pydyf.Array(),
         'P': structure_root.reference,
     })
@@ -151,12 +151,12 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
         return
     elif tag in ('TD', 'TH'):
         # Ignore anonymous blocks created for table cells.
-        if parent['S'] in ('/TD', '/TH'):
+        if parent['S'] in (b'/TD', b'/TH'):
             tag = 'NonStruct'
     elif tag == 'LI':
         # Ignore anonymous blocks created for lists and bullets.
-        anonymous_list_element = parent['S'] == '/LI'
-        anonymous_li_child = parent['S'] == '/LBody'
+        anonymous_list_element = parent['S'] == b'/LI'
+        anonymous_li_child = parent['S'] == b'/LBody'
         dl_item = box.element_tag in ('dt', 'dd')
         no_bullet_li = box.element_tag == 'li' and (
             'list-item' not in box.style['display'] or
@@ -172,7 +172,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
             tag = 'LBody'
             parent = pydyf.Dictionary({
                 'Type': '/StructElem',
-                'S': '/LI',
+                'S': b'/LI',
                 'K': pydyf.Array([]),
                 'Pg': pdf.page_references[page_number],
                 'P': parent.reference,
@@ -188,7 +188,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
     # Create box element.
     element = pydyf.Dictionary({
         'Type': '/StructElem',
-        'S': f'/{tag}',
+        'S': pydyf.name(tag),
         'K': pydyf.Array([]),
         'Pg': pdf.page_references[page_number],
         'P': parent.reference,
@@ -258,7 +258,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
         pdf.add_object(object_reference)
         form_element = pydyf.Dictionary({
             'Type': '/StructElem',
-            'S': '/Form',
+            'S': b'/Form',
             'K': pydyf.Array([object_reference.reference]),
             'Pg': pdf.page_references[page_number],
             'P': element.reference,
@@ -282,7 +282,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
                 else:
                     kid_element = pydyf.Dictionary({
                         'Type': '/StructElem',
-                        'S': f'/{kid["tag"]}',
+                        'S': pydyf.name(kid['tag']),
                         'K': pydyf.Array([kid['mcid']]),
                         'Pg': pdf.page_references[page_number],
                         'P': element.reference,
@@ -292,7 +292,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, annotations, tags):
                     nums[kid['mcid']] = kid_element.reference
             else:
                 # Recursively build tree for child.
-                if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
+                if child.element_tag in ('ul', 'ol') and element['S'] == b'/LI':
                     # In PDFs, nested lists are linked to the parent list, but in
                     # HTML, nested lists are linked to a parent’s list item.
                     child_parent = parent
