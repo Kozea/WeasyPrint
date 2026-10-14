@@ -1187,13 +1187,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         resume_row = i
         if box.style['break_inside'] == 'avoid' and not page_is_empty:
             # Avoid breaks inside grid container, break before.
-            context.finish_block_formatting_context(box)
+            context.finish_block_formatting_context()
             return None, None, {'break': 'any', 'page': None}, [], False
         if page_breaks_by_row[i]['inside'] == 'avoid' and not page_is_empty:
             # Break before current row.
             if resume_row == 0:
                 # First row, break before grid container.
-                context.finish_block_formatting_context(box)
+                context.finish_block_formatting_context()
                 return None, None, {'break': 'any', 'page': None}, [], False
             # Mark all children before and in current row as drawn on the page.
             _add_page_children(resume_row)

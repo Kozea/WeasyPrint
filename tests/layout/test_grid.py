@@ -1696,6 +1696,60 @@ def test_grid_break_item_avoid():
 
 
 @assert_no_logs
+def test_grid_break_item_avoid_first_row_float():
+    # Regression test for #2962.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <div style="height: 6px"></div>
+      <section>
+        <div><span style="float: right">a</span>b</div>
+        <div style="break-inside: avoid"><div style="height: 6px"></div></div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.height == 6
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.position_y == 0
+    div1, div2 = section.children
+    assert div1.position_y == div2.position_y == 0
+
+
+@assert_no_logs
+def test_grid_break_inside_avoid_float():
+    # Regression test for #2962.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; break-inside: avoid }
+      </style>
+      <div style="height: 6px"></div>
+      <section>
+        <div><span style="float: right">a</span>b</div>
+        <div style="height: 4px"></div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.height == 6
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.position_y == 0
+
+
+@assert_no_logs
 def test_grid_break_item_avoid_auto():
     page1, page2 = render_pages('''
       <style>
