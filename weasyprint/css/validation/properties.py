@@ -129,6 +129,7 @@ def background_attachment(keyword):
 @property('border-inline-end-color')
 @property('column-rule-color', unstable=True)
 @property('text-decoration-color')
+@property('text-emphasis-color')
 @single_token
 def other_colors(token):
     if parse_color(token):
@@ -1290,6 +1291,44 @@ def text_indent(token):
     """``text-indent`` property validation."""
     if length := get_length(token, percentage=True):
         return length
+
+
+@property()
+def text_emphasis_position(tokens):
+    """``text-emphasis-position`` property validation."""
+    keywords = {get_keyword(token) for token in tokens}
+    if len(tokens) != len(keywords):
+        return
+    if not keywords <= {'over', 'under', 'right', 'left'}:
+        return
+    if len({keyword for keyword in keywords if keyword in ('over', 'under')}) > 1:
+        return
+    if len({keyword for keyword in keywords if keyword in ('right', 'left')}) > 1:
+        return
+    return tuple(keywords)
+
+
+@property()
+def text_emphasis_style(tokens):
+    """``text-emphasis-style`` property validation."""
+    if len(tokens) == 1:
+        token = tokens[0]
+        keyword = get_keyword(token)
+        if keyword == 'none':
+            return 'none'
+        if keyword == 'filled':
+            return ('filled', 'circle')
+        shape_keywords = {
+            'dot', 'circle', 'double-circle', 'triangle', 'sesame'}
+        if keyword in shape_keywords:
+            return ('filled', keyword)
+        if token.type == 'string':
+            return ('custom', token.value)
+    elif len(tokens) == 2:
+        fill, shape = (get_keyword(token) for token in tokens)
+        if fill in ('filled', 'open') and shape in (
+                'dot', 'circle', 'double-circle', 'triangle', 'sesame'):
+            return (fill, shape)
 
 
 @property()
