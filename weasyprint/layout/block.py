@@ -717,6 +717,11 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             first_letter_style |= box_first_letter_style
 
     # Layout box children.
+    # Save running elements state before layout so we can restore it if
+    # the box is pushed to the next page (break-inside: avoid).
+    saved_running_elements = {
+        name: list(box_list) for name, box_list in
+        context.running_elements.get(context.current_page, {}).items()}
     if is_start:
         skip = 0
     else:
@@ -830,6 +835,9 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             not page_is_empty):
         remove_placeholders(
             context, [*new_children, *box.children[skip:]], absolute_boxes, fixed_boxes)
+        # Restore running elements to their state before layout.
+        for name, box_list in saved_running_elements.items():
+            context.running_elements[name][context.current_page] = box_list
         if box.establishes_formatting_context():
             context.finish_block_formatting_context()
         return None, None, {'break': 'any', 'page': None}, [], False, max_lines
@@ -1109,6 +1117,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             context.excluded_shapes.remove(box)
         if box.note:
             context.remove_running_element(box.note)
+        if box.is_running():
+            context.remove_running_element(box)
 
 
 def avoid_page_break(page_break, context):

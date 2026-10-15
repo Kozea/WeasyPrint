@@ -1793,6 +1793,41 @@ def test_running_absolute_overflow():
 
 
 @assert_no_logs
+def test_running_elements_break_inside_avoid():
+    # Regression test for #2971: running elements should not remain assigned
+    # to a page when their containing block is pushed to the next page due to
+    # break-inside: avoid.
+    pages = render_pages('''
+      <style>
+        @page {
+          margin: 20mm;
+          size: 200px;
+          @top-center { content: element(mark, last); }
+        }
+        .mark { position: running(mark); }
+        section { break-inside: avoid; }
+        #a { height: 30mm; }
+        #b { height: 40mm; }
+      </style>
+      <section id="a"><div class="mark">Header: A</div>Section A</section>
+      <section id="b"><div class="mark">Header: B</div>Section B</section>
+    ''')
+    assert len(pages) == 2
+    # Page 1 should show "Header: A" (from section a)
+    page1_margin = pages[0].children[1]  # MarginBox
+    page1_text = ''.join(
+        getattr(node, 'text', '') for node in page1_margin.descendants())
+    assert 'Header: A' in page1_text or 'Header:A' in page1_text, \
+        f'Page 1 margin box text: {page1_text!r}'
+    # Page 2 should show "Header: B" (from section b)
+    page2_margin = pages[1].children[1]  # MarginBox
+    page2_text = ''.join(
+        getattr(node, 'text', '') for node in page2_margin.descendants())
+    assert 'Header: B' in page2_text or 'Header:B' in page2_text, \
+        f'Page 2 margin box text: {page2_text!r}'
+
+
+@assert_no_logs
 def test_running_flex():
     # Regression test.
     render_pages('''
