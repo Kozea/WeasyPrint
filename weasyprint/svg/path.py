@@ -161,11 +161,11 @@ def path(svg, node, font_size):
 
         elif letter in 'cC':
             # Curve
+            x, y = current_point
             x1, y1, string = point(svg, string, font_size)
             x2, y2, string = point(svg, string, font_size)
             x3, y3, string = point(svg, string, font_size)
             if letter == 'c':
-                x, y = current_point
                 x1 += x
                 x2 += x
                 x3 += x
@@ -173,7 +173,7 @@ def path(svg, node, font_size):
                 y2 += y
                 y3 += y
             node.vertices.append((
-                atan2(y1 - y2, x1 - x2), atan2(y3 - y2, x3 - x2)))
+                -atan2(y - y1, x - x1), atan2(y3 - y2, x3 - x2)))
             svg.stream.curve_to(x1, y1, x2, y2, x3, y3)
             current_point = x3, y3
 
