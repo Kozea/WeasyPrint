@@ -5,7 +5,7 @@ import math
 import struct
 from hashlib import md5
 from io import BytesIO
-from itertools import cycle
+from itertools import chain, cycle, zip_longest
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -380,51 +380,43 @@ def process_color_stops(vector_length, positions, hints, style):
 
     """
     # Resolve percentages.
-    positions = [percentage(position, style, vector_length) for position in positions]
-    hints = [percentage(hint, style, vector_length) / vector_length for hint in hints]
+    stops = list(chain.from_iterable(zip_longest(positions, hints)))[:-1]
+    stops = [percentage(stop, style, vector_length) for stop in stops]
 
-    # First and last default to 100%.
-    if positions[0] is None:
-        positions[0] = 0
-    if positions[-1] is None:
-        positions[-1] = vector_length
+    # First defaults to 0% and last defaults to 100%.
+    if stops[0] is None:
+        stops[0] = 0
+    if stops[-1] is None:
+        stops[-1] = vector_length
 
-    # Make sure positions are increasing.
-    previous_pos = positions[0]
-    for i, position in enumerate(positions):
-        if position is not None:
-            if position < previous_pos:
-                positions[i] = previous_pos
+    # Make sure stops are increasing.
+    previous_stop = stops[0]
+    for i, stop in enumerate(stops):
+        if stop is not None:
+            if stop < previous_stop:
+                stops[i] = previous_stop
             else:
-                previous_pos = position
+                previous_stop = stop
 
-    # Assign missing values.
+    # Assign missing positions.
     previous_i = -1
-    for i, position in enumerate(positions):
-        if position is not None:
-            base = positions[previous_i]
-            increment = (position - base) / (i - previous_i)
-            for j in range(previous_i + 1, i):
-                positions[j] = base + j * increment
+    for i, stop in enumerate(stops):
+        if stop is not None:
+            base = stops[previous_i]
+            increment = (stop - base) / (i - previous_i)
+            for j in range(1, i - previous_i):
+                stops[previous_i + j] = base + j * increment
             previous_i = i
 
-    # Calculate exponential value for PDF hints, avoid big numbers.
-    pdf_hints = []
-    for i, hint in enumerate(hints):
-        if hint <= 0:
-            hint = 0
-        elif hint >= 1:
-            hint = 2 ** 32
-        else:
-            before = positions[i] / vector_length
-            after = positions[i+1] / vector_length
-            if before == after or hint >= after or hint <= before:
-                hint = 1
-            else:
-                hint = min(2 ** 32, math.log(0.5, (hint - before) / (after - before)))
-        pdf_hints.append(hint)
+    # Calculate exponential value for PDF hints.
+    pdf_hints = [
+        0 if hint == stops[i*2] else
+        2 ** 16 if hint == stops[i*2+2] else
+        1 if stops[i*2] == stops[i*2+2] else
+        math.log(0.5, (hint - stops[i*2]) / (stops[i*2+2] - stops[i*2]))
+        for i, hint in enumerate(stops[1::2])]
 
-    return positions, pdf_hints
+    return stops[::2], pdf_hints
 
 
 def normalize_stop_positions(positions):
