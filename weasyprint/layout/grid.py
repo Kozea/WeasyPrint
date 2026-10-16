@@ -188,7 +188,54 @@ def _get_sizing_functions(size):
     return (min_sizing, max_sizing)
 
 
-def _get_template_tracks(tracks):
+def _get_auto_repeat_number(tracks, box_size, gap, style):
+    """Number of repetitions for an auto-fill repeat().
+
+    See https://drafts.csswg.org/css-grid/#auto-repeat.
+
+    """
+    if box_size == 'auto':
+        # TODO: Use max-width/-height and min-width/-height.
+        return 1
+
+    def size(track):
+        # Each track counts as its max sizing function if it is definite,
+        # or as its min sizing function otherwise.
+        min_sizing, max_sizing = _get_sizing_functions(track)
+        for sizing in (max_sizing, min_sizing):
+            if _is_length(sizing):
+                return percentage(sizing, style, box_size)
+        return 0
+
+    fixed_size = fixed_number = repeat_size = repeat_number = 0
+    for track in tracks[1::2]:
+        if track[0] == 'repeat()':
+            number, repeat_tracks = track[1:]
+            sizes = [size(repeat_track) for repeat_track in repeat_tracks[1::2]]
+            if isinstance(number, int):
+                fixed_size += number * sum(sizes)
+                fixed_number += number * len(sizes)
+            else:
+                repeat_size, repeat_number = sum(sizes), len(sizes)
+        else:
+            fixed_size += size(track)
+            fixed_number += 1
+    if repeat_size + repeat_number * gap <= 0:
+        return 1
+
+    # Largest number of repetitions that doesn't overflow, at least 1.
+    repetitions = 1
+    while True:
+        tracks_number = fixed_number + (repetitions + 1) * repeat_number
+        grid_size = (
+            fixed_size + (repetitions + 1) * repeat_size +
+            (tracks_number - 1) * gap)
+        if grid_size > box_size:
+            return repetitions
+        repetitions += 1
+
+
+def _get_template_tracks(tracks, box_size='auto', gap=0, style=None):
     if tracks == 'none':
         tracks = ((),)
     if 'subgrid' in tracks:
@@ -201,10 +248,12 @@ def _get_template_tracks(tracks):
             # Track size.
             if track[0] == 'repeat()':
                 repeat_number, repeat_track_list = track[1:]
-                if not isinstance(repeat_number, int):
-                    # TODO: Respect auto-fit and auto-fill.
-                    LOGGER.warning(
-                        '"auto-fit" and "auto-fill" are unsupported in repeat()')
+                if repeat_number == 'auto-fill':
+                    repeat_number = _get_auto_repeat_number(
+                        tracks, box_size, gap, style)
+                elif not isinstance(repeat_number, int):
+                    # TODO: Respect auto-fit.
+                    LOGGER.warning('"auto-fit" is unsupported in repeat()')
                     repeat_number = 1
                 for _ in range(repeat_number):
                     for j, repeat_track in enumerate(repeat_track_list):
@@ -590,8 +639,24 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         grid_areas = ((None,),)
     grid_areas = [list(row) for row in grid_areas]
 
-    rows = _get_template_tracks(box.style['grid_template_rows'])
-    columns = _get_template_tracks(box.style['grid_template_columns'])
+    # 2. Find the size of the grid container.
+
+    if isinstance(box, boxes.GridBox):
+        from .block import block_level_width
+        block_level_width(box, containing_block)
+    else:
+        assert isinstance(box, boxes.InlineGridBox)
+        from .inline import inline_block_width
+        inline_block_width(box, context, containing_block)
+    if box.width == 'auto':
+        # TODO: Calculate max-width.
+        box.width = containing_block.width
+
+    rows = _get_template_tracks(
+        box.style['grid_template_rows'], box.height, row_gap, box.style)
+    columns = _get_template_tracks(
+        box.style['grid_template_columns'], box.width, column_gap, box.style)
+
 
     # Adjust rows number
     grid_areas_columns = len(grid_areas[0]) if grid_areas else 0
@@ -981,19 +1046,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 row_page_break[side] = 'page'
             elif child.style[f'break_{side}'] in ('left', 'right', 'recto', 'verso'):
                 row_page_break[side] = child.style[f'break_{side}']
-
-    # 2. Find the size of the grid container.
-
-    if isinstance(box, boxes.GridBox):
-        from .block import block_level_width
-        block_level_width(box, containing_block)
-    else:
-        assert isinstance(box, boxes.InlineGridBox)
-        from .inline import inline_block_width
-        inline_block_width(box, context, containing_block)
-    if box.width == 'auto':
-        # TODO: Calculate max-width.
-        box.width = containing_block.width
 
     # 3. Run the grid sizing algorithm.
 
