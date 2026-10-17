@@ -284,3 +284,20 @@ def test_string_to_css(string, expected):
 ])
 def test_url_to_css(string, expected):
     assert url_to_css(string) == expected
+
+
+@assert_no_logs
+def test_style_attribute_shared_computed_style():
+    document = FakeHTML(string='''
+      <p style="color: red">a</p>
+      <p style="color: red">b</p>
+      <p style="color: blue">c</p>
+      <p style="color:red">d</p>
+    ''')
+    style_for = get_all_computed_styles(document)
+    _head, body = document.etree_element
+    p1, p2, p3, p4 = body
+    assert style_for(p1) is style_for(p2)
+    assert style_for(p1) is not style_for(p3)
+    assert style_for(p1)['color'] == style_for(p4)['color']
+    assert style_for(p3)['color'] != style_for(p1)['color']

@@ -358,11 +358,16 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
     """
     from .. import html
 
+    # Elements with the same style attribute get the same declarations, so
+    # that they can share their computed style.
+    parsed_styles = {}
     for element in tree.iter():
         # Apply style attribute.
         if style := element.get('style'):
             specificity = (1, 0, 0)
-            declarations = tinycss2.parse_blocks_contents(style)
+            if (declarations := parsed_styles.get(style)) is None:
+                declarations = parsed_styles[style] = tuple(
+                    tinycss2.parse_blocks_contents(style))
             yield specificity, element, declarations, base_url
 
         specificity = (0, 0, 0)
