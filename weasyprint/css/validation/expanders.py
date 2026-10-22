@@ -598,6 +598,45 @@ def expand_text_decoration(tokens, name):
         yield '-thickness', thickness
 
 
+@expander('text-emphasis')
+@generic_expander('-style', '-color')
+def expand_text_emphasis(tokens, name):
+    """Expand the ``text-emphasis`` shorthand property."""
+    style = []
+    color = []
+
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword in ('filled', 'open'):
+            if style:
+                raise InvalidValues
+            style.append(token)
+        elif keyword in (
+                'dot', 'circle', 'double-circle', 'triangle', 'sesame'):
+            if len(style) > 1:
+                raise InvalidValues
+            style.append(token)
+        elif keyword == 'none':
+            if style or len(tokens) > 1:
+                raise InvalidValues
+            style.append(token)
+        elif token.type == 'string':
+            if style:
+                raise InvalidValues
+            style.append(token)
+        elif parse_color(token):
+            if color:
+                raise InvalidValues
+            color.append(token)
+        else:
+            raise InvalidValues
+
+    if style:
+        yield '-style', style
+    if color:
+        yield '-color', color
+
+
 def expand_page_break_before_after(tokens, name):
     """Expand legacy ``page-break-before`` and ``page-break-after`` properties.
 
