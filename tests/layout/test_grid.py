@@ -2027,3 +2027,55 @@ def test_grid_minmax_y_span():
     article, = body.children
     *_, div_g = article.children
     assert div_g.position_y == 8
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('columns', 'gap', 'x'), [
+    ('repeat(auto-fill, 3px)', 0, (0, 3, 6, 0, 3, 6)),
+    ('repeat(auto-fill, 3px)', 1, (0, 4, 0, 4, 0, 4)),
+    ('1px repeat(auto-fill, 3px)', 0, (0, 1, 4, 7, 0, 1)),
+    ('repeat(auto-fill, 3px 2px)', 0, (0, 3, 5, 8, 0, 3)),
+    ('repeat(auto-fill, minmax(2px, 1fr))', 0, (0, 2, 4, 6, 8, 0)),
+    ('repeat(auto-fill, 20px)', 0, (0, 0, 0, 0, 0, 0)),
+])
+def test_grid_auto_fill_columns(columns, gap, x):
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px / 1 weasyprint }
+        article { display: grid; width: 10px; column-gap: %dpx;
+                  grid-template-columns: %s }
+      </style>
+      <article>
+        <div>a</div><div>b</div><div>c</div>
+        <div>d</div><div>e</div><div>f</div>
+      </article>
+    ''' % (gap, columns))
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert tuple(div.position_x for div in article.children) == x
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('height', 'y'), [
+    ('10px', (0, 3, 6, 0, 3, 6)),
+    ('auto', (0, 0, 0, 0, 0, 0)),
+])
+def test_grid_auto_fill_rows(height, y):
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px / 1 weasyprint }
+        article { display: grid; height: %s; grid-auto-flow: column;
+                  grid-template-rows: repeat(auto-fill, 3px) }
+      </style>
+      <article>
+        <div>a</div><div>b</div><div>c</div>
+        <div>d</div><div>e</div><div>f</div>
+      </article>
+    ''' % height)
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert tuple(div.position_y for div in article.children) == y
