@@ -1594,6 +1594,57 @@ def test_first_line_text_transform():
 
 
 @assert_no_logs
+def test_first_line_across_pages():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 10px }
+        p { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        p::first-line { font-weight: bold }
+      </style>
+      <p>aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp</p>
+    ''')
+    html1, = page1.children
+    body1, = html1.children
+    paragraph1 = body1.children[0]
+    first_line_box, = paragraph1.children[0].children
+    assert first_line_box.element_tag == 'p::first-line'
+    html2, = page2.children
+    body2, = html2.children
+    paragraph2 = body2.children[0]
+    line_box, = paragraph2.children[0].children
+    assert line_box.element_tag == 'p'
+
+
+@assert_no_logs
+def test_first_line_after_block_across_pages():
+    # The first line is on the second page, after a block filling the first one.
+    page1, page2 = render_pages('''
+      <style>
+        @page { margin: 0; size: 10px }
+        body { margin: 0 }
+        div { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        div::first-line { font-weight: bold }
+      </style>
+      <div>
+        <article style="height: 9px"></article>
+        abc<br> def
+      </div>
+    ''')
+    html1, = page1.children
+    body1, = html1.children
+    div1, = body1.children
+    article, = div1.children
+    assert article.element_tag == 'article'
+    html2, = page2.children
+    body2, = html2.children
+    div2, = body2.children
+    anonymous, = div2.children
+    line1, line2 = anonymous.children
+    assert line1.children[0].element_tag == 'div::first-line'
+    assert line2.children[0].element_tag == 'div'
+
+
+@assert_no_logs
 def test_first_line_nested():
     page, = render_pages('''
       <style>
