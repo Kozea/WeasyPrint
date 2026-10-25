@@ -10,7 +10,8 @@ authors = [{name = 'Simon Sapin', email = 'simon.sapin@exyr.org'}]
 maintainers = [{name = 'CourtBouillon', email = 'contact@courtbouillon.org'}]
 requires-python = '>=3.11'
 readme = {file = 'README.rst', content-type = 'text/x-rst'}
-license = {file = 'LICENSE'}
+license = 'BSD-3-Clause'
+license-files = ['LICENSE']
 dependencies = [
   'pydyf >=0.13.0',
   'cffi >=0.6',
@@ -24,7 +25,6 @@ dependencies = [
 classifiers = [
   'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Developers',
-  'License :: OSI Approved :: BSD License',
   'Operating System :: OS Independent',
   'Programming Language :: Python',
   'Programming Language :: Python :: 3',
