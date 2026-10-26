@@ -1594,6 +1594,28 @@ def test_first_line_text_transform():
 
 
 @assert_no_logs
+def test_first_line_across_pages():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 10px }
+        p { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        p::first-line { font-weight: bold }
+      </style>
+      <p>aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp</p>
+    ''')
+    html1, = page1.children
+    body1, = html1.children
+    paragraph1 = body1.children[0]
+    first_line_box, = paragraph1.children[0].children
+    assert first_line_box.element_tag == 'p::first-line'
+    html2, = page2.children
+    body2, = html2.children
+    paragraph2 = body2.children[0]
+    line_box, = paragraph2.children[0].children
+    assert line_box.element_tag == 'p'
+
+
+@assert_no_logs
 def test_first_line_nested():
     page, = render_pages('''
       <style>
