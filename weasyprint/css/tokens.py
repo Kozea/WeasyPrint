@@ -130,7 +130,7 @@ def parse_color_stops_and_hints(color_stops_hints):
             color_hints.append(hint)
             previous_was_color_stop = False
         elif previous_was_color_stop:
-            color_hints.append(FIFTY_PERCENT)
+            color_hints.append(None)
             color_stops.append(parse_color_stop(tokens))
             previous_was_color_stop = True
         else:

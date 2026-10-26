@@ -1,5 +1,7 @@
 """Test how gradients are drawn."""
 
+import pytest
+
 from ..testing_utils import assert_no_logs
 
 
@@ -465,3 +467,59 @@ def test_radial_gradients_hints_percentage(assert_pixels):
         zzzzzz
     ''', '''<style>@page { size: 6px; background:
       radial-gradient(blue, 99%, white)''')
+
+
+@assert_no_logs
+def test_gradient_positions(assert_same_renderings):
+    style = '<style>@page { size: 10px 1px; background: linear-gradient(to right, %s) }'
+    assert_same_renderings(
+        style % 'blue, red, pink, green',
+        style % 'blue, red 33.3333%, pink, green',
+        style % 'blue, red 33.3333%, pink 66.6667%, green',
+        style % 'blue 0.0001%, red, pink, green 99.9999%',
+        style % 'blue 0.0001%, red 33.3333%, pink, green 99.9999%',
+        style % 'blue 0.0001%, red 33.3333%, pink 66.6666%, green 99.9999%',
+    )
+
+
+@assert_no_logs
+def test_gradient_hints(assert_same_renderings):
+    style = '<style>@page { size: 9px 1px; background: linear-gradient(to right, %s) }'
+    assert_same_renderings(
+        style % 'blue, red, green',
+        style % 'blue, 25%, red, 75%, green',
+        style % 'blue 0.0001%, red, green',
+        style % 'blue, red, green 99.9999%',
+        style % 'blue, red 50.00001%, green',
+        style % 'blue 0.0001%, 24.9999%, red 50.00001%, 75.0001%, green 99.9999%',
+        tolerance=3,
+    )
+
+
+@assert_no_logs
+def test_gradient_hints_and_positions(assert_same_renderings):
+    style = '<style>@page { size: 9px 1px; background: linear-gradient(to right, %s) }'
+    assert_same_renderings(
+        style % 'blue, 10%, red, 60%, green',
+        style % 'blue, 10%, red 35%, 60%, green',
+        style % 'blue 0%, 10%, red, 60%, green 100%',
+    )
+
+
+@assert_no_logs
+@pytest.mark.parametrize('gradient', [
+    'blue, 100%, red',
+    'blue, 110%, red',
+    'red, 0, blue',
+    'blue, 100%, red, green',
+])
+def test_gradient_degenerate(assert_pixels, gradient):
+    style = '''
+      <style>
+        @page {
+          size: 9px 1px;
+          background:linear-gradient(to right ,%s)
+        }
+      </style>
+    ''' % gradient
+    assert_pixels('zBBBBBBBz', style)
