@@ -335,6 +335,20 @@ LST_TO_ISO = {
     'znd': 'zne',
 }
 
+# Emphasis marks, see https://drafts.csswg.org/css-text-decor-4/#text-emphasis-style
+EMPHASIS_MARKS = {
+    ('filled', 'dot'): '•',
+    ('open', 'dot'): '◦',
+    ('filled', 'circle'): '●',
+    ('open', 'circle'): '○',
+    ('filled', 'double-circle'): '◉',
+    ('open', 'double-circle'): '◎',
+    ('filled', 'triangle'): '▲',
+    ('open', 'triangle'): '△',
+    ('filled', 'sesame'): '﹅',
+    ('open', 'sesame'): '﹆',
+}
+
 # Quotes, from https://github.com/unicode-org/cldr/tree/main/common/main
 LANG_QUOTES = {
     None: (('“', '‘'), ('”', '’')),  # Default, chosen by user agent
@@ -539,21 +553,4 @@ FONTCONFIG_STRETCH = {
     'expanded': 'expanded',
     'extra-expanded': 'extraexpanded',
     'ultra-expanded': 'ultraexpanded',
-}
-
-
-# Maps (fill, shape) keyword pairs to the Unicode codepoint of the
-# corresponding text emphasis mark, as listed in
-# https://drafts.csswg.org/css-text-decor-4/#text-emphasis-style
-EMPHASIS_MARKS = {
-    ('filled', 'dot'): '•',
-    ('open', 'dot'): '◦',
-    ('filled', 'circle'): '●',
-    ('open', 'circle'): '○',
-    ('filled', 'double-circle'): '◉',
-    ('open', 'double-circle'): '◎',
-    ('filled', 'triangle'): '▲',
-    ('open', 'triangle'): '△',
-    ('filled', 'sesame'): '﹅',
-    ('open', 'sesame'): '﹆',
 }

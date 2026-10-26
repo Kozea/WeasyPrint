@@ -270,7 +270,7 @@ INITIAL_VALUES = {
     'text_underline_offset': 'auto',
     'text_emphasis_style': 'none',
     'text_emphasis_color': 'currentcolor',
-    'text_emphasis_position': ('over',),
+    'text_emphasis_position': ('over', 'right'),
 
     # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
     'block_ellipsis': 'none',

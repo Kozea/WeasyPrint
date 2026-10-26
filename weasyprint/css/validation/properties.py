@@ -1296,39 +1296,35 @@ def text_indent(token):
 @property()
 def text_emphasis_position(tokens):
     """``text-emphasis-position`` property validation."""
-    keywords = {get_keyword(token) for token in tokens}
-    if len(tokens) != len(keywords):
-        return
-    if not keywords <= {'over', 'under', 'right', 'left'}:
-        return
-    if len({keyword for keyword in keywords if keyword in ('over', 'under')}) > 1:
-        return
-    if len({keyword for keyword in keywords if keyword in ('right', 'left')}) > 1:
-        return
-    return tuple(keywords)
+    horizontal, vertical = {'left', 'right'}, {'over', 'under'}
+    keywords = tuple(get_keyword(token) for token in tokens)
+    if len(tokens) == 1 and keywords[0] in vertical:
+        return keywords
+    elif len(tokens) == 2:
+        if set(keywords) & horizontal and set(keywords) & vertical:
+            return keywords
 
 
 @property()
 def text_emphasis_style(tokens):
     """``text-emphasis-style`` property validation."""
+    shapes = {'dot', 'circle', 'double-circle', 'triangle', 'sesame'}
+    fills = {'filled', 'open'}
+    keywords = {get_keyword(token) for token in tokens}
     if len(tokens) == 1:
-        token = tokens[0]
-        keyword = get_keyword(token)
+        token, = tokens
+        if token.type == 'string':
+            return ('string', token.value)
+        keyword, = keywords
         if keyword == 'none':
             return 'none'
-        if keyword == 'filled':
-            return ('filled', 'circle')
-        shape_keywords = {
-            'dot', 'circle', 'double-circle', 'triangle', 'sesame'}
-        if keyword in shape_keywords:
+        elif keyword in fills:
+            return (keyword, 'circle')
+        elif keyword in shapes:
             return ('filled', keyword)
-        if token.type == 'string':
-            return ('custom', token.value)
     elif len(tokens) == 2:
-        fill, shape = (get_keyword(token) for token in tokens)
-        if fill in ('filled', 'open') and shape in (
-                'dot', 'circle', 'double-circle', 'triangle', 'sesame'):
-            return (fill, shape)
+        if (fill := keywords & fills) and (shape := keywords & shapes):
+            return (fill.pop(), shape.pop())
 
 
 @property()

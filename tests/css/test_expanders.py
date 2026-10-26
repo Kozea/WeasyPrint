@@ -1012,15 +1012,15 @@ def test_text_align_invalid(rule, reason):
         'text_emphasis_style': ('filled', 'circle'),
         'text_emphasis_color': parse_color('blue'),
     }),
-    ('"X"', {'text_emphasis_style': ('custom', 'X')}),
+    ('"X"', {'text_emphasis_style': ('string', 'X')}),
     ('"X" red', {
-        'text_emphasis_style': ('custom', 'X'),
+        'text_emphasis_style': ('string', 'X'),
         'text_emphasis_color': parse_color('red'),
     }),
     ('none', {'text_emphasis_style': 'none'}),
     ('inherit', {
-        f'text_emphasis_{key}': 'inherit'
-        for key in ('color', 'style')}),
+        'text_emphasis_color': 'inherit',
+        'text_emphasis_style': 'inherit'}),
 ])
 def test_text_emphasis(rule, result):
     assert expand_to_dict(f'text-emphasis: {rule}') == result

@@ -319,7 +319,7 @@ def draw_text_emphasis(stream, textbox, x, y):
     emphasis_style = style['text_emphasis_style']
     if emphasis_style == 'none':
         return
-    if emphasis_style[0] == 'custom':
+    elif emphasis_style[0] == 'string':
         mark = emphasis_style[1]
         if len(mark) > 1:
             LOGGER.warning(
@@ -327,21 +327,14 @@ def draw_text_emphasis(stream, textbox, x, y):
                 'mark: "%s" is ignored, first character is used', mark)
             mark = mark[0]
     else:
-        fill, shape = emphasis_style
-        mark = EMPHASIS_MARKS[(fill, shape)]
+        mark = EMPHASIS_MARKS[emphasis_style]
 
-    # The horizontal keyword defaults to "right", as required by the
-    # specification, and is ignored as vertical writing is not supported.
+    # TODO: support horizontal position for vertical writing direction.
     position = style['text_emphasis_position']
-    if 'left' in position:
-        LOGGER.warning(
-            'Only "right" text-emphasis-position horizontal keyword is '
-            'supported, "left" is ignored')
     vertical = 'under' if 'under' in position else 'over'
 
-    # Ruby position: above the ascent or below the descent, half font size.
-    font_size = style['font_size']
-    mark_size = font_size / 2
+    # Set mark position: above the ascent or below the descent, half font size.
+    mark_size = style['font_size'] / 2
     ascent = textbox.pango_layout.ascent
     if vertical == 'over':
         offset_y = -ascent - mark_size / 2
@@ -351,15 +344,13 @@ def draw_text_emphasis(stream, textbox, x, y):
 
     color = get_color(style, 'text_emphasis_color')
 
-    # Layout for the mark, so that Pango can select a font that has a glyph
-    # for it (the text font may not have one, e.g. for sesames).
+    # Create layout for the mark.
     mark_layout = Layout(style)
     mark_layout.set_text(mark)
     mark_line, _ = mark_layout.get_first_line()
     mark_run = mark_line.runs[0]
     if mark_run == ffi.NULL:
-        LOGGER.warning(
-            'No glyph found for text emphasis mark "%s"', mark)
+        LOGGER.warning('No glyph found for text emphasis mark "%s"', mark)
         return
     mark_glyph_item = mark_run.data
     mark_pango_font = mark_glyph_item.item.analysis.font
@@ -387,12 +378,10 @@ def draw_text_emphasis(stream, textbox, x, y):
             # Advance by the width of every glyph, cluster-start or not.
             cluster_width = glyph_info.geometry.width * FROM_UNITS
 
-            cluster_start = not i or clusters[i] != clusters[i - 1]
-            if not cluster_start:
-                x += cluster_width
-                continue
-
-            if glyph_id == pango.PANGO_GLYPH_EMPTY:
+            skip = (
+                (i and clusters[i] == clusters[i-1]) or
+                glyph_id == pango.PANGO_GLYPH_EMPTY)
+            if skip:
                 x += cluster_width
                 continue
 

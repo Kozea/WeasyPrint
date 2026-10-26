@@ -1408,13 +1408,13 @@ def test_box_shadow_invalid(rule):
 @assert_no_logs
 @pytest.mark.parametrize(('rule', 'value'), [
     ('filled dot', ('filled', 'dot')),
-    ('filled circle', ('filled', 'circle')),
+    ('circle filled', ('filled', 'circle')),
     ('filled double-circle', ('filled', 'double-circle')),
-    ('filled triangle', ('filled', 'triangle')),
+    ('triangle filled', ('filled', 'triangle')),
     ('filled sesame', ('filled', 'sesame')),
-    ('open dot', ('open', 'dot')),
+    ('dot open', ('open', 'dot')),
     ('open circle', ('open', 'circle')),
-    ('open double-circle', ('open', 'double-circle')),
+    ('double-circle open', ('open', 'double-circle')),
     ('open triangle', ('open', 'triangle')),
     ('open sesame', ('open', 'sesame')),
     ('filled', ('filled', 'circle')),
@@ -1423,7 +1423,7 @@ def test_box_shadow_invalid(rule):
     ('double-circle', ('filled', 'double-circle')),
     ('triangle', ('filled', 'triangle')),
     ('sesame', ('filled', 'sesame')),
-    ('"X"', ('custom', 'X')),
+    ('"X"', ('string', 'X')),
     ('none', 'none'),
 ])
 def test_text_emphasis_style(rule, value):
@@ -1446,24 +1446,24 @@ def test_text_emphasis_style_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize(('rule', 'value'), [
-    ('over right', {'over', 'right'}),
-    ('over left', {'over', 'left'}),
-    ('under right', {'under', 'right'}),
-    ('under left', {'under', 'left'}),
-    ('right over', {'over', 'right'}),
-    ('left under', {'under', 'left'}),
-    ('over', {'over'}),
-    ('under', {'under'}),
+    ('over right', ('over', 'right')),
+    ('over left', ('over', 'left')),
+    ('under right', ('under', 'right')),
+    ('under left', ('under', 'left')),
+    ('right over', ('right', 'over')),
+    ('left under', ('left', 'under')),
+    ('over', ('over',)),
+    ('under', ('under',)),
 ])
 def test_text_emphasis_position(rule, value):
-    result = get_value(f'text-emphasis-position: {rule}')
-    # Computed values are the specified keywords only, "right" is the
-    # default and is used when drawing.
-    assert set(result) == value
+    assert get_value(f'text-emphasis-position: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', [
+    'none',
+    'right',
+    'over / right',
     'over under',
     'left right',
     'over over',
