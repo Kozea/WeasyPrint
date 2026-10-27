@@ -2037,6 +2037,7 @@ def test_grid_minmax_y_span():
     ('repeat(auto-fill, 3px 2px)', 0, (0, 3, 5, 8, 0, 3)),
     ('repeat(auto-fill, minmax(2px, 1fr))', 0, (0, 2, 4, 6, 8, 0)),
     ('repeat(auto-fill, 20px)', 0, (0, 0, 0, 0, 0, 0)),
+    ('repeat(auto-fill, minmax(4px, 3px))', 0, (0, 4, 0, 4, 0, 4)),
 ])
 def test_grid_auto_fill_columns(columns, gap, x):
     page, = render_pages('''

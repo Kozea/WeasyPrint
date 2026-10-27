@@ -199,43 +199,38 @@ def _get_auto_repeat_number(tracks, box_size, gap, style):
         return 1
 
     def size(track):
-        # Each track counts as its max sizing function if it is definite,
-        # or as its min sizing function otherwise.
+        # Each track counts as its max sizing function if it is definite, or
+        # as its min sizing function if it is definite. If both are definite,
+        # the max sizing function is floored by the min sizing function.
         min_sizing, max_sizing = _get_sizing_functions(track)
-        for sizing in (max_sizing, min_sizing):
-            if _is_length(sizing):
-                return percentage(sizing, style, box_size)
-        return 0
+        sizes = [
+            percentage(sizing, style, box_size)
+            for sizing in (min_sizing, max_sizing) if _is_length(sizing)]
+        return max(sizes) if sizes else None
 
-    fixed_size = fixed_number = repeat_size = repeat_number = 0
-    for track in tracks[1::2]:
+    repeat_size = 0
+    for track in tracks:
         if track[0] == 'repeat()':
             number, repeat_tracks = track[1:]
             sizes = [size(repeat_track) for repeat_track in repeat_tracks[1::2]]
-            if isinstance(number, int):
-                fixed_size += number * sum(sizes)
-                fixed_number += number * len(sizes)
+            if None in sizes:
+                # Neither sizing function is definite.
+                return 1
+            if number in ('auto-fill', 'auto-fit'):
+                repeat_size = sum(sizes) + len(sizes) * gap
             else:
-                repeat_size, repeat_number = sum(sizes), len(sizes)
+                box_size -= number * (sum(sizes) + len(sizes) * gap)
         else:
-            fixed_size += size(track)
-            fixed_number += 1
-    if repeat_size + repeat_number * gap <= 0:
-        return 1
-
-    # Largest number of repetitions that doesn't overflow, at least 1.
-    repetitions = 1
-    while True:
-        tracks_number = fixed_number + (repetitions + 1) * repeat_number
-        grid_size = (
-            fixed_size + (repetitions + 1) * repeat_size +
-            (tracks_number - 1) * gap)
-        if grid_size > box_size:
-            return repetitions
-        repetitions += 1
+            track_size = size(track)
+            if track_size is None:
+                # Neither sizing function is definite.
+                return 1
+            box_size -= track_size + gap
+    return max(1, int((box_size + gap) / repeat_size)) if repeat_size else 1
 
 
-def _get_template_tracks(tracks, box_size='auto', gap=0, style=None):
+def _get_template_tracks(tracks, box_size, gap, style):
+
     if tracks == 'none':
         tracks = ((),)
     if 'subgrid' in tracks:
@@ -250,8 +245,8 @@ def _get_template_tracks(tracks, box_size='auto', gap=0, style=None):
                 repeat_number, repeat_track_list = track[1:]
                 if repeat_number == 'auto-fill':
                     repeat_number = _get_auto_repeat_number(
-                        tracks, box_size, gap, style)
-                elif not isinstance(repeat_number, int):
+                        tracks[1::2], box_size, gap, style)
+                elif repeat_number == 'auto-fit':
                     # TODO: Respect auto-fit.
                     LOGGER.warning('"auto-fit" is unsupported in repeat()')
                     repeat_number = 1
