@@ -757,6 +757,7 @@ class SVG:
                 stream_color = color(stroke)
                 stream_color.alpha *= opacity
                 self.stream.set_color(stream_color, stroke=True)
+            if stroke:
                 self.stream.set_line_width(stroke_width)
         else:
             stroke = None
