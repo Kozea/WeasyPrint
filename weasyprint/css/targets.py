@@ -20,10 +20,10 @@ def anchor_name_from_token(anchor_token):
         return anchor_token[1][1]
 
 
-class TargetLookupItem:
+class Target:
     """Item controlling pending targets and page based target counters.
 
-    Collected in the TargetCollector's ``target_lookup_items``.
+    Collected in the TargetCollector's ``targets``.
 
     """
     def __init__(self, state='pending'):
@@ -40,10 +40,10 @@ class TargetLookupItem:
         self.cached_page_counter_values = {}
 
 
-class CounterLookupItem:
+class Counter:
     """Item controlling page based counters.
 
-    Collected in the TargetCollector's ``counter_lookup_items``.
+    Collected in the TargetCollector's ``counters``.
 
     """
     def __init__(self, parse_again, missing_counters, missing_target_counters):
@@ -64,22 +64,22 @@ class TargetCollector:
     """Collector of HTML targets used by CSS content with ``target-*``."""
     def __init__(self):
         # Lookup items for targets and page counters.
-        self.target_lookup_items = {}
-        self.counter_lookup_items = {}
+        self.targets = {}
+        self.counters = {}
         # had_pending_targets is set to True when a target is needed but has
         # not been seen yet. check_pending_targets then uses this information
         # to call the needed parse_again functions.
         self.had_pending_targets = False
 
     def collect_anchor(self, anchor_name):
-        """Create a TargetLookupItem for the given `anchor_name``."""
-        if anchor_name in self.target_lookup_items:
+        """Create a Target for the given `anchor_name``."""
+        if anchor_name in self.targets:
             LOGGER.warning('Anchor defined twice: %r', anchor_name)
         else:
-            self.target_lookup_items[anchor_name] = TargetLookupItem()
+            self.targets[anchor_name] = Target()
 
     def lookup_target(self, anchor_token, source_box, css_token, parse_again):
-        """Get a TargetLookupItem corresponding to ``anchor_token``.
+        """Get a Target corresponding to ``anchor_token``.
 
         If it is already filled by a previous anchor-element, the status is
         'up-to-date'. Otherwise, it is 'pending', we must parse the whole
@@ -95,7 +95,7 @@ class TargetCollector:
                 url_tuple = get_url_tuple(attr_value, source_box.style.base_url)
                 anchor_token = ('url', url_tuple)
         anchor_name = anchor_name_from_token(anchor_token)
-        item = self.target_lookup_items.get(anchor_name, TargetLookupItem('undefined'))
+        item = self.targets.get(anchor_name, Target('undefined'))
 
         if item.state == 'pending':
             self.had_pending_targets = True
@@ -110,11 +110,11 @@ class TargetCollector:
     def store_target(self, anchor_name, target_counter_values, target_box):
         """Store a target called ``anchor_name``.
 
-        If there is a pending TargetLookupItem, it is updated. Only previously
-        collected anchors are stored.
+        If there is a pending Target, it is updated. Only previously collected anchors
+        are stored.
 
         """
-        item = self.target_lookup_items.get(anchor_name)
+        item = self.targets.get(anchor_name)
         if item and item.state == 'pending':
             item.state = 'up-to-date'
             item.target_box = target_box
@@ -137,15 +137,13 @@ class TargetCollector:
         if missing_counters or missing_target_counters:
             if parent_box.missing_link is None:
                 parent_box.missing_link = parent_box
-            counter_lookup_item = CounterLookupItem(
+            self.counters[parent_box, css_token] = Counter(
                 parse_again_function, missing_counters, missing_target_counters)
-            self.counter_lookup_items.setdefault(
-                (parent_box, css_token), counter_lookup_item)
 
     def check_pending_targets(self):
         """Check pending targets if needed."""
         if self.had_pending_targets:
-            for item in self.target_lookup_items.values():
+            for item in self.targets.values():
                 for function in item.parse_again_functions:
                     function({})
             self.had_pending_targets = False
@@ -157,7 +155,7 @@ class TargetCollector:
         Eventually update associated targeting boxes.
 
         """
-        item = self.target_lookup_items.get(anchor_name)
+        item = self.targets.get(anchor_name)
         if not item or item.state != 'up-to-date':
             return
         if item.cached_page_counter_values == page_counter_values:
@@ -168,7 +166,7 @@ class TargetCollector:
 
         # Spread the news: update boxes affected by a change in the
         # anchor's page counter values.
-        for (_, css_token), item in self.counter_lookup_items.items():
+        for (_, css_token), item in self.counters.items():
             # Only update items that need counters in their content.
             if css_token != 'content':
                 continue

@@ -122,7 +122,7 @@ def layout_document(html, root_box, context, max_loops=8):
                     checklist.append(child.element)
 
             if child.missing_link:
-                lookup_items = context.target_collector.counter_lookup_items.items()
+                lookup_items = context.target_collector.counters.items()
                 for (box, css_token), item in lookup_items:
                     if child.missing_link == box and css_token != 'content':
                         if css_token == 'bookmark-label' and not child.bookmark_label:

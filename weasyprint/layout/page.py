@@ -107,7 +107,7 @@ class PageMaker:
     """Collect the pagination's states required for page based counters."""
     def __init__(self, resume_at, next_page, right_page, quote_depth, counter_values,
                  counter_scopes, page_groups, content_changed, pages_wanted, anchors,
-                 content_lookups):
+                 counters):
         self.resume_at = resume_at
         self.next_page = next_page
         self.right_page = right_page
@@ -118,7 +118,7 @@ class PageMaker:
         self.content_changed = content_changed
         self.pages_wanted = pages_wanted
         self.anchors = anchors
-        self.content_lookups = content_lookups
+        self.counters = counters
 
     @classmethod
     def from_root_box(cls, root_box):
@@ -140,12 +140,12 @@ class PageMaker:
         content_changed = False
         pages_wanted = False
         anchors = []
-        content_lookups = []
+        counters = []
 
         return cls(
             resume_at, next_page, right_page, quote_depth, counter_values,
             counter_scopes, page_groups, content_changed, pages_wanted, anchors,
-            content_lookups)
+            counters)
 
 
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
@@ -354,76 +354,67 @@ def _standardize_page_based_counters(style, pseudo_type):
             ('page', 1),) + style['counter_increment']
 
 
-def _update_page_counters(style, context, page, counter_values, counter_scopes,
-                          page_number):
+def _update_page_counters(style, context, page, counter_values, counter_scopes, index):
     _standardize_page_based_counters(style, None)
     build.update_counters(counter_values, counter_scopes, style)
     target_collector = context.target_collector
     page_maker = context.page_maker
-    page_data = page_maker[page_number-1]
+    page_data = page_maker[index]
 
-    # Evaluate and cache page values only once (for the first LineBox)
-    # otherwise we suffer endless loops when the target/pseudo-element
-    # spans across multiple pages
-    cached_anchors = []
-    cached_lookups = []
-    for previous_page_data in page_maker[:page_number-1]:
+    # Evaluate and cache page values only once.
+    cached_anchors, cached_counters = [], []
+    for previous_page_data in page_maker[:index]:
         cached_anchors.extend(previous_page_data.anchors)
-        cached_lookups.extend(previous_page_data.content_lookups)
+        cached_counters.extend(previous_page_data.counters)
 
     for child in page.descendants(placeholders=True):
-        # Cache target's page counters
+        # Cache target's page counters.
         anchor = child.style['anchor']
         if anchor and anchor not in cached_anchors:
             page_data.anchors.append(anchor)
             cached_anchors.append(anchor)
-            # Re-make of affected targeting boxes is inclusive
             target_collector.cache_target_page_counters(
-                anchor, counter_values, page_number - 1, page_maker)
+                anchor, counter_values, index, page_maker)
 
-        # string-set and bookmark-labels don't create boxes, only `content`
-        # requires another call to make_page. There is maximum one 'content'
-        # item per box.
+        # string-set and bookmark-labels don't create boxes, only `content` requires
+        # another call to make_page. There is maximum one 'content' item per box.
         if child.missing_link:
-            # A CounterLookupItem exists for the css-token 'content'
-            counter_lookup = target_collector.counter_lookup_items.get(
-                (child.missing_link, 'content'))
+            # A Counter exists for the css-token 'content'.
+            counter = target_collector.counters.get((child.missing_link, 'content'))
         else:
-            counter_lookup = None
+            counter = None
 
-        # Resolve missing (page based) counters
-        if counter_lookup is not None:
+        # Resolve missing page based counters.
+        if counter is not None:
             call_parse_again = False
 
             # Prevent endless loops
-            counter_lookup_id = id(counter_lookup)
-            refresh_missing_counters = counter_lookup_id not in cached_lookups
+            refresh_missing_counters = counter not in cached_counters
             if refresh_missing_counters:
-                page_data.content_lookups.append(counter_lookup_id)
-                cached_lookups.append(counter_lookup_id)
-                counter_lookup.page_maker_index = page_number - 1
+                page_data.counters.append(counter)
+                cached_counters.append(counter)
+                counter.page_maker_index = index
 
             # Step 1: page based back-references
             # Marked as pending by target_collector.cache_target_page_counters
-            if counter_lookup.pending:
-                if counter_values != counter_lookup.cached_page_counter_values:
-                    counter_lookup.cached_page_counter_values = copy.deepcopy(
-                        counter_values)
-                counter_lookup.pending = False
+            if counter.pending:
+                if counter_values != counter.cached_page_counter_values:
+                    counter.cached_page_counter_values = copy.deepcopy(counter_values)
+                counter.pending = False
                 call_parse_again = True
 
             # Step 2: local counters
             # If the box mixed-in page counters changed, update the content
             # and cache the new values.
-            missing_counters = counter_lookup.missing_counters
+            missing_counters = counter.missing_counters
             if missing_counters:
                 if 'pages' in missing_counters:
                     page_data.pages_wanted = True
                 refresh = (
                     refresh_missing_counters and
-                    counter_values != counter_lookup.cached_page_counter_values)
+                    counter_values != counter.cached_page_counter_values)
                 if refresh:
-                    counter_lookup.cached_page_counter_values = copy.deepcopy(
+                    counter.cached_page_counter_values = copy.deepcopy(
                         counter_values)
                     for counter_name in missing_counters:
                         counter_value = counter_values.get(counter_name, None)
@@ -433,13 +424,12 @@ def _update_page_counters(style, context, page, counter_values, counter_scopes,
                             break
 
             # Step 3: targeted counters
-            target_missing = counter_lookup.missing_target_counters
+            target_missing = counter.missing_target_counters
             for anchor_name, missed_counters in target_missing.items():
                 if 'pages' not in missed_counters:
                     continue
                 # Adjust 'pages_wanted'
-                item = target_collector.target_lookup_items.get(
-                    anchor_name, None)
+                item = target_collector.targets.get(anchor_name, None)
                 page_maker_index = item.page_maker_index
                 if page_maker_index >= 0 and anchor_name in cached_anchors:
                     page_maker[page_maker_index].pages_wanted = True
@@ -448,7 +438,7 @@ def _update_page_counters(style, context, page, counter_values, counter_scopes,
 
             if call_parse_again:
                 page_data.content_changed = True
-                counter_lookup.parse_again(counter_values)
+                counter.parse_again(counter_values)
 
 
 def make_margin_boxes(context, page, quote_depth, counter_values, counter_scopes):
@@ -944,8 +934,7 @@ def make_page(index, context, root_box, html):
 
     # Update page counter values.
     counter_scopes = copy.deepcopy(page_data.counter_scopes)
-    _update_page_counters(
-        style, context, page, counter_values, counter_scopes, page_number)
+    _update_page_counters(style, context, page, counter_values, counter_scopes, index)
 
     if blank:
         resume_at = previous_resume_at
@@ -959,12 +948,12 @@ def make_page(index, context, root_box, html):
     if new_page or content_changed:
         # Reset remake state and force page re-creation for old pages.
         pages_wanted = False
-        anchors, content_lookups = [], []
+        anchors, counters = [], []
         right_page = not page_data.right_page
         data = PageMaker(
             resume_at, next_page, right_page, quote_depth, counter_values,
             counter_scopes, page_groups, content_changed, pages_wanted, anchors,
-            content_lookups)
+            counters)
         if new_page:
             page_maker.append(data)
         else:
@@ -987,7 +976,7 @@ def make_pages(context, root_box, html, pages):
         if not pages or page_data.content_changed or page_data.pages_wanted:
             PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %d', i + 1)
             page_data.content_changed = page_data.pages_wanted = False
-            page_data.anchors, page_data.content_lookups = [], []
+            page_data.anchors, page_data.counters = [], []
             page, resume_at = make_page(i, context, root_box, html)
             reported_footnotes = context.reported_footnotes
             yield page

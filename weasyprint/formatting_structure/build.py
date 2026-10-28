@@ -508,8 +508,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'element()':
             if not in_page_context:
                 LOGGER.warning(
-                    '"element(%s)" is only allowed in page margins',
-                    ' '.join(value))
+                    '"element(%s)" is only allowed in page margins', ' '.join(value))
                 continue
             for new_box in context.get_running_element_for(page, *value):
                 new_box = new_box.deepcopy()
@@ -529,17 +528,16 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if not value[1]:
                 continue
             text_box = boxes.TextBox.anonymous_from(parent_box, value[1])
-            leader_box = boxes.InlineBox.anonymous_from(
-                parent_box, (text_box,))
-            # Avoid breaks inside the leader box
+            leader_box = boxes.InlineBox.anonymous_from(parent_box, (text_box,))
+            # Avoid breaks inside the leader box.
             leader_box.style['white_space'] = 'pre'
-            # Prevent whitespaces from being removed from the text box
+            # Prevent whitespaces from being removed from the text box.
             text_box.style['white_space'] = 'pre'
             leader_box.is_leader = True
             content_boxes.append(leader_box)
 
     if has_text or content_boxes:
-        # Only add CounterLookupItem if the content_list actually produced text
+        # Only add Counter if the content_list actually produced text
         target_collector.collect_missing_counters(
             parent_box, css_token, parse_again, missing_counters,
             missing_target_counters)
