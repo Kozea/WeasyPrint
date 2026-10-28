@@ -56,12 +56,11 @@ class VerticalBox(OrientedBox):
             box.border_top_width + box.border_bottom_width)
 
     def restore_box_attributes(self):
-        box = self.box
-        box.height = self.inner
-        box.margin_top = self.margin_a
-        box.margin_bottom = self.margin_b
+        self.box.height = self.inner
+        self.box.margin_top = self.margin_a
+        self.box.margin_bottom = self.margin_b
 
-    # TODO: Define what are the min-content and max-content heights
+    # TODO: Define what are the min-content and max-content heights.
     @property
     def min_content_size(self):
         return 0
@@ -85,10 +84,9 @@ class HorizontalBox(OrientedBox):
         self._max_content_size = None
 
     def restore_box_attributes(self):
-        box = self.box
-        box.width = self.inner
-        box.margin_left = self.margin_a
-        box.margin_right = self.margin_b
+        self.box.width = self.inner
+        self.box.margin_left = self.margin_a
+        self.box.margin_right = self.margin_b
 
     @property
     def min_content_size(self):
@@ -124,7 +122,7 @@ class PageMaker:
 
     @classmethod
     def from_root_box(cls, root_box):
-        # TODO: take care of text direction and writing mode
+        # TODO: take care of text direction and writing mode.
         # https://www.w3.org/TR/css-page-3/#progression
         recto = root_box.style['direction'] == 'ltr'
         right_page = {
@@ -153,71 +151,60 @@ class PageMaker:
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
     """Compute and set a margin box fixed dimension on ``box``.
 
-    Described in: https://drafts.csswg.org/css-page-3/#margin-constraints
-
     :param box:
-        The margin box to work on
+        The margin box to work on.
     :param outer:
-        The target outer dimension (value of a page margin)
+        The target outer dimension.
     :param vertical:
-        True to set height, margin-top and margin-bottom; False for width,
-        margin-left and margin-right
+        ``True`` to set height, margin-top and margin-bottom;
+        ``False`` for width, margin-left and margin-right.
     :param top_or_left:
-        True if the margin box in if the top half (for vertical==True) or
-        left half (for vertical==False) of the page.
-        This determines which margin should be 'auto' if the values are
-        over-constrained. (Rule 3 of the algorithm.)
+        ``True`` if the margin box in if the top or left half of the page. This
+        determines which margin should be 'auto' if the values are over-constrained.
+
     """
+    # See https://drafts.csswg.org/css-page-3/#margin-constraints.
     box = (VerticalBox if vertical else HorizontalBox)(context, box)
 
-    # Rule 2
-    total = box.padding_plus_border + sum(
-        value for value in (box.margin_a, box.margin_b, box.inner)
-        if value != 'auto')
+    # Rule 2.
+    sizes = (box.margin_a, box.margin_b, box.inner)
+    total = box.padding_plus_border + sum(size for size in sizes if size != 'auto')
     if total > outer:
         if box.margin_a == 'auto':
             box.margin_a = 0
         if box.margin_b == 'auto':
             box.margin_b = 0
         if box.inner == 'auto':
-            # XXX this is not in the spec, but without it box.inner
-            # would end up with a negative value.
-            # Instead, this will trigger rule 3 below.
+            # This is not specified, but without it box.inner would end up with a
+            # negative value. Instead, this will trigger rule 3 below.
             # https://lists.w3.org/Archives/Public/www-style/2012Jul/0006.html
             box.inner = 0
-    # Rule 3
-    if 'auto' not in [box.margin_a, box.margin_b, box.inner]:
-        # Over-constrained
+    # Rule 3.
+    if 'auto' not in (box.margin_a, box.margin_b, box.inner):
         if top_or_left:
             box.margin_a = 'auto'
         else:
             box.margin_b = 'auto'
-    # Rule 4
-    if [box.margin_a, box.margin_b, box.inner].count('auto') == 1:
+    # Rule 4.
+    if (box.margin_a, box.margin_b, box.inner).count('auto') == 1:
         if box.inner == 'auto':
-            box.inner = (outer - box.padding_plus_border -
-                         box.margin_a - box.margin_b)
+            box.inner = outer - box.padding_plus_border - box.margin_a - box.margin_b
         elif box.margin_a == 'auto':
-            box.margin_a = (outer - box.padding_plus_border -
-                            box.margin_b - box.inner)
+            box.margin_a = outer - box.padding_plus_border - box.margin_b - box.inner
         elif box.margin_b == 'auto':
-            box.margin_b = (outer - box.padding_plus_border -
-                            box.margin_a - box.inner)
-    # Rule 5
+            box.margin_b = outer - box.padding_plus_border - box.margin_a - box.inner
+    # Rule 5.
     if box.inner == 'auto':
         if box.margin_a == 'auto':
             box.margin_a = 0
         if box.margin_b == 'auto':
             box.margin_b = 0
-        box.inner = (outer - box.padding_plus_border -
-                     box.margin_a - box.margin_b)
-    # Rule 6
+        box.inner = outer - box.padding_plus_border - box.margin_a - box.margin_b
+    # Rule 6.
     if box.margin_a == box.margin_b == 'auto':
-        box.margin_a = box.margin_b = (
-            outer - box.padding_plus_border - box.inner) / 2
+        box.margin_a = box.margin_b = (outer - box.padding_plus_border - box.inner) / 2
 
-    assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
-
+    assert 'auto' not in {box.margin_a, box.margin_b, box.inner}
     box.restore_box_attributes()
 
 
@@ -229,19 +216,18 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
     :param side_boxes:
         Three boxes on a same side (as opposed to a corner).
         A list of:
-        - A @*-left or @*-top margin box
-        - A @*-center or @*-middle margin box
-        - A @*-right or @*-bottom margin box
+        - a @*-left or @*-top margin box,
+        - a @*-center or @*-middle margin box,
+        - a @*-right or @*-bottom margin box.
     :param vertical:
         ``True`` to set height, margin-top and margin-bottom;
         ``False`` for width, margin-left and margin-right.
     :param available_size:
-        The distance between the page box’s left right border edges
+        The distance between the page box’s left right border edges.
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
-    side_boxes = [box_class(context, box) for box in side_boxes]
-    box_a, box_b, box_c = side_boxes
+    side_boxes = box_a, box_b, box_c = [box_class(context, box) for box in side_boxes]
 
     for box in side_boxes:
         if box.margin_a == 'auto':
@@ -250,19 +236,15 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
             box.margin_b = 0
 
     if not box_b.box.is_generated:
-        # Non-generated boxes get zero for every box-model property
+        # Non-generated boxes get zero for every box-model property.
         assert box_b.inner == 0
         if box_a.inner == box_c.inner == 'auto':
-            # A and C both have 'width: auto'
-            if available_size > (
-                    box_a.outer_max_content_size +
-                    box_c.outer_max_content_size):
-                # sum of the outer max-content widths
-                # is less than the available width
-                flex_space = (
-                    available_size -
-                    box_a.outer_max_content_size -
-                    box_c.outer_max_content_size)
+            # A and C both have 'width: auto'.
+            max_external = box_a.outer_max_content_size + box_c.outer_max_content_size
+            min_external = box_a.outer_min_content_size + box_c.outer_min_content_size
+            if available_size > max_external:
+                # Sum of the outer max-content widths is less than the available width.
+                flex_space = available_size - max_external
                 flex_factor_a = box_a.outer_max_content_size
                 flex_factor_c = box_c.outer_max_content_size
                 flex_factor_sum = flex_factor_a + flex_factor_c
@@ -272,19 +254,11 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                     flex_space * flex_factor_a / flex_factor_sum)
                 box_c.outer = box_c.max_content_size + (
                     flex_space * flex_factor_c / flex_factor_sum)
-            elif available_size > (
-                    box_a.outer_min_content_size +
-                    box_c.outer_min_content_size):
-                # sum of the outer min-content widths
-                # is less than the available width
-                flex_space = (
-                    available_size -
-                    box_a.outer_min_content_size -
-                    box_c.outer_min_content_size)
-                flex_factor_a = (
-                    box_a.max_content_size - box_a.min_content_size)
-                flex_factor_c = (
-                    box_c.max_content_size - box_c.min_content_size)
+            elif available_size > min_external:
+                # Sum of the outer min-content widths is less than the available width.
+                flex_space = available_size - min_external
+                flex_factor_a = box_a.max_content_size - box_a.min_content_size
+                flex_factor_c = box_c.max_content_size - box_c.min_content_size
                 flex_factor_sum = flex_factor_a + flex_factor_c
                 if flex_factor_sum == 0:
                     flex_factor_sum = 1
@@ -293,11 +267,7 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                 box_c.outer = box_c.min_content_size + (
                     flex_space * flex_factor_c / flex_factor_sum)
             else:
-                # otherwise
-                flex_space = (
-                    available_size -
-                    box_a.outer_min_content_size -
-                    box_c.outer_min_content_size)
+                flex_space = available_size - min_external
                 flex_factor_a = box_a.min_content_size
                 flex_factor_c = box_c.min_content_size
                 flex_factor_sum = flex_factor_a + flex_factor_c
@@ -308,22 +278,19 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                 box_c.outer = box_c.min_content_size + (
                     flex_space * flex_factor_c / flex_factor_sum)
         else:
-            # only one box has 'width: auto'
+            # Only one box has 'width: auto'.
             if box_a.inner == 'auto':
                 box_a.outer = available_size - box_c.outer
             elif box_c.inner == 'auto':
                 box_c.outer = available_size - box_a.outer
     else:
         if box_b.inner == 'auto':
-            # resolve any auto width of the middle box (B)
+            # Resolve any auto width of the middle box (B).
             ac_max_content_size = 2 * max(
                 box_a.outer_max_content_size, box_c.outer_max_content_size)
-            if available_size > (
-                    box_b.outer_max_content_size + ac_max_content_size):
-                flex_space = (
-                    available_size -
-                    box_b.outer_max_content_size -
-                    ac_max_content_size)
+            max_size = box_b.outer_max_content_size + ac_max_content_size
+            if available_size > max_size:
+                flex_space = available_size - max_size
                 flex_factor_b = box_b.outer_max_content_size
                 flex_factor_ac = ac_max_content_size
                 flex_factor_sum = flex_factor_b + flex_factor_ac
@@ -334,14 +301,10 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
             else:
                 ac_min_content_size = 2 * max(
                     box_a.outer_min_content_size, box_c.outer_min_content_size)
-                if available_size > (
-                        box_b.outer_min_content_size + ac_min_content_size):
-                    flex_space = (
-                        available_size -
-                        box_b.outer_min_content_size -
-                        ac_min_content_size)
-                    flex_factor_b = (
-                        box_b.max_content_size - box_b.min_content_size)
+                min_size = box_b.outer_min_content_size + ac_min_content_size
+                flex_space = available_size - min_size
+                if available_size > min_size:
+                    flex_factor_b = box_b.max_content_size - box_b.min_content_size
                     flex_factor_ac = ac_max_content_size - ac_min_content_size
                     flex_factor_sum = flex_factor_b + flex_factor_ac
                     if flex_factor_sum == 0:
@@ -349,10 +312,6 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                     box_b.outer = box_b.min_content_size + (
                         flex_space * flex_factor_b / flex_factor_sum)
                 else:
-                    flex_space = (
-                        available_size -
-                        box_b.outer_min_content_size -
-                        ac_min_content_size)
                     flex_factor_b = box_b.min_content_size
                     flex_factor_ac = ac_min_content_size
                     flex_factor_sum = flex_factor_b + flex_factor_ac
@@ -365,9 +324,7 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
         if box_c.inner == 'auto':
             box_c.outer = (available_size - box_b.outer) / 2
 
-    # And, we’re done!
     assert 'auto' not in [box.inner for box in side_boxes]
-    # Set the actual attributes back.
     for box in side_boxes:
         box.restore_box_attributes()
 
@@ -552,24 +509,15 @@ def make_margin_boxes(context, page, quote_depth, counter_values, counter_scopes
     max_box_width = page.border_width()
     max_box_height = page.border_height()
 
-    # bottom right corner of the border box
+    # Generate side boxes.
     page_end_x = margin_left + max_box_width
     page_end_y = margin_top + max_box_height
-
-    # Margin box dimensions, described in
-    # https://drafts.csswg.org/css-page-3/#margin-box-dimensions
-    generated_boxes = []
-
-    for prefix, vertical, containing_block, position_x, position_y in (
-        ('top', False, (max_box_width, margin_top),
-            margin_left, 0),
-        ('bottom', False, (max_box_width, margin_bottom),
-            margin_left, page_end_y),
-        ('left', True, (margin_left, max_box_height),
-            0, margin_top),
-        ('right', True, (margin_right, max_box_height),
-            page_end_x, margin_top),
-    ):
+    sides = (
+        ('top', False, (max_box_width, margin_top), margin_left, 0),
+        ('bottom', False, (max_box_width, margin_bottom), margin_left, page_end_y),
+        ('left', True, (margin_left, max_box_height), 0, margin_top),
+        ('right', True, (margin_right, max_box_height), page_end_x, margin_top))
+    for prefix, vertical, containing_block, position_x, position_y in sides:
         if vertical:
             suffixes = ['top', 'middle', 'bottom']
             fixed_outer, variable_outer = containing_block
@@ -583,7 +531,6 @@ def make_margin_boxes(context, page, quote_depth, counter_values, counter_scopes
             for suffix in suffixes]
         if not any(box.is_generated for box in side_boxes):
             continue
-        # We need the three boxes together for the variable dimension:
         compute_variable_dimension(context, side_boxes, vertical, variable_outer)
         for box, offset in zip(side_boxes, [0, 0.5, 1]):
             if not box.is_generated:
@@ -596,15 +543,14 @@ def make_margin_boxes(context, page, quote_depth, counter_values, counter_scopes
                 box.position_x += offset * (variable_outer - box.margin_width())
             compute_fixed_dimension(
                 context, box, fixed_outer, not vertical, prefix in ('top', 'left'))
-            generated_boxes.append(box)
+            yield margin_box_content_layout(context, page, box)
 
-    # Corner boxes
+    # Generate corner boxes.
     corners = (
         ('@top-left-corner', margin_left, margin_top, 0, 0),
         ('@top-right-corner', margin_right, margin_top, page_end_x, 0),
         ('@bottom-left-corner', margin_left, margin_bottom, 0, page_end_y),
-        ('@bottom-right-corner', margin_right, margin_bottom, page_end_x, page_end_y),
-    )
+        ('@bottom-right-corner', margin_right, margin_bottom, page_end_x, page_end_y))
     for at_keyword, cb_width, cb_height, position_x, position_y in corners:
         box = make_box(
             at_keyword, (cb_width, cb_height), quote_depth, counter_values,
@@ -615,9 +561,6 @@ def make_margin_boxes(context, page, quote_depth, counter_values, counter_scopes
         box.position_y = position_y
         compute_fixed_dimension(context, box, cb_height, True, 'top' in at_keyword)
         compute_fixed_dimension(context, box, cb_width, False, 'left' in at_keyword)
-        generated_boxes.append(box)
-
-    for box in generated_boxes:
         yield margin_box_content_layout(context, page, box)
 
 
@@ -787,13 +730,8 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
 def make_page(index, context, root_box, html):
     """Return one laid out page without margin boxes.
 
-    Start with the initial values from ``context.page_maker[index]``.
-    The resulting values / initial values for the next page are stored in
-    the ``page_maker``.
-
-    As the function's name suggests: the plan is not to make all pages
-    repeatedly when a missing counter was resolved, but rather re-make the
-    single page where the ``content_changed`` happened.
+    Start with the initial values from ``context.page_maker[index]``. The resulting
+    values, used as initial values for the next page, are stored in the ``page_maker``.
 
     """
     page_number = index + 1
@@ -1035,23 +973,21 @@ def make_page(index, context, root_box, html):
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, pages):
+def make_pages(context, root_box, html, pages):
     """Return a list of laid out pages without margin boxes.
 
-    Re-make pages only if necessary.
+    Re-make pages if necessary.
 
     """
     i = 0
-    reported_footnotes = None
+    resume_at = reported_footnotes = None
     context.rendered_notes = []
-    while True:
+    while not i or resume_at is not None or reported_footnotes:
         page_data = context.page_maker[i]
         if not pages or page_data.content_changed or page_data.pages_wanted:
             PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %d', i + 1)
-            page_data.content_changed = False
-            page_data.pages_wanted = False
-            page_data.anchors = []
-            page_data.content_lookups = []
+            page_data.content_changed = page_data.pages_wanted = False
+            page_data.anchors, page_data.content_lookups = [], []
             page, resume_at = make_page(i, context, root_box, html)
             reported_footnotes = context.reported_footnotes
             yield page
@@ -1061,11 +997,9 @@ def make_all_pages(context, root_box, html, pages):
             resume_at = context.page_maker[i + 1].resume_at
             reported_footnotes = None
             yield pages[i]
-
         i += 1
-        if resume_at is None and not reported_footnotes:
-            # Throw away obsolete pages and content
-            context.page_maker = context.page_maker[:i + 1]
-            context.broken_out_of_flow.clear()
-            context.reported_footnotes.clear()
-            return
+
+    # Throw away obsolete pages and content.
+    context.page_maker = context.page_maker[:i + 1]
+    context.broken_out_of_flow.clear()
+    context.reported_footnotes.clear()

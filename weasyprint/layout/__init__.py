@@ -20,7 +20,7 @@ from ..urls import get_link
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
 from .block import block_level_layout
-from .page import PageMaker, make_all_pages, make_margin_boxes
+from .page import PageMaker, make_margin_boxes, make_pages
 
 
 def layout_fixed_boxes(context, pages, containing_page):
@@ -76,7 +76,7 @@ def layout_document(html, root_box, context, max_loops=8):
         initial_total_pages = actual_total_pages
         if loop == 0:
             original_footnotes = context.footnotes.copy()
-        pages = list(make_all_pages(context, root_box, html, pages))
+        pages = list(make_pages(context, root_box, html, pages))
         actual_total_pages = len(pages)
 
         # Check whether another round is required.
