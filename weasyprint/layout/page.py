@@ -1014,34 +1014,20 @@ def make_page(index, context, root_box, html):
         next_page = page_maker[index].next_page
 
     assert next_page
-    right_page = not page_data.right_page
 
     # Check whether we need to append or update the next page_maker item.
-    if new_page := index + 1 >= len(page_maker):
-        # Force new page creation.
-        page_maker_next_changed = True
-    else:
-        # Check whether something changed.
-        page_maker_next_changed = (
-            page_maker[index+1].resume_at != resume_at or
-            page_maker[index+1].next_page != next_page or
-            page_maker[index+1].right_page != right_page or
-            page_maker[index+1].quote_depth != quote_depth or
-            page_maker[index+1].counter_values != counter_values or
-            page_maker[index+1].counter_scopes != counter_scopes or
-            page_maker[index+1].page_groups != page_groups)
-
-    if page_maker_next_changed:
+    new_page = len(page_maker) <= index + 1
+    content_changed = not new_page and page_maker[index+1].resume_at != resume_at
+    if new_page or content_changed:
         # Reset remake state and force page re-creation for old pages.
-        content_changed = not new_page
         pages_wanted = False
-        anchors = []
-        content_lookups = []
+        anchors, content_lookups = [], []
+        right_page = not page_data.right_page
         data = PageMaker(
             resume_at, next_page, right_page, quote_depth, counter_values,
             counter_scopes, page_groups, content_changed, pages_wanted, anchors,
             content_lookups)
-        if index + 1 >= len(page_maker):
+        if new_page:
             page_maker.append(data)
         else:
             page_maker[index+1] = data
