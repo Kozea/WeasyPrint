@@ -280,7 +280,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         else:
             # Child doesn’t fit and we can break, find where to break and stop
             # parent rendering.
-            last_child = find_last_class_a_break_point_child(new_children)
+            last_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_child, child)
             resume_at = {index: None}
             out_of_flow_resume_at = None
@@ -1034,11 +1034,10 @@ def find_earlier_page_break(context, children, absolute_boxes, fixed_boxes):
                 break
             previous_in_flow = child
 
-        if child.is_in_normal_flow() and (
-                not avoid_page_break(child.style['break_inside'], context)):
-            breakable_box_types = (
-                boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
-            if isinstance(child, breakable_box_types):
+        avoid_break_in_child = avoid_page_break(child.style['break_inside'], context)
+        if child.is_in_normal_flow() and not avoid_break_in_child:
+            breakable_types = (boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
+            if isinstance(child, breakable_types):
                 result = find_earlier_page_break(
                     context, child.children, absolute_boxes, fixed_boxes)
                 if result:

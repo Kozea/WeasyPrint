@@ -1035,6 +1035,7 @@ def grid_children(box, children):
     if isinstance(box, boxes.GridContainerBox):
         grid_children = []
         for child in children:
+            child.is_floated = lambda: False
             if child.is_in_normal_flow():
                 child.is_grid_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
@@ -1287,8 +1288,7 @@ def _inner_block_in_inline(box, skip_stack=None):
 
     for i, child in enumerate(box.children[skip:]):
         index = i + skip
-        if (isinstance(child, boxes.BlockLevelBox) and
-                child.is_in_normal_flow()):
+        if isinstance(child, boxes.BlockLevelBox) and child.is_in_normal_flow():
             assert skip_stack is None  # Should not skip here
             block_level_box = child
             index += 1  # Resume *after* the block
