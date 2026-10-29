@@ -93,19 +93,6 @@ class Box:
     colspan = 1
     rowspan = 1
 
-    # Default, overridden on some subclasses
-    def all_children(self):
-        return self.children
-
-    def descendants(self, placeholders=False):
-        """A flat generator for a box, its children and descendants."""
-        yield self
-        for child in self.children:
-            if placeholders or isinstance(child, Box):
-                yield from child.descendants(placeholders)
-            else:
-                yield child
-
     def __init__(self, element_tag, style, element):
         self.element_tag = element_tag
         self.element = element
@@ -138,6 +125,29 @@ class Box:
     def deepcopy(self):
         """Return a copy of the box with recursive copies of its children."""
         return self.copy()
+
+    def all_children(self):
+        # Default, overridden on some subclasses.
+        return self.children
+
+    @property
+    def in_flow_children(self):
+        return tuple(child for child in self.children if child.is_in_normal_flow())
+
+    @property
+    def in_flow_or_floated_children(self):
+        return tuple(
+            child for child in self.children
+            if child.is_in_normal_flow() or child.is_floated())
+
+    def descendants(self, placeholders=False):
+        """A flat generator for a box, its children and descendants."""
+        yield self
+        for child in self.children:
+            if placeholders or isinstance(child, Box):
+                yield from child.descendants(placeholders)
+            else:
+                yield child
 
     def translate(self, dx=0, dy=0, ignore_floats=False):
         """Change the box’s position.
@@ -464,18 +474,15 @@ class ParentBox(Box):
         # The specification only includes in-flow boxes, but as page breaks can appear
         # between floats, it makes sense to include them here too.
         start_value, end_value = super().page_values()
-        children = [
-            child for child in self.children
-            if child.is_in_normal_flow() or child.is_floated()]
-        if children:
-            if len(children) == 1:
-                page_values = children[0].page_values()
-                start_value = page_values[0] or start_value
-                end_value = page_values[1] or end_value
-            else:
-                start_box, end_box = children[0], children[-1]
-                start_value = start_box.page_values()[0] or start_value
-                end_value = end_box.page_values()[1] or end_value
+        children = self.in_flow_or_floated_children
+        if len(children) == 1:
+            page_values = children[0].page_values()
+            start_value = page_values[0] or start_value
+            end_value = page_values[1] or end_value
+        elif len(children) > 1:
+            start_box, end_box = children[0], children[-1]
+            start_value = start_box.page_values()[0] or start_value
+            end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
 
     def top_margin_collapses(self):

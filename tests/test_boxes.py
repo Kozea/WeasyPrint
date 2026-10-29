@@ -1246,6 +1246,28 @@ def test_page_counters():
 
 
 @assert_no_logs
+def test_page_counters_in_page_content():
+    """Test page-based counters in page_content."""
+    pages = render_pages('''
+      <style>
+        div { break-after: page }
+        div::before { content: counter(pages) }
+      </style>
+      <div></div>
+      <div></div>
+      <div></div>
+    ''')
+    for page in pages:
+        html, = page.children
+        body, = html.children
+        div, = body.children
+        line, = div.children
+        before, = line.children
+        text_box, = before.children
+        assert text_box.text == '3'
+
+
+@assert_no_logs
 @pytest.mark.parametrize('html', [
     '<html style="display: none">',
     '<html style="display: none">abc',

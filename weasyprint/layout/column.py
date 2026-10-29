@@ -181,10 +181,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 column_skip_stack = resume_at
 
                 # Calculate consumed height, empty space and next box height
-                in_flow_children = [
-                    child for child in new_box.children
-                    if child.is_in_normal_flow()]
-                if in_flow_children:
+                if in_flow_children := tuple(new_box.in_flow_children):
                     # Get the empty space at the bottom of the column box
                     consumed_height = (
                         in_flow_children[-1].margin_height() +
@@ -199,10 +196,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                             context, column_box, inf, column_skip_stack,
                             containing_block, True, [], [], [], first_letter_style,
                             first_line_style, discard=False, max_lines=None)[0]
-                        for child in next_box.children:
-                            if child.is_in_normal_flow():
-                                next_box_height = child.margin_height()
-                                break
+                        for child in next_box.in_flow_children:
+                            next_box_height = child.margin_height()
+                            break
                         remove_placeholders(context, [next_box], [], [])
                 else:
                     consumed_height = empty_space = next_box_height = 0

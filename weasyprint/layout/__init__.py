@@ -20,60 +20,7 @@ from ..urls import get_link
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
 from .block import block_level_layout
-from .page import make_all_pages, make_margin_boxes
-
-
-def initialize_page_maker(context, root_box):
-    """Initialize ``context.page_maker``.
-
-    Collect the pagination's states required for page based counters.
-
-    """
-    context.page_maker = []
-
-    # Special case the root box
-    page_break = root_box.style['break_before']
-
-    # TODO: take care of text direction and writing mode
-    # https://www.w3.org/TR/css-page-3/#progression
-    if page_break == 'right':
-        right_page = True
-    elif page_break == 'left':
-        right_page = False
-    elif page_break == 'recto':
-        right_page = root_box.style['direction'] == 'ltr'
-    elif page_break == 'verso':
-        right_page = root_box.style['direction'] == 'rtl'
-    else:
-        right_page = root_box.style['direction'] == 'ltr'
-    resume_at = None
-    next_page = {'break': 'any', 'page': root_box.page_values()[0]}
-
-    # page_state is prerequisite for filling in missing page based counters
-    # although neither a variable quote_depth nor counter_scopes are needed
-    # in page-boxes -- reusing
-    # `formatting_structure.build.update_counters()` to avoid redundant
-    # code requires a full `state`.
-    # The value of **pages**, of course, is unknown until we return and
-    # might change when 'content_changed' triggers re-pagination...
-    # So we start with an empty state
-    page_state = (
-        # Shared mutable objects:
-        [0],  # quote_depth: single integer
-        {'pages': [0]},
-        [{'pages'}],  # counter_scopes
-        [] # page_groups
-    )
-
-    # Initial values
-    remake_state = {
-        'content_changed': False,
-        'pages_wanted': False,
-        'anchors': [],  # first occurrence of anchor
-        'content_lookups': []  # first occurr. of content-CounterLookupItem
-    }
-    context.page_maker.append((
-        resume_at, next_page, right_page, page_state, remake_state))
+from .page import PageMaker, make_margin_boxes, make_pages
 
 
 def layout_fixed_boxes(context, pages, containing_page):
@@ -115,7 +62,7 @@ def layout_document(html, root_box, context, max_loops=8):
         A list of laid out Page objects.
 
     """
-    initialize_page_maker(context, root_box)
+    context.page_maker = [PageMaker.from_root_box(root_box)]
     pages = []
     original_footnotes = []
     actual_total_pages = 0
@@ -129,24 +76,22 @@ def layout_document(html, root_box, context, max_loops=8):
         initial_total_pages = actual_total_pages
         if loop == 0:
             original_footnotes = context.footnotes.copy()
-        pages = list(make_all_pages(context, root_box, html, pages))
+        pages = list(make_pages(context, root_box, html, pages))
         actual_total_pages = len(pages)
 
-        # Check whether another round is required
-        reloop_content = False
-        reloop_pages = False
+        # Check whether another round is required.
+        reloop = False
         for page_data in context.page_maker:
-            # Update pages
-            _, _, _, page_state, remake_state = page_data
-            page_counter_values = page_state[1]
-            page_counter_values['pages'] = [actual_total_pages]
-            if remake_state['content_changed']:
-                reloop_content = True
-            if remake_state['pages_wanted']:
-                reloop_pages = initial_total_pages != actual_total_pages
+            # Update pages.
+            counter_values = page_data.counter_values
+            counter_values['pages'] = [actual_total_pages]
+            if page_data.content_changed:
+                reloop = True
+            elif page_data.pages_wanted:
+                reloop = initial_total_pages != actual_total_pages
 
-        # No need for another loop, stop here
-        if not reloop_content and not reloop_pages:
+        # No need for another loop, stop here.
+        if not reloop:
             break
 
     # Calculate string-sets and bookmark-labels containing page based counters
@@ -160,8 +105,7 @@ def layout_document(html, root_box, context, max_loops=8):
     watch_elements_after = []
     for i, page in enumerate(pages):
         # We need the updated page_counter_values
-        _, _, _, page_state, _ = context.page_maker[i + 1]
-        page_counter_values = page_state[1]
+        page_counter_values = context.page_maker[i+1].counter_values
 
         for child in page.descendants():
             # Only one bookmark per original box
@@ -178,11 +122,10 @@ def layout_document(html, root_box, context, max_loops=8):
                     checklist.append(child.element)
 
             if child.missing_link:
-                for (box, css_token), item in (
-                        context.target_collector.counter_lookup_items.items()):
+                lookup_items = context.target_collector.counters.items()
+                for (box, css_token), item in lookup_items:
                     if child.missing_link == box and css_token != 'content':
-                        if (css_token == 'bookmark-label' and
-                                not child.bookmark_label):
+                        if css_token == 'bookmark-label' and not child.bookmark_label:
                             # don't refill it!
                             continue
                         item.parse_again(page_counter_values)
@@ -208,14 +151,16 @@ def layout_document(html, root_box, context, max_loops=8):
         context.current_page = i + 1  # page_number starts at 1
 
         # page_maker's page_state is ready for the MarginBoxes
-        state = context.page_maker[context.current_page][3]
+        page_maker = context.page_maker[context.current_page]
         children = []
         children.append(root)
         if footnote_area.children:
             children.append(footnote_area)
         if note_area.children:
             children.append(note_area)
-        children.extend(make_margin_boxes(context, page, state))
+        children.extend(make_margin_boxes(
+            context, page, page_maker.quote_depth, page_maker.counter_values,
+            page_maker.counter_scopes))
         page.children = tuple(children)
         layout_backgrounds(page, context.get_image_from_uri)
         yield page

@@ -203,9 +203,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     if resume_at is None:
                         resume_at = {index_row: {}}
                     resume_at[index_row][index_cell] = cell_resume_at
-                cell.empty = not any(
-                    child.is_floated() or child.is_in_normal_flow()
-                    for child in cell.children)
+                cell.empty = not any(cell.in_flow_or_floated_children)
                 cell.content_height = cell.height
                 if cell.computed_height != 'auto':
                     cell.height = max(cell.height, cell.computed_height)
@@ -838,12 +836,11 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
         return box.position_y + box.baseline
     elif isinstance(box, boxes.TableCaptionBox):
         return
-    children = reversed(box.children) if last else box.children
+    children = reversed(tuple(box.in_flow_children)) if last else box.in_flow_children
     for child in children:
-        if child.is_in_normal_flow():
-            result = find_in_flow_baseline(child, last, baseline_types)
-            if result is not None:
-                return result
+        result = find_in_flow_baseline(child, last, baseline_types)
+        if result is not None:
+            return result
 
 
 def distribute_excess_width(context, grid, excess_width, column_widths, constrainedness,

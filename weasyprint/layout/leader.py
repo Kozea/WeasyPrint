@@ -28,8 +28,7 @@ def handle_leader(context, line, containing_block):
 
         # Extra width is the additional width taken by the leader box
         extra_width = containing_block.width - sum(
-            child.margin_width() for child in line.children
-            if child.is_in_normal_flow())
+            child.margin_width() for child in line.in_flow_children)
 
         # Take care of excluded shapes
         for shape in context.excluded_shapes:

@@ -89,7 +89,8 @@ def make_box(element_tag, style, content, element):
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
-                   target_collector, counter_style, footnotes, state=None):
+                   target_collector, counter_style, footnotes, quote_depth=None,
+                   counter_values=None, counter_scopes=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -136,36 +137,30 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     box.first_letter_style = style_for(element, 'first-letter')
     box.first_line_style = style_for(element, 'first-line')
 
-    if state is None:
-        # use a list to have a shared mutable object
-        state = (
-            # Shared mutable objects:
-            [0],  # quote_depth: single integer
-            # TODO: define the note counters where it can be updated by page.
-            {'footnote': [0], 'note': [0]},  # counter_values: name -> stacked values
-            [{'footnote', 'note'}],  # counter_scopes: element depths -> counter names
-            [], # page_groups
-        )
-    quote_depth, counter_values, counter_scopes, _page_groups = state
+    if quote_depth is None:
+        quote_depth = [0]
+    if counter_values is None:
+        counter_values = {'footnote': [0], 'note': [0]}
+    if counter_scopes is None:
+        counter_scopes = [{'footnote', 'note'}]
 
-    update_counters(state, style)
+    update_counters(counter_values, counter_scopes, style)
+    # If this element’s direct children create new scopes, the counter
+    # names will be in this new list.
+    counter_scopes.append(set())
 
     children = []
-
-    # If this element’s direct children create new scopes, the counter
-    # names will be in this new list
-    counter_scopes.append(set())
 
     marker_boxes = []
     if 'list-item' in style['display']:
         marker_boxes = list(marker_to_box(
-            element, state, style, style_for, get_image_from_uri,
-            target_collector, counter_style))
+            element, quote_depth, counter_values, counter_scopes, style, style_for,
+            get_image_from_uri, target_collector, counter_style))
         children.extend(marker_boxes)
 
     children.extend(before_after_to_box(
-        element, 'before', state, style_for, get_image_from_uri,
-        target_collector, counter_style))
+        element, 'before', quote_depth, counter_values, counter_scopes, style_for,
+        get_image_from_uri, target_collector, counter_style))
 
     # collect anchor's counter_values, maybe it's a target.
     # to get the spec-conform counter_values we must do it here,
@@ -179,8 +174,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     for child_element in element:
         child_boxes = element_to_box(
-            child_element, style_for, get_image_from_uri, base_url,
-            target_collector, counter_style, footnotes, state)
+            child_element, style_for, get_image_from_uri, base_url, target_collector,
+            counter_style, footnotes, quote_depth, counter_values, counter_scopes)
 
         if child_boxes and child_boxes[0].style['float'] == 'footnote':
             footnote = child_boxes[0]
@@ -218,8 +213,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
                 children.append(text_box)
 
     children.extend(before_after_to_box(
-        element, 'after', state, style_for, get_image_from_uri,
-        target_collector, counter_style))
+        element, 'after', quote_depth, counter_values, counter_scopes, style_for,
+        get_image_from_uri, target_collector, counter_style))
 
     # Scopes created by this element’s children stop here.
     for name in counter_scopes.pop():
@@ -276,8 +271,9 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     return html.handle_element(element, box, get_image_from_uri, base_url)
 
 
-def before_after_to_box(element, pseudo_type, state, style_for,
-                        get_image_from_uri, target_collector, counter_style):
+def before_after_to_box(element, pseudo_type, quote_depth, counter_values,
+                        counter_scopes, style_for, get_image_from_uri, target_collector,
+                        counter_style):
     """Return the boxes for ::before or ::after pseudo-element."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
@@ -285,45 +281,32 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         # Their initial content property computes to 'none'.
         return []
 
-    # TODO: should be the computed value. When does the used value for
-    # `display` differ from the computer value? It's at least wrong for
-    # `content` where 'normal' computes as 'inhibit' for pseudo elements.
-    display = style['display']
-    if display == ('none',):
+    if style['display'] == ('none',):
         return []
-    content = style['content']
-    if content in ('normal', 'inhibit', 'none'):
+    if style['content'] in ('normal', 'inhibit', 'none'):
         return []
+
+    update_counters(counter_values, counter_scopes, style)
+
     box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
-
-    quote_depth, counter_values, _counter_scopes, _page_groups = state
-    update_counters(state, style)
-
     children = []
-
-    if 'list-item' in display:
-        marker_boxes = list(marker_to_box(
-            element, state, style, style_for, get_image_from_uri,
-            target_collector, counter_style))
-        children.extend(marker_boxes)
-
+    if 'list-item' in style['display']:
+        children.extend(marker_to_box(
+            element, quote_depth, counter_values, counter_scopes, style, style_for,
+            get_image_from_uri, target_collector, counter_style))
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri,
         target_collector, counter_style))
-
     box.children = children
 
-    # calculate the bookmark-label
-    if style['bookmark_level'] != 'none':
-        _quote_depth, counter_values, _counter_scopes, _page_groups = state
-        compute_bookmark_label(
-            element, box, style['bookmark_label'], counter_values,
-            target_collector, counter_style)
+    set_content_lists(
+        element, box, style, counter_values, target_collector, counter_style)
+
     return [box]
 
 
-def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
-                  target_collector, counter_style):
+def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_style,
+                  style_for, get_image_from_uri, target_collector, counter_style):
     """Yield the box for ::marker pseudo-element if there is one.
 
     https://drafts.csswg.org/css-lists-3/#marker-pseudo
@@ -334,11 +317,6 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         style = parent_style.anonymous_style
 
     children = []
-
-    # TODO: should be the computed value. When does the used value for
-    # `display` differ from the computer value? It's at least wrong for
-    # `content` where 'normal' computes as 'inhibit' for pseudo elements.
-    quote_depth, counter_values, _counter_scopes, _page_groups = state
 
     box = make_box(f'{element.tag}::marker', style, children, element)
 
@@ -419,10 +397,6 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     missing_target_counters = {}
     in_page_context = context is not None and page is not None
 
-    # Collect missing counters during build_formatting_structure.
-    # Pointless to collect missing target counters in MarginBoxes.
-    need_collect_missing = target_collector.collecting and not in_page_context
-
     if parent_box.cached_counter_values is None:
         # Store the counter_values in the parent_box to make them accessible
         # in @page context.
@@ -464,7 +438,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             counter_name, counter_type = value[0], value[-1]
             if counter_type == 'none':
                 continue
-            if need_collect_missing:
+            if not in_page_context:
                 if counter_name not in list(counter_values) + missing_counters:
                     missing_counters.append(counter_name)
             if type_ == 'counter()':
@@ -485,10 +459,9 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if lookup_target.state != 'up-to-date':
                 break
             target_values = lookup_target.target_box.cached_counter_values
-            if need_collect_missing and counter_name not in target_values:
+            if not in_page_context and counter_name not in target_values:
                 anchor_name = targets.anchor_name_from_token(anchor_token)
-                missing_counters = missing_target_counters.setdefault(
-                    anchor_name, [])
+                missing_counters = missing_target_counters.setdefault(anchor_name, [])
                 if counter_name not in missing_counters:
                     missing_counters.append(counter_name)
             # Mixin target's cached page counters.
@@ -535,8 +508,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'element()':
             if not in_page_context:
                 LOGGER.warning(
-                    '"element(%s)" is only allowed in page margins',
-                    ' '.join(value))
+                    '"element(%s)" is only allowed in page margins', ' '.join(value))
                 continue
             for new_box in context.get_running_element_for(page, *value):
                 new_box = new_box.deepcopy()
@@ -556,17 +528,16 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if not value[1]:
                 continue
             text_box = boxes.TextBox.anonymous_from(parent_box, value[1])
-            leader_box = boxes.InlineBox.anonymous_from(
-                parent_box, (text_box,))
-            # Avoid breaks inside the leader box
+            leader_box = boxes.InlineBox.anonymous_from(parent_box, (text_box,))
+            # Avoid breaks inside the leader box.
             leader_box.style['white_space'] = 'pre'
-            # Prevent whitespaces from being removed from the text box
+            # Prevent whitespaces from being removed from the text box.
             text_box.style['white_space'] = 'pre'
             leader_box.is_leader = True
             content_boxes.append(leader_box)
 
     if has_text or content_boxes:
-        # Only add CounterLookupItem if the content_list actually produced text
+        # Only add Counter if the content_list actually produced text
         target_collector.collect_missing_counters(
             parent_box, css_token, parse_again, missing_counters,
             missing_target_counters)
@@ -577,23 +548,15 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      get_image_from_uri, target_collector, counter_style,
                      context=None, page=None):
     """Take the value of a ``content`` property and return boxes."""
-    def parse_again(mixin_pagebased_counters=None):
+    def parse_again(counters):
         """Closure to parse the ``parent_boxes`` children all again."""
-
-        # Neither alters the mixed-in nor the cached counter values, no
-        # need to deepcopy here
-        if mixin_pagebased_counters is None:
-            local_counters = {}
-        else:
-            local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(parent_box.cached_counter_values)
 
-        local_children = []
-        local_children.extend(content_to_boxes(
+        local_children = content_to_boxes(
             style, parent_box, orig_quote_depth, local_counters,
-            get_image_from_uri, target_collector, counter_style))
+            get_image_from_uri, target_collector, counter_style)
 
-        # TODO: do we need to add markers here?
         # TODO: redo the formatting structure of the parent instead of hacking
         # the already formatted structure. Find why inline_in_blocks has
         # sometimes already been called, and sometimes not.
@@ -618,14 +581,9 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 def compute_string_set(element, box, string_name, content_list,
                        counter_values, target_collector, counter_style):
     """Parse the content-list value of ``string_name`` for ``string-set``."""
-    def parse_again(mixin_pagebased_counters=None):
+    def parse_again(counters):
         """Closure to parse the string-set string value all again."""
-        # Neither alters the mixed-in nor the cached counter values, no
-        # need to deepcopy here
-        if mixin_pagebased_counters is None:
-            local_counters = {}
-        else:
-            local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_string_set(
             element, box, string_name, content_list, local_counters,
@@ -650,14 +608,9 @@ def compute_string_set(element, box, string_name, content_list,
 def compute_bookmark_label(element, box, content_list, counter_values,
                            target_collector, counter_style):
     """Parses the content-list value for ``bookmark-label``."""
-    def parse_again(mixin_pagebased_counters=None):
+    def parse_again(counters):
         """Closure to parse the bookmark-label all again."""
-        # Neither alters the mixed-in nor the cached counter values, no
-        # need to deepcopy here
-        if mixin_pagebased_counters is None:
-            local_counters = {}
-        else:
-            local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_bookmark_label(
             element, box, content_list, local_counters, target_collector,
@@ -691,9 +644,8 @@ def set_content_lists(element, box, style, counter_values, target_collector,
             target_collector, counter_style)
 
 
-def update_counters(state, style):
+def update_counters(counter_values, counter_scopes, style):
     """Handle the ``counter-*`` properties."""
-    _quote_depth, counter_values, counter_scopes, _page_groups = state
     sibling_scopes = counter_scopes[-1]
 
     for name, value in style['counter_reset']:
@@ -1079,6 +1031,7 @@ def grid_children(box, children):
     if isinstance(box, boxes.GridContainerBox):
         grid_children = []
         for child in children:
+            child.is_floated = lambda: False
             if child.is_in_normal_flow():
                 child.is_grid_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
@@ -1331,8 +1284,7 @@ def _inner_block_in_inline(box, skip_stack=None):
 
     for i, child in enumerate(box.children[skip:]):
         index = i + skip
-        if (isinstance(child, boxes.BlockLevelBox) and
-                child.is_in_normal_flow()):
+        if isinstance(child, boxes.BlockLevelBox) and child.is_in_normal_flow():
             assert skip_stack is None  # Should not skip here
             block_level_box = child
             index += 1  # Resume *after* the block
