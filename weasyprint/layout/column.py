@@ -80,7 +80,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             (i + 1 - len(column_children), column_children))
 
     if skip_stack:
-        skip_stack = {0: skip_stack[skip]}
+        skip_stack = skip_stack[skip]
 
     if not box.children:
         next_page = {'break': 'any', 'page': None}
@@ -133,7 +133,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             if resume_at:
                 last_loop = True
                 break_page = True
-                column_skip_stack = resume_at
+                column_skip_stack = {0: resume_at}
                 break
             page_is_empty = False
             continue
@@ -151,11 +151,11 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
         # Try to render columns until the content fits, increase the column
         # height step by step
-        column_skip_stack = skip_stack
         lost_space = inf
         original_excluded_shapes = context.excluded_shapes[:]
         original_page_is_empty = page_is_empty
         page_is_empty = stop_rendering = balancing = False
+        skip_stack = {0: skip_stack}
         while True:
             # Remove extra excluded shapes introduced during the previous loop
             while len(context.excluded_shapes) > len(original_excluded_shapes):

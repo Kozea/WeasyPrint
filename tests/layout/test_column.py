@@ -473,6 +473,76 @@ def test_columns_multipage():
 
 
 @assert_no_logs
+def test_columns_multipage_span():
+    page1, page2 = render_pages('''
+      <style>
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px }
+        section { column-span: all }
+        @page { margin: 0; size: 3px 2px }
+      </style>
+      <div>
+        a b
+        <section>cc dd</section>
+        e
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2, section = div.children
+    assert len(column1.children) == 1
+    assert len(column2.children) == 1
+    assert column1.children[0].children[0].children[0].text == 'a'
+    assert column2.children[0].children[0].children[0].text == 'b'
+    assert section.children[0].children[0].text == 'cc'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    section, column1, = div.children
+    assert section.children[0].children[0].text == 'dd'
+    assert len(column1.children) == 1
+    assert column1.children[0].children[0].children[0].text == 'e'
+
+
+def test_columns_multipage_span_nested():
+    page1, page2 = render_pages('''
+      <style>
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px }
+        section { column-span: all }
+        @page { margin: 0; size: 3px 2px }
+      </style>
+      <div>
+        <section>
+          <p>aa</p>
+          <p>bb cc</p>
+        </section>
+        d e
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    section, = div.children
+    assert section.children[0].children[0].children[0].text == 'aa'
+    assert section.children[1].children[0].children[0].text == 'bb'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    section, column1, column2 = div.children
+    assert section.children[0].children[0].children[0].text == 'cc'
+    assert len(column1.children) == 1
+    assert len(column2.children) == 1
+    assert column1.children[0].children[0].children[0].text == 'd'
+    assert column2.children[0].children[0].children[0].text == 'e'
+
+
+@assert_no_logs
 def test_columns_breaks():
     page1, page2 = render_pages('''
       <style>
