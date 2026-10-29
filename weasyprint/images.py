@@ -10,7 +10,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 import pydyf
-from PIL import EpsImagePlugin, Image, ImageFile, ImageOps
+from PIL import EpsImagePlugin, ExifTags, Image, ImageFile, ImageOps
 from tinycss2.color5 import parse_color
 
 from . import DEFAULT_OPTIONS
@@ -349,7 +349,7 @@ def rotate_pillow_image(pillow_image, orientation):
     """
     image_format = pillow_image.format
     if orientation == 'from-image':
-        if 'exif' in pillow_image.info:
+        if pillow_image.getexif().get(ExifTags.Base.Orientation, 1) != 1:
             pillow_image = ImageOps.exif_transpose(pillow_image)
     elif orientation != 'none':
         angle, flip = orientation
@@ -357,8 +357,7 @@ def rotate_pillow_image(pillow_image, orientation):
             rotation = getattr(Image.Transpose, f'ROTATE_{angle}')
             pillow_image = pillow_image.transpose(rotation)
         if flip:
-            pillow_image = pillow_image.transpose(
-                Image.Transpose.FLIP_LEFT_RIGHT)
+            pillow_image = pillow_image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     # Keep image format as it is discarded by transposition
     pillow_image.format = image_format
