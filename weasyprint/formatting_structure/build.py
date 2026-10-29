@@ -548,17 +548,15 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
                      get_image_from_uri, target_collector, counter_style,
                      context=None, page=None):
     """Take the value of a ``content`` property and return boxes."""
-    def parse_again(mixin_pagebased_counters):
+    def parse_again(counters):
         """Closure to parse the ``parent_boxes`` children all again."""
-        local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(parent_box.cached_counter_values)
 
-        local_children = []
-        local_children.extend(content_to_boxes(
+        local_children = content_to_boxes(
             style, parent_box, orig_quote_depth, local_counters,
-            get_image_from_uri, target_collector, counter_style))
+            get_image_from_uri, target_collector, counter_style)
 
-        # TODO: do we need to add markers here?
         # TODO: redo the formatting structure of the parent instead of hacking
         # the already formatted structure. Find why inline_in_blocks has
         # sometimes already been called, and sometimes not.
@@ -583,9 +581,9 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
 def compute_string_set(element, box, string_name, content_list,
                        counter_values, target_collector, counter_style):
     """Parse the content-list value of ``string_name`` for ``string-set``."""
-    def parse_again(mixin_pagebased_counters):
+    def parse_again(counters):
         """Closure to parse the string-set string value all again."""
-        local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_string_set(
             element, box, string_name, content_list, local_counters,
@@ -610,9 +608,9 @@ def compute_string_set(element, box, string_name, content_list,
 def compute_bookmark_label(element, box, content_list, counter_values,
                            target_collector, counter_style):
     """Parses the content-list value for ``bookmark-label``."""
-    def parse_again(mixin_pagebased_counters):
+    def parse_again(counters):
         """Closure to parse the bookmark-label all again."""
-        local_counters = mixin_pagebased_counters.copy()
+        local_counters = counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_bookmark_label(
             element, box, content_list, local_counters, target_collector,

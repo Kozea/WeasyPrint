@@ -143,9 +143,9 @@ class TargetCollector:
     def check_pending_targets(self):
         """Check pending targets if needed."""
         if self.had_pending_targets:
-            for item in self.targets.values():
-                for function in item.parse_again_functions:
-                    function({})
+            for target in self.targets.values():
+                for parse_again in target.parse_again_functions:
+                    parse_again({})
             self.had_pending_targets = False
 
     def cache_target_page_counters(self, anchor_name, page_counter_values,
