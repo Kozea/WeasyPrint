@@ -391,7 +391,8 @@ def continue_(keyword):
 @single_token
 def max_lines(token):
     if number := get_number(token, negative=False, integer=True):
-        return number.value
+        if number.value >= 1:
+            return number.value
     elif get_keyword(token) == 'none':
         return 'none'
 
