@@ -92,6 +92,7 @@ class Box:
     force_fragmentation = False
     colspan = 1
     rowspan = 1
+    anchors = ()
 
     def __init__(self, element_tag, style, element):
         self.element_tag = element_tag

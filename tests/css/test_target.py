@@ -1,6 +1,6 @@
 """Test the CSS cross references using target-*() functions."""
 
-from ..testing_utils import assert_no_logs, render_pages
+from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
 @assert_no_logs
@@ -224,3 +224,48 @@ def test_target_absolute_non_root():
     text_box, after = inline.children
     assert text_box.text == 'link'
     assert after.children[0].text == '1'
+
+
+def test_target_counter_display_contents():
+    # Regression test for #2210. A display:contents element generates no box, so
+    # it cannot be a target-*() anchor: the reference resolves to the usual
+    # undefined-anchor error and its content is discarded, rather than being
+    # papered over with a stand-in descendant box. Links to the element still
+    # resolve, see test_links_display_contents_target.
+    with capture_logs() as logs:
+        page, = render_pages('''
+          <style> a::after { content: target-counter(url(#t), page) } </style>
+          <p><a>ref</a></p>
+          <div id="t" style="display: contents">T</div>
+        ''')
+    html, = page.children
+    body, = html.children
+    a = body.children[0].children[0].children[0]
+    text, after = a.children
+    assert text.text == 'ref'
+    assert not after.children
+    assert len(logs) == 1
+    assert 'undefined anchor' in logs[0]
+
+
+@assert_no_logs
+def test_target_counter_display_contents_child():
+    # Targeting a child of a display:contents wrapper is unaffected: the child
+    # keeps its own box and id, so target-counter() resolves normally.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 6px }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        a::after { content: target-counter(url(#child), page) }
+      </style>
+      <p><a>ref</a></p><p>x</p><p>x</p><p>x</p>
+      <div style="display: contents"><span id="child">T</span></div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    p_a = body.children[0]
+    line, = p_a.children
+    a, = line.children
+    text, after = a.children
+    assert text.text == 'ref'
+    assert after.children[0].text == '2'

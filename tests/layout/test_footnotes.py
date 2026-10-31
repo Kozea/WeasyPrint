@@ -987,3 +987,65 @@ def test_footnotes_column_converge():
     column1, column2 = div.children
     assert column1.height == column2.height == p.height == 2
     assert footnote_area.height == 2
+
+
+@assert_no_logs
+def test_footnote_display_contents():
+    # Regression test for #2210.
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        span { float: footnote; display: contents }
+      </style>
+      <div>a<span>b</span></div>
+    ''')
+    html, footnote_area = page.children
+    body, = html.children
+    div, = body.children
+    footnote, = footnote_area.children
+    assert footnote.children[0].children[-1].text == 'b'
+
+
+@assert_no_logs
+def test_footnote_call_display_contents():
+    # Regression test for #2210.
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        span { float: footnote }
+        span::footnote-call { display: contents }
+        span::footnote-marker { display: contents }
+      </style>
+      <div>a<span>b</span></div>
+    ''')
+    html, footnote_area = page.children
+    footnote, = footnote_area.children
+    assert footnote.children[0].children[-1].text == 'b'
+
+
+@assert_no_logs
+def test_footnote_call_display_contents_keeps_footnote():
+    # display:contents on the footnote-call pseudo keeps a placeholder box
+    # instead of unboxing: that box carries the footnote reference, so unboxing
+    # it would drop the footnote entirely.
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1 }
+        span { float: footnote }
+        span::footnote-call { display: contents }
+      </style>
+      <div>a<span>b</span></div>
+    ''')
+    html, footnote_area = page.children
+    div, = html.children[0].children
+    line, = div.children
+    # The call marker still renders inline in the text...
+    assert ''.join(
+        box.text for box in line.descendants()
+        if getattr(box, 'text', None)) == 'a1'
+    # ...and the footnote is preserved.
+    footnote, = footnote_area.children
+    assert footnote.children[0].children[-1].text == 'b'
