@@ -22,10 +22,11 @@ from weasyprint import CSS, HTML, __main__
 from weasyprint.pdf.anchors import resolve_links
 
 from .draw import parse_pixels
-from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 from weasyprint.urls import (  # isort:skip
     FatalURLFetchingError, URLFetcher, URLFetcherResponse, URLFetchingError, path2url)
+from .testing_utils import (  # isort:skip
+    BASE_URL, FakeHTML, assert_no_logs, capture_logs, resource_path)
 
 try:
     # Available in Python 3.11+
@@ -303,7 +304,6 @@ def check_png_pattern(assert_pixels_equal, png_bytes, x2=False, blank=False,
 @assert_no_logs
 def test_python_render(assert_pixels_equal, tmp_path):
     """Test rendering with the Python API."""
-    base_url = str(resource_path('dummy.html'))
     html_string = '<body><img src=pattern.png>'
     css_string = '''
         @page { margin: 2px; size: 8px }
@@ -312,7 +312,7 @@ def test_python_render(assert_pixels_equal, tmp_path):
 
         @media screen { img { transform: rotate(-90deg) } }
     '''
-    html = FakeHTML(string=html_string, base_url=base_url)
+    html = FakeHTML(string=html_string, base_url=BASE_URL)
     css = CSS(string=css_string)
 
     png_bytes = html.write_png(stylesheets=[css])
@@ -352,13 +352,13 @@ def test_python_render(assert_pixels_equal, tmp_path):
     check_png_pattern(assert_pixels_equal, rotated_png_bytes, rotated=True)
 
     assert FakeHTML(
-        string=html_string, base_url=base_url, media_type='screen'
+        string=html_string, base_url=BASE_URL, media_type='screen'
     ).write_png(
         stylesheets=[io.BytesIO(css_string.encode())]
     ) == rotated_png_bytes
     assert FakeHTML(
         string=f'<style>{css_string}</style>{html_string}',
-        base_url=base_url, media_type='screen'
+        base_url=BASE_URL, media_type='screen'
     ).write_png() == rotated_png_bytes
 
 
@@ -1046,8 +1046,7 @@ def simplify_links(links):
         for link_type, link_target, rectangle, box in links]
 
 
-def assert_links(html, links, anchors, resolved_links,
-                 base_url=resource_path('<inline HTML>'), warnings=(),
+def assert_links(html, links, anchors, resolved_links, base_url=BASE_URL, warnings=(),
                  round=False):
     with capture_logs() as logs:
         document = FakeHTML(string=html, base_url=base_url).render()
@@ -1322,18 +1321,16 @@ class Fetcher(URLFetcher):
 ])
 @assert_no_logs
 def test_url_fetcher(html, assert_pixels_equal):
-    base_url = str(resource_path('dummy.html'))
-    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=base_url)
-    html = FakeHTML(string=html, url_fetcher=Fetcher(), base_url=base_url)
+    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=BASE_URL)
+    html = FakeHTML(string=html, url_fetcher=Fetcher(), base_url=BASE_URL)
     check_png_pattern(assert_pixels_equal, html.write_png(stylesheets=[css]))
 
 
 @assert_no_logs
 def test_url_fetcher_default(assert_pixels_equal):
     html = '<body><img src="pattern.png">'
-    base_url = str(resource_path('dummy.html'))
-    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=base_url)
-    html = FakeHTML(string=html, url_fetcher=URLFetcher(), base_url=base_url)
+    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=BASE_URL)
+    html = FakeHTML(string=html, url_fetcher=URLFetcher(), base_url=BASE_URL)
     check_png_pattern(assert_pixels_equal, html.write_png(stylesheets=[css]))
 
 
@@ -1357,9 +1354,8 @@ def test_url_fetcher_body_replaces_missing_file(image_name, mime):
                 return URLFetcherResponse(url, image_bytes, {'Content-Type': mime})
             return super().fetch(url, headers)
 
-    base_url = resource_path('dummy.html')
     html = f'<body><img src="missing/replaced{Path(image_name).suffix}">'
-    FakeHTML(string=html, url_fetcher=ReplacingFetcher(), base_url=base_url).write_pdf()
+    FakeHTML(string=html, url_fetcher=ReplacingFetcher(), base_url=BASE_URL).write_pdf()
 
 
 @assert_no_logs
@@ -1418,10 +1414,9 @@ def test_url_fetcher_fatal_error(assert_pixels_equal):
 @assert_no_logs
 def test_url_fetcher_default_fail_on_errors(assert_pixels_equal):
     html = '<body><img src="unknown.png">'
-    base_url = str(resource_path('dummy.html'))
     url_fetcher = URLFetcher(fail_on_errors=True)
     with pytest.raises(FatalURLFetchingError, match='Error fetching'):
-        FakeHTML(string=html, url_fetcher=url_fetcher, base_url=base_url).write_png()
+        FakeHTML(string=html, url_fetcher=url_fetcher, base_url=BASE_URL).write_png()
 
 
 def assert_meta(html, **meta):

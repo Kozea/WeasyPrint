@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ..testing_utils import FakeHTML, resource_path
+from ..testing_utils import BASE_URL, FakeHTML
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
 # better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
@@ -127,7 +127,7 @@ def html_to_pixels(html):
     Also return the document to aid debugging.
 
     """
-    document = FakeHTML(string=html, base_url=resource_path('<dummy>'))
+    document = FakeHTML(string=html, base_url=BASE_URL)
     return document_to_pixels(document)
 
 

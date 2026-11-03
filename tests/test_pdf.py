@@ -12,7 +12,7 @@ from weasyprint.document import Document, DocumentMetadata
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
-from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
+from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
 
 # Top and right positions in points, rounded to the default float precision of
 # 6 digits, a rendered by pydyf
@@ -323,7 +323,7 @@ def test_links():
         <a style="display: block; page-break-before: always; height: 30pt"
            href="#hel%6Co"></a>a
       </p>
-    ''', base_url=resource_path('<inline HTML>')).write_pdf()
+    ''', base_url=BASE_URL).write_pdf()
 
     uris = re.findall(b'/URI \\((.*)\\)', pdf)
     types = re.findall(b'/S (/\\w*)', pdf)
@@ -375,7 +375,7 @@ def test_sorted_links():
       <p id="aaa">aaa</p>
       <a href="#zzz">z</a>
       <a href="#aaa">a</a>
-    ''', base_url=resource_path('<inline HTML>')).write_pdf()
+    ''', base_url=BASE_URL).write_pdf()
     assert b'(zzz) [' in pdf.split(b'(aaa) [')[-1]
 
 
@@ -488,39 +488,32 @@ def test_anchor_multiple_pages():
 @assert_no_logs
 def test_embed_gif():
     assert b'/Filter /DCTDecode' not in FakeHTML(
-        base_url=resource_path('dummy.html'),
-        string='<img src="pattern.gif">').write_pdf()
+        base_url=BASE_URL, string='<img src="pattern.gif">').write_pdf()
 
 
 @assert_no_logs
 def test_embed_jpeg():
     # JPEG-encoded image, embedded in PDF:
     assert b'/Filter /DCTDecode' in FakeHTML(
-        base_url=resource_path('dummy.html'),
-        string='<img src="blue.jpg">').write_pdf()
+        base_url=BASE_URL, string='<img src="blue.jpg">').write_pdf()
 
 
 @assert_no_logs
 def test_embed_image_once():
     # Image repeated multiple times, embedded once
-    assert FakeHTML(
-        base_url=resource_path('dummy.html'),
-        string='''
-          <img src="blue.jpg">
-          <div style="background: url(blue.jpg)"></div>
-          <img src="blue.jpg">
-          <div style="background: url(blue.jpg) no-repeat"></div>
-        ''').write_pdf().count(b'/Filter /DCTDecode') == 1
+    assert FakeHTML(base_url=BASE_URL, string='''
+      <img src="blue.jpg">
+      <div style="background: url(blue.jpg)"></div>
+      <img src="blue.jpg">
+      <div style="background: url(blue.jpg) no-repeat"></div>
+    ''').write_pdf().count(b'/Filter /DCTDecode') == 1
 
 
 @assert_no_logs
 def test_embed_images_from_pages():
-    page1, = FakeHTML(
-        base_url=resource_path('dummy.html'),
-        string='<img src="blue.jpg">').render().pages
+    page1, = FakeHTML(base_url=BASE_URL, string='<img src="blue.jpg">').render().pages
     page2, = FakeHTML(
-        base_url=resource_path('dummy.html'),
-        string='<img src="not-optimized.jpg">').render().pages
+        base_url=BASE_URL, string='<img src="not-optimized.jpg">').render().pages
     document = Document(
         (page1, page2), metadata=DocumentMetadata(),
         font_config=FontConfiguration(), color_profiles={},
