@@ -781,6 +781,42 @@ def test_font_descent_ascent():
 
 
 @assert_no_logs
+def test_font_unicode_range():
+    pdf = FakeHTML(string='''<html><head><style>
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: unicode-range;
+          unicode-range: u+0040-005F;
+        }
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: unicode-range;
+          unicode-range: u+0060-007E;
+        }
+        html { font-family: unicode-range }
+      </style></head><body>Aa</body></html>''', base_url=BASE_URL).write_pdf()
+    assert pdf.count(b'/FontName') == 2
+
+
+@assert_no_logs
+def test_font_unicode_range_different():
+    pdf = FakeHTML(string='''<html><head><style>
+        @font-face {
+          src: url(weasyprint.otf);
+          font-family: unicode-range-diff;
+          unicode-range: u+0040-005F;
+        }
+        @font-face {
+          src: url(weasyprint.woff);
+          font-family: unicode-range-diff;
+          unicode-range: u+0060-007E;
+        }
+        html { font-family: unicode-range }
+      </style></head><body>Aa</body></html>''', base_url=BASE_URL).write_pdf()
+    assert pdf.count(b'/FontName') == 2
+
+
+@assert_no_logs
 def test_pdf_tags_inline_table():
     # Regression test for #2601.
     FakeHTML(string='''
