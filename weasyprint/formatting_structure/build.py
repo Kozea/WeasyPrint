@@ -135,33 +135,17 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     style = style_for(element)
 
-    # TODO: should be the used value. When does the used value for `display`
-    # differ from the computer value?
     display = style['display']
-    if display == ('none',) or (
-            display == ('contents',) and element.tag in DISPLAY_CONTENTS_NONE):
-        # display:contents computes to none on replaced elements, form controls
-        # and other unusual elements (CSS Display 3 Appendix B).
+    if display == ('none',):
+        return []
+    elif display == ('contents',) and element.tag in DISPLAY_CONTENTS_NONE:
         return []
 
-    if style['float'] == 'footnote':
-        # A footnote is a box moved to the footnote area, so display:contents
-        # (which would generate no box) cannot apply: the footnote wins.
-        if style['footnote_display'] == 'block':
-            style['display'] = ('block', 'flow')
-        else:
-            # TODO: handle compact footnotes
-            style['display'] = ('inline', 'flow')
-
     unboxed = style['display'] == ('contents',)
+
     box = make_box(element.tag, style, [], element)
-    if not unboxed:
-        # ::first-letter and ::first-line style a block container's own box. A
-        # display:contents element generates none, so per spec its own have no
-        # effect (an ancestor's still reach the content). Skip the lookup: this
-        # box is discarded anyway.
-        box.first_letter_style = style_for(element, 'first-letter')
-        box.first_line_style = style_for(element, 'first-line')
+    box.first_letter_style = style_for(element, 'first-letter')
+    box.first_line_style = style_for(element, 'first-line')
 
     if quote_depth is None:
         quote_depth = [0]
@@ -179,9 +163,9 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     marker_boxes = []
     if 'list-item' in style['display']:
-        marker_boxes = list(marker_to_box(
+        marker_boxes = marker_to_box(
             element, quote_depth, counter_values, counter_scopes, style, style_for,
-            get_image_from_uri, target_collector, counter_style))
+            get_image_from_uri, target_collector, counter_style)
         children.extend(marker_boxes)
 
     children.extend(before_after_to_box(
@@ -209,11 +193,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
             call_style = style_for(footnote.element, 'footnote-call')
-            if call_style['display'] == ('contents',):
-                # The call anchors the footnote and must generate a box, so
-                # display:contents falls back to inline rather than unboxing.
-                call_style = call_style.copy()
-                call_style['display'] = ('inline', 'flow')
             footnote_call = make_box(
                 f'{footnote.element.tag}::footnote-call', call_style, [],
                 footnote.element)
@@ -356,14 +335,10 @@ def before_after_to_box(element, pseudo_type, quote_depth, counter_values,
         style, box, quote_depth, counter_values, get_image_from_uri,
         target_collector, counter_style))
 
-    if style['display'] == ('contents',):
-        # Unbox the pseudo, returning its generated content and no box.
-        return children
-
     box.children = children
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
-    return [box]
+    return box.children if style['display'] == ('contents',) else [box]
 
 
 def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_style,
@@ -380,7 +355,7 @@ def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_s
     children = []
 
     if style['display'] == ('none',):
-        return
+        return []
 
     box = make_box(f'{element.tag}::marker', style, children, element)
 
@@ -408,12 +383,7 @@ def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_s
                 children.append(box)
 
     if not children:
-        return
-
-    if style['display'] == ('contents',):
-        # display:contents: unbox the marker, yielding its content and no box.
-        yield from children
-        return
+        return []
 
     if parent_style['list_style_position'] == 'outside':
         marker_box = boxes.BlockBox.anonymous_from(box, children)
@@ -424,7 +394,7 @@ def marker_to_box(element, quote_depth, counter_values, counter_scopes, parent_s
         marker_box.is_outside_marker = True
     else:
         marker_box = boxes.InlineBox.anonymous_from(box, children)
-    yield marker_box
+    return marker_box.children if style['display'] == ('contents',) else [marker_box]
 
 
 def compute_content_list(content_list, parent_box, counter_values, css_token,
