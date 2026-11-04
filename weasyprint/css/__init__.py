@@ -1226,6 +1226,9 @@ class ComputedStyle(Style):
         elif value == 'inherit':
             # Values in parent_style are already computed.
             self[key] = value = parent_style[key]
+            # display depends on float, and float on position, call computer again.
+            if key in ('display', 'float'):
+                self[key] = value = COMPUTER_FUNCTIONS[key](self, key, value)
 
         if key[:16] == 'text_decoration_' and parent_style is not None:
             # Text decorations are not inherited but propagated. See

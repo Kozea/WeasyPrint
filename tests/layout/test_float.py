@@ -980,3 +980,21 @@ def test_float_break_after_page_no_fit():
     div, = body.children
     assert div.position_y == 0
     assert div.children[0].children[0].text == 'end'
+
+
+@assert_no_logs
+def test_float_display_inherit():
+    # Regression test for #2998.
+    page1, = render_pages('''
+      <style>
+        @page { size: 100px }
+        em { display: inherit; float: right; width: 15px; height: 15px }
+      </style>
+      <body><span><em></em></span></body>
+    ''')
+    html, = page1.children
+    body, = html.children
+    line, = body.children
+    span, text = line.children
+    em, = span.children
+    assert em.position_x == 85
