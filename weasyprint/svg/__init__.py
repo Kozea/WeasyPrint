@@ -97,6 +97,7 @@ class Node:
 
         self.vertices = deque()
         self.bounding_box = None
+        self.anchor_shift = False
 
     def copy(self):
         """Create a deep copy of the node as it was when first created."""
@@ -130,6 +131,23 @@ class Node:
     def visible(self):
         """Whether node is visible."""
         return self.display and self.get('visibility') != 'hidden'
+
+    @property
+    def is_text(self):
+        """Whether node is a text-container node."""
+        return TAGS.get(self.tag) == text
+
+    @property
+    def anchor_direction(self):
+        """Get anchor and direction."""
+        return self.get('text-anchor', 'start'), self.get('direction', 'ltr')
+
+    def set_anchor_shift(self, parent):
+        """Set whether the tag shifts the text anchor."""
+        self.anchor_shift = (
+            self.display and self.is_text and
+            self.anchor_direction not in (('start', 'ltr'), ('end', 'rtl')) and (
+                not parent.is_text or self.anchor_direction != parent.anchor_direction))
 
     def cascade(self, child):
         """Apply CSS cascade and other related operations to given child."""
@@ -512,14 +530,8 @@ class SVG:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
         # Handle text anchor and set text bounding box
-        text_anchor_shift = False
-        if node.display and TAGS.get(node.tag) == text:
-            text_anchor = node.get('text-anchor', 'start')
-            direction = node.get('direction', 'ltr')
-            text_anchor_shift = (
-                text_anchor in ('start', 'middle', 'end') and
-                (text_anchor, direction) not in (('start', 'ltr'), ('end', 'rtl')))
-            if text_anchor_shift:
+        if node.display and node.is_text:
+            if node.anchor_shift:
                 group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
                 original_streams.append(self.stream)
                 self.stream = group
@@ -538,20 +550,10 @@ class SVG:
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
-                new_chunk = text_anchor_shift and (
-                    child.tag == 'text' or 'x' in child.attrib or 'y' in child.attrib)
-                if new_chunk:
-                    new_stream = self.stream
-                    self.stream = original_streams[-1]
+                child.set_anchor_shift(node)
                 context = node if node.tag == 'use' else context
                 self.draw_node(child, font_size, fill_stroke, context)
-                if new_chunk:
-                    self.stream = new_stream
-                visible_text_child = (
-                    TAGS.get(node.tag) == text and
-                    TAGS.get(child.tag) == text and
-                    child.visible)
-                if visible_text_child:
+                if node.is_text and child.is_text and child.visible:
                     if not is_valid_bounding_box(child.text_bounding_box):
                         continue
                     x1, y1 = child.text_bounding_box[:2]
@@ -565,7 +567,7 @@ class SVG:
             self.tree.set_svg_size(self, concrete_width, concrete_height)
 
         # Handle text anchor
-        if text_anchor_shift:
+        if node.anchor_shift:
             group_id = self.stream.id
             self.stream = original_streams.pop()
             self.stream.push_state()
@@ -575,11 +577,10 @@ class SVG:
                 group.extra['BBox'][:] = (
                     x - font_size, y - font_size,
                     x + width + font_size, y + height + font_size)
+                text_anchor = node.get('text-anchor', 'start')
                 x_align = width / 2 if text_anchor == 'middle' else width
-                if node.tag == 'text' or 'x' in node.attrib or 'y' in node.attrib:
-                    self.stream.transform(e=-x_align)
-                    if node.tag == 'text':
-                        node.text_bounding_box = (x - x_align, y, width, height)
+                self.stream.transform(e=-x_align)
+                node.text_bounding_box = (x - x_align, y, width, height)
             self.stream.draw_x_object(group_id)
             self.stream.pop_state()
 

@@ -462,6 +462,25 @@ def test_text_tspan_anchor_non_text(assert_pixels):
 
 
 @assert_no_logs
+def test_text_anchor_end_tspan_x(assert_pixels):
+    # Regression test for #3007.
+    assert_pixels('''
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text font-family="weasyprint" font-size="2" fill="blue" text-anchor="end">
+          <tspan x="18" y="1.5" text-anchor="end">AB</tspan><tspan>C</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_rotate(assert_pixels):
     assert_pixels('''
         __RR__RR__RR________
