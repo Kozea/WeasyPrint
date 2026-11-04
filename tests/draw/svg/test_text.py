@@ -462,6 +462,67 @@ def test_text_tspan_anchor_non_text(assert_pixels):
 
 
 @assert_no_logs
+def test_text_anchor_end_tspan_x(assert_pixels):
+    # Regression test for #3007.
+    assert_pixels('''
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text font-family="weasyprint" font-size="2" fill="blue" text-anchor="end">
+          <tspan x="18" y="1.5" text-anchor="end">AB</tspan><tspan>C</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_multiline(assert_pixels):
+    assert_pixels('''
+        _______BBBB_________
+        _______BBBB_________
+        _____BBBBBB_________
+        _____BBBBBB_________
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text font-family="weasyprint" font-size="2" fill="blue" text-anchor="middle">
+          <tspan x="10" y="1.5">ab</tspan>
+          <tspan x="8" y="3.5">cde</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_multiline_smaller(assert_pixels):
+    assert_pixels('''
+        ____BBBBBB__________
+        ____BBBBBB__________
+        ________BBBB________
+        ________BBBB________
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text font-family="weasyprint" font-size="2" fill="blue" text-anchor="middle">
+          <tspan x="8" y="1.5">cde</tspan>
+          <tspan x="10" y="3.5">ab</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_rotate(assert_pixels):
     assert_pixels('''
         __RR__RR__RR________
