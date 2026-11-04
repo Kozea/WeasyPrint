@@ -697,34 +697,31 @@ def expand_font(tokens, name):
 
     """
     expand_font_keyword = get_single_keyword(tokens)
-    if expand_font_keyword in ('caption', 'icon', 'menu', 'message-box',
-                               'small-caption', 'status-bar'):
+    system = ('caption', 'icon', 'menu', 'message-box', 'small-caption', 'status-bar')
+    if expand_font_keyword in system:
         raise InvalidValues('System fonts are not supported')
 
-    # Make `tokens` a stack
+    # Make `tokens` a stack.
     tokens = list(reversed(tokens))
     # Values for font-style, font-variant-caps, font-weight and font-stretch
     # can come in any order and are all optional.
     for _ in range(4):
         token = tokens.pop()
-        if get_keyword(token) == 'normal':
+        if get_keyword(token) != 'normal':
             # Just ignore 'normal' keywords. Unspecified properties will get
             # their initial token, which is 'normal' for all four here.
-            continue
-
-        if font_style([token]) is not None:
-            suffix = '-style'
-        elif font_variant_caps([token]) is not None:
-            suffix = '-variant-caps'
-        elif font_weight([token]) is not None:
-            suffix = '-weight'
-        elif font_stretch([token]) is not None:
-            suffix = '-stretch'
-        else:
-            # We’re done with these four, continue with font-size
-            break
-        yield suffix, [token]
-
+            if font_style([token]) is not None:
+                suffix = '-style'
+            elif font_variant_caps([token]) is not None:
+                suffix = '-variant-caps'
+            elif font_weight([token]) is not None:
+                suffix = '-weight'
+            elif font_stretch([token]) is not None:
+                suffix = '-stretch'
+            else:
+                # We’re done with these four, continue with font-size.
+                break
+            yield suffix, [token]
         if not tokens:
             raise InvalidValues
     else:

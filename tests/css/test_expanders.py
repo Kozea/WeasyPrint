@@ -572,6 +572,8 @@ def test_font(rule, result):
     ('small-caps italic 700 condensed normal large serif', 'invalid'),
     ('normal normal normal normal', 'invalid'),
     ('normal normal normal italic', 'invalid'),
+    ('italic normal', 'invalid'),
+    ('normal', 'invalid'),
     ('caption', 'System fonts'),
 ])
 def test_font_invalid(rule, message):
