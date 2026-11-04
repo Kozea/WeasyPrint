@@ -1153,3 +1153,20 @@ def test_marks_crop_cross(assert_pixels):
          @page { size: 4px; bleed: 1px; margin: 1px; marks: crop cross }
       </style>
       <body>''')
+
+
+@assert_no_logs
+def test_marks_crop_on_top(assert_pixels):
+    # Regression test for #3008.
+    assert_pixels('''
+        KK__KK
+        KB___K
+        ______
+        ______
+        K____K
+        KK__KK
+    ''', '''
+      <style>
+         @page { size: 4px; bleed: 1px; margin: 1px; marks: crop }
+      </style>
+      <div style="width: 2px; height: 2px; background: blue; margin: -2px 0 0 -2px">''')

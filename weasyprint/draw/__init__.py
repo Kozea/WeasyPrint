@@ -8,7 +8,6 @@ from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from ..images import LinearGradient, RadialGradient, SVGImage
 from ..layout import replaced
-from ..layout.background import BackgroundLayer
 from ..matrix import Matrix
 from ..stacking import StackingContext
 from .border import draw_border, draw_line, draw_outline, rounded_box, set_mask_border
@@ -18,15 +17,13 @@ from .text import draw_text
 
 def draw_page(page, stream):
     """Draw the given PageBox."""
-    marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
-    draw_background(
-        stream, stacking_context.box.background, clip_box=False, bleed=page.bleed,
-        marks=marks)
+    draw_background(stream, stacking_context.box.background, clip_box=False)
     set_mask_border(stream, page)
     draw_background(stream, page.canvas_background, clip_box=False)
     draw_border(stream, page)
     draw_stacking_context(stream, stacking_context)
+    draw_marks(stream, page)
 
 
 def draw_stacking_context(stream, stacking_context):
@@ -233,6 +230,43 @@ def _draw_box_shadow(stream, box, style, tx, ty, blur, spread, color, inset):
                 gradient.draw(stream, width, height, style)
 
 
+def draw_marks(stream, page):
+    """Draw page marks."""
+    if (bleed := page.bleed) and (marks := page.style['marks']):
+        x, y, w, h = page.bleed_area
+        t, r, b, l = bleed['top'], bleed['right'], bleed['bottom'], bleed['left']
+        s = 'scale(0.5)'
+        marks_svg = '' if 'crop' not in marks else f'''
+          <path d="M0,{t} h{l/2}"/>
+          <path d="M0,{t} h{r/2}" transform="translate({w},0) scale(-1,1)"/>
+          <path d="M0,{b} h{r/2}" transform="translate({w},{h}) scale(-1,-1)"/>
+          <path d="M0,{b} h{l/2}" transform="translate(0,{h}) scale(1,-1)"/>
+          <path d="M{l},0 v{t/2}"/>
+          <path d="M{r},0 v{b/2}" transform="translate({w},{h}) scale(-1,-1)"/>
+          <path d="M{l},0 v{b/2}" transform="translate(0,{h}) scale(1,-1)"/>
+          <path d="M{r},0 v{t/2}" transform="translate({w},0) scale(-1,1)"/>'''
+        cross_svg = '' if 'cross' not in marks else f'''
+          <circle r="{t/2}" transform="{s} translate({w},{t/2}) {s}"/>
+          <path d="M-{t/2},{t/2} h{t} M0,0 v{t}" transform="{s} translate({w},0)"/>
+          <circle r="{b/2}" transform="translate(0,{h}) {s} translate({w},-{b/2}) {s}"/>
+          <path d="M-{b/2},-{b/2} h{b} M0,0 v-{b}"
+                transform="translate(0,{h}) {s} translate({w},0)"/>
+          <circle r="{l/2}" transform="{s} translate({l/2},{h}) {s}"/>
+          <path d="M{l/2},-{l/2} v{l} M0,0 h{l}" transform="{s} translate(0,{h})"/>
+          <circle r="{r/2}" transform="translate({w},0) {s} translate(-{r/2},{h}) {s}"/>
+          <path d="M-{r/2},-{r/2} v{r} M0,0 h-{r}"
+                transform="translate({w},0) {s} translate(0,{h})"/>'''
+        svg = f'''
+          <svg height="{h}" width="{w}" fill="transparent" stroke="black"
+               stroke-width="1" xmlns="http://www.w3.org/2000/svg">
+            {marks_svg} {cross_svg}
+          </svg>'''
+        image = SVGImage(ElementTree.fromstring(svg), None, None, None)
+        with stream.stacked():
+            stream.transform(e=x, f=y)
+            image.draw(stream, w, h, None)
+
+
 def draw_box_shadows(stream, boxes, style, inset):
     """Draw box shadows."""
     for x, y, blur, spread, color, shadow_inset in reversed(style['box_shadow']):
@@ -281,72 +315,6 @@ def draw_background(stream, background, clip_box=True, bleed=None, marks=()):
                 stream.rectangle(*painting_area)
                 stream.fill()
 
-        # Draw crop marks and crosses.
-        if bleed and marks:
-            x, y, width, height = painting_area
-            half_bleed = {key: value * 0.5 for key, value in bleed.items()}
-            svg = f'''
-              <svg height="{height}" width="{width}"
-                   fill="transparent" stroke="black" stroke-width="1"
-                   xmlns="http://www.w3.org/2000/svg">
-            '''
-            if 'crop' in marks:
-                svg += f'''
-                  <path d="M0,{bleed['top']} h{half_bleed['left']}" />
-                  <path d="M0,{bleed['top']} h{half_bleed['right']}"
-                        transform="translate({width},0) scale(-1,1)" />
-                  <path d="M0,{bleed['bottom']} h{half_bleed['right']}"
-                        transform="translate({width},{height}) scale(-1,-1)" />
-                  <path d="M0,{bleed['bottom']} h{half_bleed['left']}"
-                        transform="translate(0,{height}) scale(1,-1)" />
-                  <path d="M{bleed['left']},0 v{half_bleed['top']}" />
-                  <path d="M{bleed['right']},0 v{half_bleed['bottom']}"
-                        transform="translate({width},{height}) scale(-1,-1)" />
-                  <path d="M{bleed['left']},0 v{half_bleed['bottom']}"
-                        transform="translate(0,{height}) scale(1,-1)" />
-                  <path d="M{bleed['right']},0 v{half_bleed['top']}"
-                        transform="translate({width},0) scale(-1,1)" />
-                '''
-            if 'cross' in marks:
-                svg += f'''
-                  <circle r="{half_bleed['top']}" transform="scale(0.5)
-                     translate({width},{half_bleed['top']}) scale(0.5)" />
-                  <path transform="scale(0.5) translate({width},0)" d="
-                    M-{half_bleed['top']},{half_bleed['top']} h{bleed['top']}
-                    M0,0 v{bleed['top']}" />
-                  <circle r="{half_bleed['bottom']}" transform="
-                    translate(0,{height}) scale(0.5)
-                    translate({width},-{half_bleed['bottom']}) scale(0.5)" />
-                  <path d="M-{half_bleed['bottom']},-{half_bleed['bottom']}
-                    h{bleed['bottom']} M0,0 v-{bleed['bottom']}" transform="
-                    translate(0,{height}) scale(0.5) translate({width},0)" />
-                  <circle r="{half_bleed['left']}" transform="scale(0.5)
-                    translate({half_bleed['left']},{height}) scale(0.5)" />
-                  <path d="M{half_bleed['left']},-{half_bleed['left']}
-                    v{bleed['left']} M0,0 h{bleed['left']}"
-                    transform="scale(0.5) translate(0,{height})" />
-                  <circle r="{half_bleed['right']}" transform="
-                    translate({width},0) scale(0.5)
-                    translate(-{half_bleed['right']},{height}) scale(0.5)" />
-                  <path d="M-{half_bleed['right']},-{half_bleed['right']}
-                    v{bleed['right']} M0,0 h-{bleed['right']}" transform="
-                    translate({width},0) scale(0.5) translate(0,{height})" />
-                '''
-            svg += '</svg>'
-            tree = ElementTree.fromstring(svg)
-            image = SVGImage(tree, None, None, None)
-            # Painting area is the PDF media box
-            size = (width, height)
-            position = (x, y)
-            repeat = ('no-repeat', 'no-repeat')
-            unbounded = True
-            painting_area = position + size
-            positioning_area = (0, 0, width, height)
-            clipped_boxes = []
-            layer = BackgroundLayer(
-                image, size, position, repeat, unbounded, painting_area,
-                positioning_area, clipped_boxes)
-            background.layers.insert(0, layer)
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(background.layers):
             draw_background_image(stream, layer, background.style)
