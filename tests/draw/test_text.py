@@ -1063,6 +1063,27 @@ def test_zero_width_character(assert_pixels):
       <div>a&zwnj;b</div>''')
 
 
+def test_font_size_small(assert_pixels):
+    assert_pixels('''
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 4px;
+          margin: 1px;
+        }
+        body {
+          font-family: weasyprint;
+          font-size: 0.0001px;
+        }
+      </style>
+      test font size zero
+    ''')
+
+
 def test_font_size_very_small(assert_pixels):
     assert_pixels('''
         __________

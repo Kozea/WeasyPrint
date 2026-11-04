@@ -19,9 +19,6 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
     from ..layout.percent import percentage
 
-    # Pango crashes with font-size: 0.
-    assert textbox.style['font_size']
-
     # Don’t draw invisible textboxes.
     if textbox.style['visibility'] != 'visible':
         return
@@ -90,7 +87,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     if not textbox.text.strip():
         return []
 
-    if textbox.style['font_size'] < 1e-6:  # default float precision used by pydyf
+    if textbox.style['font_size'] < FROM_UNITS:  # minimum font size handled by Pango
         return []
 
     pango.pango_layout_set_single_paragraph_mode(textbox.pango_layout.layout, True)
