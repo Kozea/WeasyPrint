@@ -81,13 +81,15 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
     else:
         bookmark_level = box.style['bookmark_level']
     state = box.style['bookmark_state']
-    link = box.link or parent_link
-    anchor_name = box.style['anchor']
+    # Add link from parent.
+    if box.link is None and not isinstance(box, (boxes.TextBox, boxes.LineBox)):
+        box.link = parent_link
+    has_link = box.link
+    anchor_names = [box.style['anchor']] if box.style['anchor'] else []
+    anchor_names += box.anchors
     has_bookmark = bookmark_label and bookmark_level
-    # 'link' is inherited but redundant on text boxes
-    has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
     # In case of duplicate IDs, only the first is an anchor.
-    has_anchor = anchor_name and anchor_name not in anchors
+    has_anchor = any(name not in anchors for name in anchor_names)
     is_input = box.is_input()
 
     if box.is_form():
@@ -104,7 +106,7 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
         if has_link or is_input:
             rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
         if has_link:
-            token_type, token_link = link
+            token_type, token_link = box.link
             assert token_type == 'url'
             link_type, target = token_link
             assert isinstance(target, str)
@@ -123,11 +125,13 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
             if matrix:
                 pos_x1, pos_y1 = matrix.transform_point(pos_x1, pos_y1)
                 pos_x2, pos_y2 = matrix.transform_point(pos_x2, pos_y2)
-            anchors[anchor_name] = (pos_x1, pos_y1, pos_x2, pos_y2)
+            for name in anchor_names:
+                if name not in anchors:
+                    anchors[name] = (pos_x1, pos_y1, pos_x2, pos_y2)
 
     for child in box.all_children():
         gather_anchors(
-            child, anchors, links, bookmarks, forms, matrix, parent_form, link)
+            child, anchors, links, bookmarks, forms, matrix, parent_form, box.link)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

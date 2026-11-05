@@ -534,7 +534,15 @@ def display(style, name, value):
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
     float_ = style.specified['float']
     position = style.specified['position']
-    if position in ('absolute', 'fixed') or float_ != 'none' or style.is_root_element:
+
+    if float_ == 'footnote':
+        # TODO: handle compact footnotes.
+        return ('block' if style['footnote_display'] == 'block' else 'inline', 'flow')
+
+    if value == ('contents',) and style.is_root_element:
+        return ('block', 'flow')
+
+    if float_ != 'none' or style.is_root_element or position in ('absolute', 'fixed'):
         if value == ('inline-table',):
             return ('block', 'table')
         elif len(value) == 1 and value[0].startswith('table-'):
@@ -544,6 +552,7 @@ def display(style, name, value):
                 return ('block', 'flow', 'list-item')
             else:
                 return ('block', 'flow')
+
     return value
 
 

@@ -641,3 +641,43 @@ def test_counter_multiple_extends():
     assert li_6.children[0].children[0].children[0].text == '6. '
     assert li_7.children[0].children[0].children[0].text == '7. '
     assert li_8.children[0].children[0].children[0].text == '8. '
+
+
+@assert_no_logs
+def test_counter_display_contents():
+    page, = render_pages('''
+      <style>
+        section { counter-reset: c }
+        p { counter-increment: c }
+        p::before { content: counter(c) }
+      </style>
+      <section><p>a</p><div style="display: contents"><p>b</p><p>c</p></div>
+      <p>d</p></section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    values = [
+        p.children[0].children[0].children[0].text for p in section.children]
+    assert values == ['1', '2', '3', '4']
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('display', 'value'), [
+    ('none', '0'),
+    ('contents', '1'),
+    ('block', '1'),
+])
+def test_counter_increment_display(display, value):
+    page, = render_pages(f'''
+      <style>
+        body {{ counter-reset: c }}
+        x {{ counter-increment: c; display: {display} }}
+        p::before {{ content: counter(c) }}
+      </style>
+      <x></x><p>y</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p = body.children[-1]
+    assert p.children[0].children[0].children[0].text == value

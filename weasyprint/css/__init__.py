@@ -199,7 +199,8 @@ class StyleFor:
             parent_style, cascaded, pseudo_type, root_style, base_url,
             self.font_config, self.initial_page_sizes)
         if target_collector and computed['anchor']:
-            target_collector.collect_anchor(computed['anchor'])
+            if computed['display'] != ('contents',):
+                target_collector.collect_anchor(computed['anchor'])
 
     def add_page_declarations(self, page_type):
         # TODO: use real layer order.
