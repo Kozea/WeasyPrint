@@ -539,6 +539,30 @@ def test_path_a7(assert_pixels):
 
 
 @assert_no_logs
+def test_path_a_0(assert_pixels):
+    # Regression test for #2974.
+    assert_pixels('''
+        __BB____
+        __BB____
+        __BB____
+        __BB____
+        ________
+        ________
+        ________
+        ________
+    ''', '''
+      <style>
+        @page { size: 8px }
+        svg { display: block }
+      </style>
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 3 0 A 0 5 0 0 1 3 4"
+          stroke="blue" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_path_wrong_point(assert_pixels):
     assert_pixels('''
         ____________

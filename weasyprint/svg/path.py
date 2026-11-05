@@ -77,7 +77,7 @@ def path(svg, node, font_size):
                     # that the next letter is set to the real current letter (a
                     # or A) in case it’s omitted
                     matches.appendleft((letter, string))
-                matches.appendleft(('l', f'{x3} {y3}'))
+                matches.appendleft(('L', f'{x3} {y3}'))
                 continue
 
             # Cancel the rotation of the second point
