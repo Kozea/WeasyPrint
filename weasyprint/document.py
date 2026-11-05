@@ -340,7 +340,7 @@ class Document:
                 if value is None and key in properties:
                     options[key] = properties[key]
 
-        pdf = generate_pdf(self, target, zoom, **options)
+        pdf = generate_pdf(self, zoom, **options)
 
         if finisher:
             finisher(self, pdf)

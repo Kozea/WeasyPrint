@@ -117,7 +117,7 @@ def _use_references(pdf, resources, images, color_profiles):
             alpha['SMask']['G'] = alpha['SMask']['G'].reference
 
 
-def generate_pdf(document, target, zoom, **options):
+def generate_pdf(document, zoom, **options):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
