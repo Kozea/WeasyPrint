@@ -199,6 +199,9 @@ class FontConfiguration:
             # Prepend, as replacing the font family breaks Pango, see #2510.
             edit = SubElement(match, 'edit', name='family', mode='prepend')
             SubElement(edit, 'string').text = rule_descriptors['font_family']
+            # Add custom variation to get unique font description, see #3005.
+            edit = SubElement(match, 'edit', name='fontvariations', mode=mode)
+            SubElement(edit, 'string').text = f'WePr={int(config_digest[:10], base=16)}'
             if 'font_style' in rule_descriptors:
                 edit = SubElement(match, 'edit', name='slant', mode=mode)
                 text = FONTCONFIG_STYLE[rule_descriptors['font_style']]
@@ -211,9 +214,6 @@ class FontConfiguration:
                 edit = SubElement(match, 'edit', name='width', mode=mode)
                 text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
                 SubElement(edit, 'const').text = text
-            match = SubElement(root, 'match', target='font')
-            test = SubElement(match, 'test', name='file', compare='eq')
-            SubElement(test, 'string').text = font_path.as_posix()
             descriptors = {
                 rules[0][0].replace('-', '_'): rules[0][1] for rules in
                 rule_descriptors.get('font_variant', [])}
