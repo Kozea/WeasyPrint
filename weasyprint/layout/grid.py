@@ -1225,6 +1225,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     row_lines_positions = (
         [*rows_positions[first_skip_row + 1:], box.content_box_y() + total_height])
+    original_page_is_empty = page_is_empty
     for i, row_y in enumerate(row_lines_positions, start=first_skip_row):
         # TODO: handle break-before and break-after for rows.
         if not context.overflows_page(bottom_space, row_y - skip_height):
@@ -1232,7 +1233,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             page_is_empty = False
             continue
         resume_row = i
-        if box.style['break_inside'] == 'avoid' and not page_is_empty:
+        if box.style['break_inside'] == 'avoid' and not original_page_is_empty:
             # Avoid breaks inside grid container, break before.
             context.finish_block_formatting_context(box)
             return None, None, {'break': 'any', 'page': None}, [], False
