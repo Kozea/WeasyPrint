@@ -27,8 +27,14 @@ def set_mask_border(stream, box):
 
 def draw_column_rules(stream, box):
     """Draw the column rules to a ``pdf.stream.Stream``."""
-    border_widths = (0, 0, 0, box.style['column_rule_width'])
     skip_next = True
+    rule_width = box.style['column_rule_width']
+    rule_style = box.style['column_rule_style']
+    border_widths = (0, 0, 0, rule_width)
+    if box.style['column_gap'] == 'normal':
+        gap = box.style['font_size']  # normal equals 1em
+    else:
+        gap = percentage(box.style['column_gap'], box.style, box.width)
     for child in box.children:
         if child.style['column_span'] == 'all':
             skip_next = True
@@ -37,14 +43,10 @@ def draw_column_rules(stream, box):
             skip_next = False
             continue
         with stream.stacked():
-            rule_width = box.style['column_rule_width']
-            rule_style = box.style['column_rule_style']
-            if box.style['column_gap'] == 'normal':
-                gap = box.style['font_size']  # normal equals 1em
+            if box.style['direction'] == 'rtl':
+                position_x = child.position_x + child.width + (gap - rule_width) / 2
             else:
-                gap = percentage(box.style['column_gap'], box.style, box.width)
-            position_x = (
-                child.position_x - (box.style['column_rule_width'] + gap) / 2)
+                position_x = child.position_x - (gap + rule_width) / 2
             border_box = position_x, child.position_y, rule_width, child.height
             clip_border_segment(
                 stream, rule_style, rule_width, 'left', border_box, border_widths)
