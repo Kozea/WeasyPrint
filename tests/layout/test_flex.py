@@ -96,6 +96,33 @@ def test_flex_direction_row_rtl_gap():
 
 
 @assert_no_logs
+def test_flex_direction_row_rtl_gap_multiline():
+    # Regression test for issue #3014.
+    page, = render_pages('''
+      <article style="display: flex; flex-wrap: wrap; direction: rtl;
+                      gap: 10px; width: 75px">
+        <div style="width: 30px; height: 40px">A</div>
+        <div style="width: 30px; height: 40px">B</div>
+        <div style="width: 30px; height: 40px">C</div>
+        <div style="width: 30px; height: 40px">D</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2, div3, div4 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div2.children[0].children[0].text == 'B'
+    assert div3.children[0].children[0].text == 'C'
+    assert div4.children[0].children[0].text == 'D'
+    assert article.width == 75
+    assert div1.position_y == div2.position_y == article.position_y
+    assert div3.position_y == div4.position_y == article.position_y + 40 + 10
+    assert div1.position_x == div3.position_x == article.position_x + article.width - 30
+    assert div2.position_x == div4.position_x == article.position_x + article.width - 70
+
+
+@assert_no_logs
 def test_flex_direction_row_reverse():
     page, = render_pages('''
       <article style="display: flex; flex-direction: row-reverse">

@@ -658,6 +658,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         elif 'end' in justify_content:
             justify_content = ('start',)
 
+    width_rtl = box.style['direction'] == 'rtl' and main == 'width'
     for line in flex_lines:
         position_main = original_position_main
         if main == 'width':
@@ -706,7 +707,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                         child.margin_bottom = free_space
             free_space = 0
 
-        if box.style['direction'] == 'rtl' and main == 'width':
+        if width_rtl:
             free_space *= -1
 
         # 12.2 Align the items along the main-axis per justify-content.
@@ -720,11 +721,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             position_main += free_space / (len(line) + 1)
 
         growths = sum(child.style['flex_grow'] for child in children)
-        if box.style['direction'] == 'rtl' and main == 'width':
-            main_gap *= -1
         for i, (index, child) in enumerate(line):
             if i:
-                position_main += main_gap
+                position_main += -main_gap if width_rtl else main_gap
             if main == 'width':
                 child.position_x = position_main
                 if 'stretch' in justify_content and growths:
@@ -733,9 +732,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 child.position_y = position_main
             margin_main = (
                 child.margin_width() if main == 'width' else child.margin_height())
-            if box.style['direction'] == 'rtl' and main == 'width':
-                margin_main *= -1
-            position_main += margin_main
+            position_main += -margin_main if width_rtl else margin_main
             if 'space-around' in justify_content:
                 position_main += free_space / len(line)
             elif 'space-between' in justify_content:
