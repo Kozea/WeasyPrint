@@ -365,7 +365,6 @@ def test_footnote_report_orphans():
     page1, page2 = render_pages('''
       <style>
         @page {
-          font-family: weasyprint;
           size: 20px;
         }
         body {
@@ -403,6 +402,115 @@ def test_footnote_report_orphans():
     div, = body.children
     assert len(div.children) == 2
     assert len(footnote_area.children) == 1
+
+
+@assert_no_logs
+def test_footnote_current_line_orphans():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px/1 weasyprint; orphans: 2; widows: 2 }
+        span { float: footnote }
+      </style>
+      <div>
+        a<br>
+        b<span>1</span><br>
+        c<br>
+        d<br>
+        e<br>
+        f<br>
+        g<br>
+        h
+      </div>
+      <div>
+        i<br>
+        j<span>2</span><br>
+        k<br>
+        l<br>
+        m
+      </div>''')
+    html, footnote_area = page1.children
+    body, = html.children
+    div1, = body.children
+    assert len(div1.children) == 8
+    assert len(footnote_area.children) == 1
+    html, footnote_area = page2.children
+    body, = html.children
+    div2, = body.children
+    assert len(div2.children) == 5
+    assert len(footnote_area.children) == 1
+
+
+@assert_no_logs
+def test_footnote_previous_line_orphans():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px/1 weasyprint; orphans: 2; widows: 2 }
+        span { float: footnote }
+      </style>
+      <div>
+        a<br>
+        b<span>1</span><br>
+        c<br>
+        d<br>
+        e<br>
+        f<br>
+        g
+      </div>
+      <div>
+        i<span>2</span><br>
+        j<br>
+        k<br>
+        l<br>
+        m
+      </div>''')
+    html, footnote_area = page1.children
+    body, = html.children
+    div1, = body.children
+    assert len(div1.children) == 7
+    assert len(footnote_area.children) == 1
+    html, footnote_area = page2.children
+    body, = html.children
+    div2, = body.children
+    assert len(div2.children) == 5
+    assert len(footnote_area.children) == 1
+
+
+@assert_no_logs
+def test_footnote_report_previous_and_current_line_orphans():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 20px }
+        body { font: 2px/1 weasyprint; orphans: 2; widows: 2 }
+        span { float: footnote }
+      </style>
+      <div>
+        a<br>
+        b<span>1</span><br>
+        c<br>
+        d<br>
+        e<br>
+        f<br>
+        g
+      </div>
+      <div>
+        i<span>2</span><br>
+        j<span>3</span><br>
+        k<br>
+        l<span>4</span><br>
+        m
+      </div>''')
+    html, footnote_area = page1.children
+    body, = html.children
+    div1, = body.children
+    assert len(div1.children) == 7
+    assert len(footnote_area.children) == 1
+    html, footnote_area = page2.children
+    body, = html.children
+    div2, = body.children
+    assert len(div2.children) == 5
+    assert len(footnote_area.children) == 3
 
 
 @assert_no_logs
