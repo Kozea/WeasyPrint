@@ -76,6 +76,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
             fixed_boxes=fixed_boxes)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
+        box = box.copy()
         resume_at = None
 
     box = find_float_position(context, box, containing_block)

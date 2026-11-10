@@ -1041,3 +1041,30 @@ def test_float_split_in_stacking_context(assert_pixels):
         aa
         <div>bb bb</div>
         cc cc''')
+
+
+@assert_no_logs
+def test_float_next_page_not_rendered_again(assert_pixels):
+    # Regression test for #3003.
+    assert_pixels('''
+        RRRR
+        RRRR
+        RRRR
+        RRRR
+        ____
+
+        RRaa
+        RRaa
+        ____
+        ____
+        ____
+    ''', '''
+        <style>
+          @page { size: 4px 5px }
+          body { color: red; font: 2px / 1 weasyprint }
+          p:first-of-type::before { content: counter(page) }
+        </style>
+        <p>a</p>
+        <p>bb</p>
+        <p><img style="float: right; width: 2px" src="blue.jpg"></p>
+        <p>c</p>''')
