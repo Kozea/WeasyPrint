@@ -2104,6 +2104,7 @@ def test_grid_absolute_page_break_avoid():
 
 @assert_no_logs
 def test_grid_split_float_child():
+    # Regression test for #2962.
     page1, page2 = render_pages('''
       <style>
         @page { size: 4px 5px }

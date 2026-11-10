@@ -342,9 +342,11 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribu
                 item = item.deepcopy()
                 item.position_x = 0
                 item.position_y = 0
+                context.create_block_formatting_context(parent)
                 item, _, _, _, _, _ = block_level_layout(
                     context, item, bottom_space=-inf, skip_stack=None,
                     containing_block=parent)
+                context.finish_block_formatting_context()
                 space = item.margin_height()
             for sizes in tracks_sizes[i:i+span]:
                 space -= sizes[affected_size_index]
@@ -601,7 +603,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
 
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
-    context.create_block_formatting_context(box)
+    context.create_grid_formatting_context(box)
 
     if skip_stack and box.style['box_decoration_break'] != 'clone':
         box.remove_decoration(start=True, end=False)
@@ -1183,9 +1185,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             parent.position_y = 0
             parent.width = width
             parent.height = 0
+            context.create_block_formatting_context(parent)
             child, _, _, _, _, _ = block_level_layout(
                 context, child, bottom_space=-inf, skip_stack=child_skip_stack,
                 containing_block=parent)
+            context.finish_block_formatting_context()
             skip_stack_advancement = span_height - child.margin_height()
             if skip_stack_advancement < advancement:
                 extra_skip_height = max(
@@ -1235,13 +1239,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         resume_row = i
         if box.style['break_inside'] == 'avoid' and not original_page_is_empty:
             # Avoid breaks inside grid container, break before.
-            context.finish_block_formatting_context()
+            context.finish_grid_formatting_context()
             return None, None, {'break': 'any', 'page': None}, [], False
         if page_breaks_by_row[i]['inside'] == 'avoid' and not page_is_empty:
             # Break before current row.
             if resume_row == 0:
                 # First row, break before grid container.
-                context.finish_block_formatting_context()
+                context.finish_grid_formatting_context()
                 return None, None, {'break': 'any', 'page': None}, [], False
             # Mark all children before and in current row as drawn on the page.
             _add_page_children(resume_row)
@@ -1342,9 +1346,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         parent.position_y = child.position_y
         parent.width = width
         parent.height = height
+        context.create_block_formatting_context(parent)
         new_child, child_resume_at, child_next_page = block_level_layout(
             context, child, bottom_space, child_skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
+        context.finish_block_formatting_context(parent)
         if new_child:
             broken_child = False
             span = _get_span(child.style['grid_row_start'])
@@ -1407,7 +1413,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Abort whole grid rendering if no child fits.
     if this_page_children and not new_children:
-        context.finish_block_formatting_context()
+        context.finish_grid_formatting_context()
         return None, None, {'break': 'any', 'page': None}, [], False
 
     old_advancements = box.advancements.copy()
@@ -1434,7 +1440,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Resume early when there’s no resume_at.
     if not resume_at:
-        context.finish_block_formatting_context(box)
+        context.finish_grid_formatting_context()
         return box, resume_at, next_page, [], False
 
     # Set broken rows’ bottom at the bottom of the page.
@@ -1480,5 +1486,5 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         box.remove_decoration(start=False, end=True)
         box.height -= box.margin_bottom + box.border_bottom_width + box.padding_bottom
 
-    context.finish_block_formatting_context(box)
+    context.finish_grid_formatting_context()
     return box, resume_at, next_page, [], False

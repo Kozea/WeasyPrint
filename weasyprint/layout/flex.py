@@ -960,6 +960,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     box.remove_decoration(start=False, end=resume_at and not discard)
 
-    context.finish_flex_formatting_context(box)
+    context.finish_flex_formatting_context()
 
     return box, resume_at, next_page, [], False
