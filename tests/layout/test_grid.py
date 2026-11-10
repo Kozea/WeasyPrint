@@ -2080,3 +2080,23 @@ def test_grid_auto_fill_rows(height, y):
     body, = html.children
     article, = body.children
     assert tuple(div.position_y for div in article.children) == y
+
+
+@assert_no_logs
+def test_grid_absolute_page_break_avoid():
+    page, = render_pages('''
+      <style>
+        @page { size: 5px }
+        body { font: 2px / 1 weasyprint }
+      </style>
+      <article style="display: grid; position: absolute; break-inside: avoid">
+        <div>a</div><div>b</div><div>c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.position_x == 0
+    assert article.position_y == 0
+    assert article.height == 5
+    assert len(article.children) == 2
