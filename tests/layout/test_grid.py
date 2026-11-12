@@ -2100,3 +2100,29 @@ def test_grid_absolute_page_break_avoid():
     assert article.position_y == 0
     assert article.height == 5
     assert len(article.children) == 2
+
+
+@assert_no_logs
+def test_grid_split_float_child():
+    # Regression test for #2962.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 5px }
+        body { font: 2px / 1 weasyprint }
+      </style>
+      <div>a</div>
+      <article style="display: grid; grid-template-columns: 2px 2px">
+        <div><span style="float: right">b</span></div>
+        <div style="break-inside: avoid">c<br>c</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.position_x == 0
+    assert article.position_y == 0
+    assert article.height == 4
+    div1, div2 = article.children

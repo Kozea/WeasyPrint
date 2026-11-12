@@ -773,7 +773,7 @@ def make_page(index, context, root_box, html):
     # Setup context and create root formatting context.
     # https://www.w3.org/TR/css-display-4/#root
     assert isinstance(root_box, boxes.BlockLevelBox)
-    context.create_block_formatting_context()
+    context.create_block_formatting_context(root_box=None)
     context.current_page = page_number
     context.current_page_footnotes = []
     context.forced_break = (

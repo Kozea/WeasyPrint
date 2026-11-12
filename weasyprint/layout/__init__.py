@@ -217,27 +217,39 @@ class LayoutContext:
     def excluded_shapes(self, excluded_shapes):
         self._excluded_shapes[self._excluded_shapes_root_boxes[-1]] = excluded_shapes
 
-    def create_block_formatting_context(self, root_box=None, new_list=None):
+    def _create_formatting_context(self, root_box, new_list):
         assert root_box not in self._excluded_shapes_root_boxes
         self._excluded_shapes_root_boxes.append(root_box)
         if root_box not in self._excluded_shapes:
-            self._excluded_shapes[root_box] = [] if new_list is None else new_list
+            self._excluded_shapes[root_box] = new_list
+
+    def _finish_formatting_context(self):
+        self._excluded_shapes.pop(self._excluded_shapes_root_boxes.pop())
+
+    def create_block_formatting_context(self, root_box, new_list=None):
+        self._create_formatting_context(root_box, [])
 
     def finish_block_formatting_context(self, root_box=None):
-        # See https://www.w3.org/TR/CSS2/visudet.html#root-height
+        # See https://www.w3.org/TR/CSS2/visudet.html#root-height.
         if root_box and root_box.style['height'] == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
             max_shape_bottom = max([
                 shape.position_y + shape.margin_height()
                 for shape in self.excluded_shapes] + [box_bottom])
             root_box.height += max_shape_bottom - box_bottom
-        self._excluded_shapes.pop(self._excluded_shapes_root_boxes.pop())
+        self._finish_formatting_context()
 
     def create_flex_formatting_context(self, root_box):
-        self.create_block_formatting_context(root_box, FakeList())
+        self._create_formatting_context(root_box, FakeList())
 
-    def finish_flex_formatting_context(self, root_box):
-        self.finish_block_formatting_context(root_box)
+    def finish_flex_formatting_context(self):
+        self._finish_formatting_context()
+
+    def create_grid_formatting_context(self, root_box):
+        self._create_formatting_context(root_box, FakeList())
+
+    def finish_grid_formatting_context(self):
+        self._finish_formatting_context()
 
     def add_broken_out_of_flow(self, new_box, box, containing_block, resume_at):
         self.broken_out_of_flow[new_box] = (
