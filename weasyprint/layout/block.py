@@ -396,12 +396,16 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             needed = max(0, needed)
             report = not context.in_column and can_break_now and not could_break_before
             reported_footnotes = 0
-            while report and context.current_page_footnotes:
-                context.report_footnote(context.current_page_footnotes[-1])
+            footnotes = [
+                descendant.footnote for line in new_children
+                for descendant in line.descendants()
+                if descendant.footnote in context.current_page_footnotes]
+            while report and footnotes:
+                context.report_footnote(footnotes.pop())
                 reported_footnotes += 1
                 if not context.overflows_page(bottom_space, new_position_y + offset_y):
-                    new_children.append(line)
                     stop = True
+                    overflow = False
                     break
             else:
                 abort, stop, resume_at = _break_line(
@@ -414,6 +418,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 extra = context.reported_footnotes[-1:-reported_footnotes-1:-1]
                 context.reported_footnotes[-reported_footnotes:] = extra
 
+        if overflow:
             break
 
         # TODO: this is incomplete.
