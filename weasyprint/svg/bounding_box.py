@@ -349,6 +349,17 @@ def extend_bounding_box(bounding_box, points):
     return minx, miny, maxx - minx, maxy - miny
 
 
+def merge_bounding_boxes(*bounding_boxes):
+    """Return a bounding box that includes given bounding boxes."""
+    merge_box = EMPTY_BOUNDING_BOX
+    for bounding_box in bounding_boxes:
+        if is_valid_bounding_box(bounding_box):
+            p1 = bounding_box[:2]
+            p2 = p1[0] + bounding_box[2], p1[1] + bounding_box[3]
+            merge_box = extend_bounding_box(merge_box, (p1, p2))
+    return merge_box
+
+
 def transform_bounding_box(svg, node, font_size, bounding_box):
     """Apply node transform to a bounding box."""
     matrix = svg.get_node_transform_matrix(node, font_size)

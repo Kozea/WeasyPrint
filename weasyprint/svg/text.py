@@ -50,6 +50,9 @@ def text(svg, node, font_size):
         except ValueError:
             style['font_weight'] = 400
 
+    if node.text is None:
+        return
+
     layout, _, _, width, height, _ = split_first_line(
         node.text, style, svg.context, inf, 0)
 
