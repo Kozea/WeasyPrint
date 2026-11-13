@@ -22,7 +22,6 @@ from .utils import (  # isort:skip
     transform)
 
 TAGS = {
-    'a': text,
     'circle': circle,
     'ellipse': ellipse,
     'image': image,
