@@ -96,7 +96,7 @@ class Node:
 
         self.vertices = deque()
         self.bounding_box = None
-        self.anchor_shift = False
+        self.anchor_shift = self.is_text
         if self.is_text:
             self.text_bounding_box = EMPTY_BOUNDING_BOX
 
@@ -462,6 +462,7 @@ class SVG:
         group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
         original_streams.append(self.stream)
         self.stream = group
+        node.text_bounding_box = EMPTY_BOUNDING_BOX
 
     def finish_text_chunk(self, node, original_streams, font_size):
         group = self.stream
@@ -574,7 +575,6 @@ class SVG:
                 if node.anchor_shift and ('x' in child.attrib or 'y' in child.attrib):
                     self.finish_text_chunk(node, original_streams, font_size)
                     node_bounding_boxes.append(node.text_bounding_box)
-                    node.text_bounding_box = EMPTY_BOUNDING_BOX
                     self.start_text_chunk(node, original_streams)
                 context = node if node.tag == 'use' else context
                 self.draw_node(child, font_size, fill_stroke, context)
