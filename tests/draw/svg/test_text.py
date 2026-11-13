@@ -850,3 +850,19 @@ def test_text_font_family(assert_pixels):
         </text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_empty_text(assert_pixels):
+    assert_pixels('''
+        ____________________
+        ____________________
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <tspan></tspan>
+      </svg>
+    ''')
