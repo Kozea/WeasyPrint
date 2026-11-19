@@ -422,7 +422,7 @@ def fetch(url_fetcher, url):
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
 
     assert isinstance(resource, URLFetcherResponse), (
-        'URL fetcher must return either a dict or a URLFetcherResponse instance')
+        'URL fetcher must return a URLFetcherResponse instance')
 
     try:
         yield resource
