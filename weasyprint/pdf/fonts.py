@@ -35,7 +35,8 @@ class Font:
         if variations != ffi.NULL:
             self.variations = {
                 part.split('=')[0]: float(part.split('=')[1])
-                for part in ffi.string(variations).decode().split(',')}
+                for part in ffi.string(variations).decode().split(',')
+                if not part.startswith('WePr=')}
         if weight := self.variations.get('weight'):
             self.weight = round(weight)
             pango.pango_font_description_set_weight(description, weight)
