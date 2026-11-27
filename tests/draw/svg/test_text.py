@@ -423,8 +423,8 @@ def test_text_anchor_end_tspan_head_tail(assert_pixels):
 @assert_no_logs
 def test_text_anchor_middle_end_tspan(assert_pixels):
     assert_pixels('''
-        _______BBBBBB_______
-        _______BBBBBB_______
+        ______BBBBBB________
+        ______BBBBBB________
         ____________BBBBBB__
         ____________BBBBBB__
     ''', '''
@@ -517,6 +517,27 @@ def test_text_anchor_multiline_smaller(assert_pixels):
         <text font-family="weasyprint" font-size="2" fill="blue" text-anchor="middle">
           <tspan x="8" y="1.5">cde</tspan>
           <tspan x="10" y="3.5">ab</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_multiline_text_after(assert_pixels):
+    assert_pixels('''
+        __BBBBBB____________
+        __BBBBBB____________
+        ________BBBBBB______
+        ________BBBBBB______
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text font-family="weasyprint" font-size="2" fill="blue">
+          <tspan x="10" y="1.5" text-anchor="end">ab</tspan>c
+          <tspan x="8" y="3.5">cde</tspan>
         </text>
       </svg>
     ''')

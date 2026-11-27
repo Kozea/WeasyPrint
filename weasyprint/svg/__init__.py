@@ -96,9 +96,6 @@ class Node:
 
         self.vertices = deque()
         self.bounding_box = None
-        self.anchor_shift = self.is_text
-        if self.is_text:
-            self.text_bounding_box = EMPTY_BOUNDING_BOX
 
     def copy(self):
         """Create a deep copy of the node as it was when first created."""
@@ -137,18 +134,6 @@ class Node:
     def is_text(self):
         """Whether node is a text-container node."""
         return TAGS.get(self.tag) == text
-
-    @property
-    def anchor_direction(self):
-        """Get anchor and direction."""
-        return self.get('text-anchor', 'start'), self.get('direction', 'ltr')
-
-    def set_anchor_shift(self, parent):
-        """Set whether the tag shifts the text anchor."""
-        self.anchor_shift = (
-            self.display and self.is_text and
-            self.anchor_direction not in (('start', 'ltr'), ('end', 'rtl')) and (
-                not parent.is_text or self.anchor_direction != parent.anchor_direction))
 
     def cascade(self, child):
         """Apply CSS cascade and other related operations to given child."""
@@ -428,7 +413,7 @@ class SVG:
 
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
-        self.text_path_width = 0
+        self.text_chunks = None
 
         self.tree.cascade(self.tree)
 
@@ -458,31 +443,49 @@ class SVG:
             size(x, font_size, self.inner_width),
             size(y, font_size, self.inner_height))
 
-    def start_text_chunk(self, node, original_streams):
-        group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
-        original_streams.append(self.stream)
-        self.stream = group
-        node.text_bounding_box = EMPTY_BOUNDING_BOX
+    def start_text_chunk(self, node):
+        """Create a text chunk."""
+        if self.text_chunks is None:
+            self.text_chunks = []
+            self._text_stream = self.stream
+        self.stream = self._text_stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+        self.text_chunks.append(self.stream)
+        self.stream.bounding_box = EMPTY_BOUNDING_BOX
+        self.stream.anchor_direction = (
+            node.get('text-anchor', 'start'), node.get('direction', 'ltr'))
 
-    def finish_text_chunk(self, node, original_streams, font_size):
-        group = self.stream
-        self.stream = original_streams.pop()
-        if is_valid_bounding_box(node.text_bounding_box):
-            self.stream.push_state()
-            x, y, width, height = node.text_bounding_box
-            # Add extra space to include ink extents
-            group.extra['BBox'][:] = (
-                x - font_size, y - font_size,
-                x + width + font_size, y + height + font_size)
-            text_anchor = node.get('text-anchor', 'start')
-            x_align = width / 2 if text_anchor == 'middle' else width
-            self.stream.transform(e=-x_align)
-            node.text_bounding_box = (x - x_align, y, width, height)
-            self.stream.draw_x_object(group.id)
-            self.stream.pop_state()
+    def draw_text_chunks(self, font_size):
+        """Align and draw the text chunks."""
+        bounding_box = EMPTY_BOUNDING_BOX
+        for text_chunk in self.text_chunks:
+            if not is_valid_bounding_box(text_chunk.bounding_box):
+                continue
+            self._text_stream.push_state()
+            x, y, width, height = text_chunk.bounding_box
+            # Set anchor shift.
+            anchor_shift = 0
+            anchor, direction = text_chunk.anchor_direction
+            if (anchor, direction) in (('end', 'ltr'), ('start', 'rtl')):
+                anchor_shift = width
+            elif anchor == 'middle':
+                anchor_shift = width / 2
+            self._text_stream.transform(e=-anchor_shift)
+            # Add extra space to include ink extents.
+            x -= font_size
+            y -= font_size
+            width += 2 * font_size
+            height += 2 * font_size
+            text_chunk.extra['BBox'][:] = (x, y, x + width, y + height)
+            self._text_stream.draw_x_object(text_chunk.id)
+            self._text_stream.pop_state()
+            bounding_box = merge_bounding_boxes(
+                bounding_box, (x - anchor_shift, y, width, height))
+        self.text_chunks = None
+        self.stream = self._text_stream
+        del self._text_stream
 
     def length(self, length, font_size):
-        """Compute size of an arbirtary attribute."""
+        """Compute size of an arbitrary attribute."""
         return size(length, font_size, self.inner_diagonal)
 
     def draw(self, stream, concrete_width, concrete_height, base_url, context):
@@ -504,17 +507,15 @@ class SVG:
         # Update font size
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
-        original_streams = []
-
         call_fill_stroke = fill_stroke and node.tag in (
             'circle', 'ellipse', 'line', 'path', 'polyline', 'polygon', 'rect')
 
         if fill_stroke:
-            self.stream.push_state()
+            stream = self.stream
+            stream.push_state()
 
         # Apply filters
-        filter_ = self.filters.get(parse_url(node.get('filter')).fragment)
-        if filter_:
+        if filter_ := self.filters.get(parse_url(node.get('filter')).fragment):
             apply_filters(self, node, filter_, font_size)
 
         # Apply transform attribute
@@ -523,8 +524,15 @@ class SVG:
         # Create substream for opacity
         opacity = alpha_value(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
-            original_streams.append(self.stream)
+            original_stream = self.stream
             self.stream = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+
+        # Create text chunk
+        if node.is_text:
+            node.bounding_box = EMPTY_BOUNDING_BOX
+            first_chunk = self.text_chunks is None
+            if first_chunk or ('x' in node.attrib or 'y' in node.attrib):
+                self.start_text_chunk(node)
 
         # Set graphical state
         if call_fill_stroke:
@@ -558,43 +566,23 @@ class SVG:
             concrete_width = self.concrete_width
             concrete_height = self.concrete_height
 
-        # Handle text anchor
-        if node.display and node.is_text and node.anchor_shift:
-            self.start_text_chunk(node, original_streams)
-
         # Draw node
         if node.visible and node.tag in TAGS:
             with suppress(PointError):
                 TAGS[node.tag](self, node, font_size)
 
         # Draw node children
-        node_bounding_boxes = []
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
-                child.set_anchor_shift(node)
-                if node.anchor_shift and ('x' in child.attrib or 'y' in child.attrib):
-                    self.finish_text_chunk(node, original_streams, font_size)
-                    node_bounding_boxes.append(node.text_bounding_box)
-                    self.start_text_chunk(node, original_streams)
                 context = node if node.tag == 'use' else context
                 self.draw_node(child, font_size, fill_stroke, context)
-                if node.is_text and child.is_text and child.visible:
-                    node.text_bounding_box = merge_bounding_boxes(
-                        node.text_bounding_box, child.text_bounding_box)
-
-        # Handle text anchor
-        if node.display and node.is_text and node.anchor_shift:
-            self.finish_text_chunk(node, original_streams, font_size)
-            node.text_bounding_box = merge_bounding_boxes(
-                node.text_bounding_box, *node_bounding_boxes)
 
         # Restore concrete and inner size of root svg tag
         if node.tag == 'svg':
             self.tree.set_svg_size(self, concrete_width, concrete_height)
 
         # Apply mask
-        mask = self.masks.get(parse_url(node.get('mask')).fragment)
-        if mask:
+        if mask := self.masks.get(parse_url(node.get('mask')).fragment):
             paint_mask(self, node, mask, opacity)
 
         # Fill and stroke
@@ -605,7 +593,14 @@ class SVG:
         # Draw markers
         self.draw_markers(node, font_size, fill_stroke)
 
-        # Apply opacity stream and restore original stream
+        # Draw text chunks
+        if node.is_text:
+            self.stream.bounding_box = merge_bounding_boxes(
+                self.stream.bounding_box, node.bounding_box)
+            if first_chunk:
+                node.bounding_box = self.draw_text_chunks(font_size)
+
+        # Apply opacity
         if fill_stroke and 0 <= opacity < 1:
             box = self.calculate_bounding_box(node, font_size)
             if not is_valid_bounding_box(box):
@@ -614,7 +609,7 @@ class SVG:
             self.stream.extra['BBox'][:] = x, y, x + width, y + height
 
             group_id = self.stream.id
-            self.stream = original_streams.pop()
+            self.stream = original_stream
             self.stream.set_alpha(opacity, stroke=True, fill=True)
             self.stream.draw_x_object(group_id)
 
@@ -622,10 +617,9 @@ class SVG:
         if node.tag == 'text':
             self.cursor_position = [0, 0]
             self.cursor_d_position = [0, 0]
-            self.text_path_width = 0
 
         if fill_stroke:
-            self.stream.pop_state()
+            stream.pop_state()
 
     def draw_markers(self, node, font_size, fill_stroke):
         """Draw markers defined in a node."""

@@ -206,7 +206,7 @@ def bounding_box_path(svg, node, font_size):
 
 def bounding_box_text(svg, node, font_size):
     """Bounding box for text node."""
-    return getattr(node, 'text_bounding_box', None)
+    return node.bounding_box
 
 
 def bounding_box_g(svg, node, font_size):

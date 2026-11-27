@@ -158,7 +158,7 @@ def text(svg, node, font_size):
             (x_position, y_position - baseline),
             (x_position + width, y_position - baseline + height))
         # TODO: Use ink extents instead of logical from line_break.line_size().
-        node.text_bounding_box = extend_bounding_box(node.text_bounding_box, points)
+        node.bounding_box = extend_bounding_box(node.bounding_box, points)
         layouts.append((layout, x_position, y_position, x, y, angle, baseline))
 
     # Set state after we have bounding box for gradients and patterns, before drawing.
