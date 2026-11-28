@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
+from .bounding_box import bounding_box, is_valid_bounding_box, merge_bounding_boxes
 from .css import parse_declarations, parse_stylesheets
 from .defs import apply_filters, draw_gradient, draw_pattern, paint_mask, use
 from .images import image, svg
@@ -15,8 +16,6 @@ from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
 
-from .bounding_box import (  # isort:skip
-    EMPTY_BOUNDING_BOX, bounding_box, is_valid_bounding_box, merge_bounding_boxes)
 from .utils import (  # isort:skip
     PointError, alpha_value, color, normalize, parse_url, preserve_ratio, size,
     transform)
@@ -450,13 +449,13 @@ class SVG:
             self._text_stream = self.stream
         self.stream = self._text_stream.add_group(0, 0, 0, 0)  # BBox set after drawing
         self.text_chunks.append(self.stream)
-        self.stream.bounding_box = EMPTY_BOUNDING_BOX
+        self.stream.bounding_box = None
         self.stream.anchor_direction = (
             node.get('text-anchor', 'start'), node.get('direction', 'ltr'))
 
     def draw_text_chunks(self, font_size):
         """Align and draw the text chunks."""
-        bounding_box = EMPTY_BOUNDING_BOX
+        bounding_boxes = []
         for text_chunk in self.text_chunks:
             if not is_valid_bounding_box(text_chunk.bounding_box):
                 continue
@@ -478,11 +477,11 @@ class SVG:
             text_chunk.extra['BBox'][:] = (x, y, x + width, y + height)
             self._text_stream.draw_x_object(text_chunk.id)
             self._text_stream.pop_state()
-            bounding_box = merge_bounding_boxes(
-                bounding_box, (x - anchor_shift, y, width, height))
+            bounding_boxes.append((x - anchor_shift, y, width, height))
         self.text_chunks = None
         self.stream = self._text_stream
         del self._text_stream
+        return merge_bounding_boxes(*bounding_boxes)
 
     def length(self, length, font_size):
         """Compute size of an arbitrary attribute."""
@@ -529,7 +528,6 @@ class SVG:
 
         # Create text chunk
         if node.is_text:
-            node.bounding_box = EMPTY_BOUNDING_BOX
             first_chunk = self.text_chunks is None
             if first_chunk or ('x' in node.attrib or 'y' in node.attrib):
                 self.start_text_chunk(node)
@@ -711,24 +709,21 @@ class SVG:
             elif node_angle == 'auto-start-reverse' and position == 'start':
                 angle += radians(180)
 
-            # Draw marker path
-            for child in marker_node:
-                self.stream.push_state()
-
-                self.stream.transform(
-                    scale_x * cos(angle), scale_x * sin(angle),
-                    -scale_y * sin(angle), scale_y * cos(angle),
-                    *point)
-                self.stream.transform(e=-translate_x, f=-translate_y)
-
-                overflow = marker_node.get('overflow', 'hidden')
-                if overflow in ('hidden', 'scroll'):
-                    self.stream.rectangle(*clip_box)
-                    self.stream.clip()
-                    self.stream.end()
-
-                self.draw_node(child, font_size, fill_stroke, context=node)
-                self.stream.pop_state()
+            marker_node = marker_node.copy()
+            marker_node._etree_node.tag = 'g'
+            self.stream.push_state()
+            self.stream.transform(
+                scale_x * cos(angle), scale_x * sin(angle),
+                -scale_y * sin(angle), scale_y * cos(angle),
+                *point)
+            self.stream.transform(e=-translate_x, f=-translate_y)
+            overflow = marker_node.get('overflow', 'hidden')
+            if overflow in ('hidden', 'scroll'):
+                self.stream.rectangle(*clip_box)
+                self.stream.clip()
+                self.stream.end()
+            self.draw_node(marker_node, font_size, fill_stroke, context=node)
+            self.stream.pop_state()
 
             position = 'mid' if angles else 'start'
 
@@ -863,13 +858,16 @@ class SVG:
 
     def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""
-        if stroke or node.bounding_box is None:
-            box = bounding_box(self, node, font_size, stroke)
-            if is_valid_bounding_box(box) and 0 not in box[2:]:
-                if stroke:
-                    return box
-                node.bounding_box = box
-        return node.bounding_box
+        box = node.bounding_box
+        if node.bounding_box is None:
+            box = node.bounding_box = bounding_box(self, node, font_size)
+        if stroke and is_valid_bounding_box(box):
+            if node.tag != 'g' and any(node.get_paint('stroke')):
+                stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
+                box = (
+                    box[0] - stroke_width / 2, box[1] - stroke_width / 2,
+                    box[2] + stroke_width, box[3] + stroke_width)
+        return box
 
 
 class Pattern(SVG):
