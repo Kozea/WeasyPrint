@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
+from .bounding_box import bounding_box, is_valid_bounding_box, merge_bounding_boxes
 from .css import parse_declarations, parse_stylesheets
 from .defs import apply_filters, draw_gradient, draw_pattern, paint_mask, use
 from .images import image, svg
@@ -15,14 +16,11 @@ from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
 
-from .bounding_box import (  # isort:skip
-    EMPTY_BOUNDING_BOX, bounding_box, extend_bounding_box, is_valid_bounding_box)
 from .utils import (  # isort:skip
     PointError, alpha_value, color, normalize, parse_url, preserve_ratio, size,
     transform)
 
 TAGS = {
-    'a': text,
     'circle': circle,
     'ellipse': ellipse,
     'image': image,
@@ -130,6 +128,11 @@ class Node:
     def visible(self):
         """Whether node is visible."""
         return self.display and self.get('visibility') != 'hidden'
+
+    @property
+    def is_text(self):
+        """Whether node is a text-container node."""
+        return TAGS.get(self.tag) == text
 
     def cascade(self, child):
         """Apply CSS cascade and other related operations to given child."""
@@ -409,7 +412,7 @@ class SVG:
 
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
-        self.text_path_width = 0
+        self.text_chunks = None
 
         self.tree.cascade(self.tree)
 
@@ -439,8 +442,49 @@ class SVG:
             size(x, font_size, self.inner_width),
             size(y, font_size, self.inner_height))
 
+    def start_text_chunk(self, node):
+        """Create a text chunk."""
+        if self.text_chunks is None:
+            self.text_chunks = []
+            self._text_stream = self.stream
+        self.stream = self._text_stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+        self.text_chunks.append(self.stream)
+        self.stream.bounding_box = None
+        self.stream.anchor_direction = (
+            node.get('text-anchor', 'start'), node.get('direction', 'ltr'))
+
+    def draw_text_chunks(self, font_size):
+        """Align and draw the text chunks."""
+        bounding_boxes = []
+        for text_chunk in self.text_chunks:
+            if not is_valid_bounding_box(text_chunk.bounding_box):
+                continue
+            self._text_stream.push_state()
+            x, y, width, height = text_chunk.bounding_box
+            # Set anchor shift.
+            anchor_shift = 0
+            anchor, direction = text_chunk.anchor_direction
+            if (anchor, direction) in (('end', 'ltr'), ('start', 'rtl')):
+                anchor_shift = width
+            elif anchor == 'middle':
+                anchor_shift = width / 2
+            self._text_stream.transform(e=-anchor_shift)
+            # Add extra space to include ink extents.
+            x -= font_size
+            y -= font_size
+            width += 2 * font_size
+            height += 2 * font_size
+            text_chunk.extra['BBox'][:] = (x, y, x + width, y + height)
+            self._text_stream.draw_x_object(text_chunk.id)
+            self._text_stream.pop_state()
+            bounding_boxes.append((x - anchor_shift, y, width, height))
+        self.text_chunks = None
+        self.stream = self._text_stream
+        del self._text_stream
+        return merge_bounding_boxes(*bounding_boxes)
+
     def length(self, length, font_size):
-        """Compute size of an arbirtary attribute."""
+        """Compute size of an arbitrary attribute."""
         return size(length, font_size, self.inner_diagonal)
 
     def draw(self, stream, concrete_width, concrete_height, base_url, context):
@@ -462,17 +506,15 @@ class SVG:
         # Update font size
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
-        original_streams = []
-
         call_fill_stroke = fill_stroke and node.tag in (
             'circle', 'ellipse', 'line', 'path', 'polyline', 'polygon', 'rect')
 
         if fill_stroke:
-            self.stream.push_state()
+            stream = self.stream
+            stream.push_state()
 
         # Apply filters
-        filter_ = self.filters.get(parse_url(node.get('filter')).fragment)
-        if filter_:
+        if filter_ := self.filters.get(parse_url(node.get('filter')).fragment):
             apply_filters(self, node, filter_, font_size)
 
         # Apply transform attribute
@@ -481,8 +523,14 @@ class SVG:
         # Create substream for opacity
         opacity = alpha_value(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
-            original_streams.append(self.stream)
+            original_stream = self.stream
             self.stream = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+
+        # Create text chunk
+        if node.is_text:
+            first_chunk = self.text_chunks is None
+            if first_chunk or ('x' in node.attrib or 'y' in node.attrib):
+                self.start_text_chunk(node)
 
         # Set graphical state
         if call_fill_stroke:
@@ -511,20 +559,6 @@ class SVG:
             if new_ctm.determinant:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
-        # Handle text anchor and set text bounding box
-        text_anchor_shift = False
-        if node.display and TAGS.get(node.tag) == text:
-            text_anchor = node.get('text-anchor', 'start')
-            direction = node.get('direction', 'ltr')
-            text_anchor_shift = (
-                text_anchor in ('start', 'middle', 'end') and
-                (text_anchor, direction) not in (('start', 'ltr'), ('end', 'rtl')))
-            if text_anchor_shift:
-                group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
-                original_streams.append(self.stream)
-                self.stream = group
-            node.text_bounding_box = EMPTY_BOUNDING_BOX
-
         # Save concrete size of root svg tag
         if node.tag == 'svg':
             concrete_width = self.concrete_width
@@ -538,54 +572,15 @@ class SVG:
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
-                new_chunk = text_anchor_shift and (
-                    child.tag == 'text' or 'x' in child.attrib or 'y' in child.attrib)
-                if new_chunk:
-                    new_stream = self.stream
-                    self.stream = original_streams[-1]
                 context = node if node.tag == 'use' else context
                 self.draw_node(child, font_size, fill_stroke, context)
-                if new_chunk:
-                    self.stream = new_stream
-                visible_text_child = (
-                    TAGS.get(node.tag) == text and
-                    TAGS.get(child.tag) == text and
-                    child.visible)
-                if visible_text_child:
-                    if not is_valid_bounding_box(child.text_bounding_box):
-                        continue
-                    x1, y1 = child.text_bounding_box[:2]
-                    x2 = x1 + child.text_bounding_box[2]
-                    y2 = y1 + child.text_bounding_box[3]
-                    node.text_bounding_box = extend_bounding_box(
-                        node.text_bounding_box, ((x1, y1), (x2, y2)))
 
         # Restore concrete and inner size of root svg tag
         if node.tag == 'svg':
             self.tree.set_svg_size(self, concrete_width, concrete_height)
 
-        # Handle text anchor
-        if text_anchor_shift:
-            group_id = self.stream.id
-            self.stream = original_streams.pop()
-            self.stream.push_state()
-            if is_valid_bounding_box(node.text_bounding_box):
-                x, y, width, height = node.text_bounding_box
-                # Add extra space to include ink extents
-                group.extra['BBox'][:] = (
-                    x - font_size, y - font_size,
-                    x + width + font_size, y + height + font_size)
-                x_align = width / 2 if text_anchor == 'middle' else width
-                if node.tag == 'text' or 'x' in node.attrib or 'y' in node.attrib:
-                    self.stream.transform(e=-x_align)
-                    if node.tag == 'text':
-                        node.text_bounding_box = (x - x_align, y, width, height)
-            self.stream.draw_x_object(group_id)
-            self.stream.pop_state()
-
         # Apply mask
-        mask = self.masks.get(parse_url(node.get('mask')).fragment)
-        if mask:
+        if mask := self.masks.get(parse_url(node.get('mask')).fragment):
             paint_mask(self, node, mask, opacity)
 
         # Fill and stroke
@@ -596,7 +591,14 @@ class SVG:
         # Draw markers
         self.draw_markers(node, font_size, fill_stroke)
 
-        # Apply opacity stream and restore original stream
+        # Draw text chunks
+        if node.is_text:
+            self.stream.bounding_box = merge_bounding_boxes(
+                self.stream.bounding_box, node.bounding_box)
+            if first_chunk:
+                node.bounding_box = self.draw_text_chunks(font_size)
+
+        # Apply opacity
         if fill_stroke and 0 <= opacity < 1:
             box = self.calculate_bounding_box(node, font_size)
             if not is_valid_bounding_box(box):
@@ -605,7 +607,7 @@ class SVG:
             self.stream.extra['BBox'][:] = x, y, x + width, y + height
 
             group_id = self.stream.id
-            self.stream = original_streams.pop()
+            self.stream = original_stream
             self.stream.set_alpha(opacity, stroke=True, fill=True)
             self.stream.draw_x_object(group_id)
 
@@ -613,10 +615,9 @@ class SVG:
         if node.tag == 'text':
             self.cursor_position = [0, 0]
             self.cursor_d_position = [0, 0]
-            self.text_path_width = 0
 
         if fill_stroke:
-            self.stream.pop_state()
+            stream.pop_state()
 
     def draw_markers(self, node, font_size, fill_stroke):
         """Draw markers defined in a node."""
@@ -708,24 +709,21 @@ class SVG:
             elif node_angle == 'auto-start-reverse' and position == 'start':
                 angle += radians(180)
 
-            # Draw marker path
-            for child in marker_node:
-                self.stream.push_state()
-
-                self.stream.transform(
-                    scale_x * cos(angle), scale_x * sin(angle),
-                    -scale_y * sin(angle), scale_y * cos(angle),
-                    *point)
-                self.stream.transform(e=-translate_x, f=-translate_y)
-
-                overflow = marker_node.get('overflow', 'hidden')
-                if overflow in ('hidden', 'scroll'):
-                    self.stream.rectangle(*clip_box)
-                    self.stream.clip()
-                    self.stream.end()
-
-                self.draw_node(child, font_size, fill_stroke, context=node)
-                self.stream.pop_state()
+            marker_node = marker_node.copy()
+            marker_node._etree_node.tag = 'g'
+            self.stream.push_state()
+            self.stream.transform(
+                scale_x * cos(angle), scale_x * sin(angle),
+                -scale_y * sin(angle), scale_y * cos(angle),
+                *point)
+            self.stream.transform(e=-translate_x, f=-translate_y)
+            overflow = marker_node.get('overflow', 'hidden')
+            if overflow in ('hidden', 'scroll'):
+                self.stream.rectangle(*clip_box)
+                self.stream.clip()
+                self.stream.end()
+            self.draw_node(marker_node, font_size, fill_stroke, context=node)
+            self.stream.pop_state()
 
             position = 'mid' if angles else 'start'
 
@@ -860,13 +858,16 @@ class SVG:
 
     def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""
-        if stroke or node.bounding_box is None:
-            box = bounding_box(self, node, font_size, stroke)
-            if is_valid_bounding_box(box) and 0 not in box[2:]:
-                if stroke:
-                    return box
-                node.bounding_box = box
-        return node.bounding_box
+        box = node.bounding_box
+        if node.bounding_box is None:
+            box = node.bounding_box = bounding_box(self, node, font_size)
+        if stroke and is_valid_bounding_box(box):
+            if node.tag != 'g' and any(node.get_paint('stroke')):
+                stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
+                box = (
+                    box[0] - stroke_width / 2, box[1] - stroke_width / 2,
+                    box[2] + stroke_width, box[3] + stroke_width)
+        return box
 
 
 class Pattern(SVG):

@@ -1,6 +1,6 @@
 """Draw image and svg tags."""
 
-from .bounding_box import bounding_box, is_valid_bounding_box
+from .bounding_box import is_valid_bounding_box
 from .utils import preserve_ratio
 
 
@@ -14,7 +14,7 @@ def svg(svg, node, font_size):
         width, height = node.get('width'), node.get('height')
         if None in (width, height):
             node._etree_node.tag = 'g'
-            box = bounding_box(svg, node, font_size, stroke=True)
+            box = svg.calculate_bounding_box(node, font_size)
             if is_valid_bounding_box(box):
                 width = box[0] + box[2]
                 height = box[1] + box[3]

@@ -8,19 +8,12 @@ from .utils import normalize, point
 EMPTY_BOUNDING_BOX = inf, inf, 0, 0
 
 
-def bounding_box(svg, node, font_size, stroke):
+def bounding_box(svg, node, font_size):
     """Bounding box for any node."""
     if node.tag not in BOUNDING_BOX_METHODS:
         return EMPTY_BOUNDING_BOX
     box = BOUNDING_BOX_METHODS[node.tag](svg, node, font_size)
-    if not is_valid_bounding_box(box):
-        return EMPTY_BOUNDING_BOX
-    if stroke and node.tag != 'g' and any(node.get_paint('stroke')):
-        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
-        box = (
-            box[0] - stroke_width / 2, box[1] - stroke_width / 2,
-            box[2] + stroke_width, box[3] + stroke_width)
-    return box
+    return box if is_valid_bounding_box(box) else EMPTY_BOUNDING_BOX
 
 
 def bounding_box_rect(svg, node, font_size):
@@ -204,11 +197,6 @@ def bounding_box_path(svg, node, font_size):
     return bounding_box
 
 
-def bounding_box_text(svg, node, font_size):
-    """Bounding box for text node."""
-    return getattr(node, 'text_bounding_box', None)
-
-
 def bounding_box_g(svg, node, font_size):
     """Bounding box for g node."""
     bounding_box = EMPTY_BOUNDING_BOX
@@ -231,7 +219,7 @@ def bounding_box_use(svg, node, font_size):
         return EMPTY_BOUNDING_BOX
     else:
         x, y = svg.point(node.get('x'), node.get('y'), font_size)
-        box = bounding_box(svg, tree, font_size, True)
+        box = svg.calculate_bounding_box(tree, font_size, stroke=True)
         box = (box[0] + x, box[1] + y, box[2], box[3])
         return transform_bounding_box(svg, tree, font_size, box)
 
@@ -338,7 +326,7 @@ def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
 
 def extend_bounding_box(bounding_box, points):
     """Extend a bounding box to include given points."""
-    minx, miny, width, height = bounding_box
+    minx, miny, width, height = bounding_box or EMPTY_BOUNDING_BOX
     maxx, maxy = (
         -inf if isinf(minx) else minx + width,
         -inf if isinf(miny) else miny + height)
@@ -347,6 +335,17 @@ def extend_bounding_box(bounding_box, points):
         min(minx, *x_list), min(miny, *y_list),
         max(maxx, *x_list), max(maxy, *y_list))
     return minx, miny, maxx - minx, maxy - miny
+
+
+def merge_bounding_boxes(*bounding_boxes):
+    """Return a bounding box that includes given bounding boxes."""
+    merge_box = EMPTY_BOUNDING_BOX
+    for bounding_box in bounding_boxes:
+        if is_valid_bounding_box(bounding_box):
+            p1 = bounding_box[:2]
+            p2 = p1[0] + bounding_box[2], p1[1] + bounding_box[3]
+            merge_box = extend_bounding_box(merge_box, (p1, p2))
+    return merge_box
 
 
 def transform_bounding_box(svg, node, font_size, bounding_box):
@@ -380,7 +379,4 @@ BOUNDING_BOX_METHODS = {
     'g': bounding_box_g,
     'use': bounding_box_use,
     'marker': bounding_box_g,
-    'text': bounding_box_text,
-    'tspan': bounding_box_text,
-    'textPath': bounding_box_text,
 }

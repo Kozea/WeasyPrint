@@ -390,3 +390,42 @@ def test_markers_viewbox_stroke_width(assert_pixels):
           marker-end="url(#rectangle)" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_markers_text(assert_pixels):
+    assert_pixels('''
+        ___________
+        ___________
+        _____RRR___
+        _____RRR___
+        _____RRR___
+        ___________
+        _____RRR___
+        _____RRR___
+        _____RRR___
+        ___________
+        _____RRR___
+        _____RRR___
+        _____RRR___
+    ''', '''
+      <style>
+        @page { size: 11px 13px }
+        svg { display: block }
+      </style>
+      <svg width="11px" height="13px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="rectangle">
+            <text fill="red" text-anchor="middle"
+                  font="3px weasyprint" x="1.5" y="2.25">
+              a
+            </text>
+          </marker>
+        </defs>
+        <path
+          d="M 5 2 v 4 v 4"
+          marker-start="url(#rectangle)"
+          marker-mid="url(#rectangle)"
+          marker-end="url(#rectangle)" />
+      </svg>
+    ''')
